@@ -1,9 +1,9 @@
 === Import Members from CSV for Paid Memberships Pro ===
 Contributors: eighty20results, sorich87, ideadude
 Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro
-Requires at least: 4.4
-Tested up to: 5.2
-Stable tag: 2.60
+Requires at least: 5.0
+Tested up to: 5.7
+Stable tag: 3.0
 
 Import and create user + PMPro member records from a CSV file to your WordPress with Paid Memberships Pro website. Can import the membership information, user meta data, PMPro order data and will link any pre-existing recurring payment records for your payment gateway integration.
 
