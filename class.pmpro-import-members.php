@@ -112,6 +112,10 @@ class Import_Members_From_CSV {
 		$c_name     = strtolower( preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] ) );
 		$base_paths = array();
 		
+		if ( file_exists( plugin_dir_path( __FILE__ ) . 'src/' ) ) {
+			$base_paths[] = plugin_dir_path( __FILE__ ) . 'src/';
+		}
+		
 		if ( file_exists( plugin_dir_path( __FILE__ ) . 'classes/' ) ) {
 			$base_paths[] = plugin_dir_path( __FILE__ ) . 'classes/';
 		}
@@ -123,7 +127,7 @@ class Import_Members_From_CSV {
 		if ( file_exists( plugin_dir_path( __FILE__ ) . 'blocks/' ) ) {
 			$base_paths[] = plugin_dir_path( __FILE__ ) . 'blocks/';
 		}
-		$filename = "class.{$c_name}.php";
+		$filename = "class-{$c_name}.php";
 		
 		foreach ( $base_paths as $base_path ) {
 			
