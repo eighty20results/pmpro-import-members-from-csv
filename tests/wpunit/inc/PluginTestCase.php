@@ -47,7 +47,7 @@ class PluginTestCase extends TestCase {
 		Monkey\Functions\when( 'plugins_url' )
 			->justReturn( sprintf( 'https://development.local/wp-content/plugins/' ) );
 		Monkey\Functions\when( 'plugin_dir_path' )
-			->justReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/' ) );
+			->justReturn( sprintf( '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/' ) );
 		Monkey\Functions\when( 'get_current_blog_id' )
 			->justReturn( 1 );
 	}
