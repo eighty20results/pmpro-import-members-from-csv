@@ -40,10 +40,12 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 	define( 'PLUGIN_PATH', __DIR__ . '/../pmpro-import-members-from-csv/' );
 }
 
-require_once __DIR__ . '/../../inc/autoload.php';
+error_log("Loading Unit Test Bootstrapper");
+
+require_once __DIR__ . '/../inc/autoload.php';
 
 # Load the class autoloader
-require_once __DIR__ . '/../../class.pmpro-import-members.php';
+require_once __DIR__ . '/../class.pmpro-import-members.php';
 
 // Include the class for PluginTestCase
-require_once __DIR__ . '/inc/PluginTestCase.php';
+require_once __DIR__ . '/wpunit/inc/PluginTestCase.php';
