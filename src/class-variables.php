@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members;
+namespace E20R\Import_Members;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Import\CSV;
+use E20R\Import_Members\Import\CSV;
 use PayPal\EBLBaseComponents\ExternalRememberMeOptInDetailsType;
 
 class Variables {
@@ -190,7 +190,7 @@ class Variables {
 	private $user_fields = array();
 	
 	/**
-	 * Import_Members_From_CSV constructor.
+	 * Import_Members constructor.
 	 *
 	 * @access private
 	 */

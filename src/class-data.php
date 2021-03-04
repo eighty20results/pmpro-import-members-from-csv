@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members;
+namespace E20R\Import_Members;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Import\CSV;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+use E20R\Import_Members\Import\CSV;
+use E20R\Import_Members\Import_Members;
 
 class Data {
 	
@@ -132,7 +132,7 @@ class Data {
 			
 			if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 				
-				$msg = __( 'Insecure connection attempted!', Import_Members_From_CSV::plugin_slug );
+				$msg = __( 'Insecure connection attempted!', Import_Members::plugin_slug );
 				
 				$error_log->debug( $msg );
 				$error_log->add_error_msg( $msg, 'error' );
@@ -197,7 +197,7 @@ class Data {
 								sprintf(
 									__(
 										"Unable to create directory on your server: %s",
-										Import_Members_From_CSV::$plugin_path
+										Import_Members::$plugin_path
 									),
 									$import_dir
 								),
@@ -269,7 +269,7 @@ class Data {
 					// Redirect to the page to run AJAX
 					$url = add_query_arg(
 						$settings + array(
-							'page'              => Import_Members_From_CSV::plugin_slug,
+							'page'              => Import_Members::plugin_slug,
 							'import'            => 'resume',
 							'background_import' => true,
 							'partial'           => true,

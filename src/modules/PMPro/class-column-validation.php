@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro;
+namespace E20R\Import_Members\Modules\PMPro;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Validate\Time;
-use E20R\Paid_Memberships_Pro\Import_Members\Validate\Validate;
-use E20R\Paid_Memberships_Pro\Import_Members\Validate_Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+use E20R\Import_Members\Validate\Time;
+use E20R\Import_Members\Validate\Validate;
+use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Import_Members;
 
 class Column_Validation {
 	
@@ -105,7 +105,7 @@ class Column_Validation {
 			if ( empty( $found_level ) ) {
 				$msg = sprintf( __(
 					'Error: The membership ID (%d) specified for this user (ID: %d) is not a defined membership level, so we can\'t assign it. (Membership data not imported!)',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 					$fields['membership_id'],
 					$user_id
@@ -144,7 +144,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Error: The start date (membership_startdate) column in the import .CSV file must use a MySQL formatted date (YYYY-MM-DD HH:MM:SS). Your file uses \'%s\' (Membership data not imported for user with ID %d!)',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$fields['membership_startdate'],
 				$user_id
@@ -156,7 +156,7 @@ class Column_Validation {
 			$should_be = Time::convert( $fields['membership_startdate'] );
 			$should_be = false === $should_be ? current_time( 'timestamp' ) : $should_be;
 			
-			$e20r_import_err['startdate_format'] = sprintf( __( 'Error: The %2$smembership_startdate column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected format: \'%4$s\'). Membership data will not be imported for this user (ID: %5$d )!', Import_Members_From_CSV::plugin_slug ), $fields['membership_startdate'], '<strong>', '</strong>', date( 'Y-m-d h:i:s', $should_be ), $user_id );
+			$e20r_import_err['startdate_format'] = sprintf( __( 'Error: The %2$smembership_startdate column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected format: \'%4$s\'). Membership data will not be imported for this user (ID: %5$d )!', Import_Members::plugin_slug ), $fields['membership_startdate'], '<strong>', '</strong>', date( 'Y-m-d h:i:s', $should_be ), $user_id );
 		}
 		
 		return $has_error;
@@ -187,7 +187,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Error: No start date provided for user\'s membership (field: %1$s) (user: %2$d)',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$fields['membership_startdate'],
 				$user_id
@@ -206,7 +206,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Error: Invalid datetime format used for %1$s. Needs to be \'YYYY-MM-DD HH:MM:SS\' (for user/ID: %2$d)',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$fields['membership_startdate'],
 				$user_id
@@ -244,7 +244,7 @@ class Column_Validation {
 		if ( ! empty( $fields['membership_enddate'] ) &&
 		     false === $validate->date( $fields['membership_enddate'] ) ) {
 			
-			$msg = sprintf( __( 'Error: The membership end date (membership_enddate) column for the user (ID: %d) in the import .CSV file must use a MySQL formatted date (YYYY-MM-DD HH:MM:SS). You appear to have used \'%s\' (Membership data not imported!)', Import_Members_From_CSV::plugin_slug ), $user_id, $fields['membership_enddate'] );
+			$msg = sprintf( __( 'Error: The membership end date (membership_enddate) column for the user (ID: %d) in the import .CSV file must use a MySQL formatted date (YYYY-MM-DD HH:MM:SS). You appear to have used \'%s\' (Membership data not imported!)', Import_Members::plugin_slug ), $user_id, $fields['membership_enddate'] );
 			
 			$e20r_import_err['bad_format_enddate'] = new \WP_Error( 'e20r_im_member', $msg );
 			$has_error                             = true;
@@ -253,7 +253,7 @@ class Column_Validation {
 			$should_be = false === $should_be ? current_time( 'timestamp' ) : $should_be;
 			
 			$e20r_import_err['unrecognized_enddate'] = sprintf(
-				__( 'Error: The membership_enddate column contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected format: \'%2$s\') Membership data may not have been imported!', Import_Members_From_CSV::plugin_slug ),
+				__( 'Error: The membership_enddate column contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected format: \'%2$s\') Membership data may not have been imported!', Import_Members::plugin_slug ),
 				$fields['membership_enddate'],
 				date( 'Y-m-d h:i:s', $should_be ) );
 		}
@@ -288,7 +288,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Notice: The membership (id: %1$d) for user ID %2$d will end at a future date (membership_enddate = %3$s), but you set the status to %4$s...',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$fields['membership_id'],
 				$user_id,
@@ -329,7 +329,7 @@ class Column_Validation {
 		if ( ! empty( $fields['membership_status'] ) &&
 		     ! in_array( $fields['membership_status'], $valid_statuses ) ) {
 			
-			$msg = sprintf( __( "Error: The membership_status column for user (ID: %d) contains an unexpected value (expected values: 'active' or 'inactive'). You used '%s' (Membership data not imported!)", Import_Members_From_CSV::plugin_slug ), $fields['membership_status'], $user_id );
+			$msg = sprintf( __( "Error: The membership_status column for user (ID: %d) contains an unexpected value (expected values: 'active' or 'inactive'). You used '%s' (Membership data not imported!)", Import_Members::plugin_slug ), $fields['membership_status'], $user_id );
 			
 			$e20r_import_err['valid_status'] = new \WP_Error( 'e20r_im_member', $msg );
 			$has_error                       = true;
@@ -362,7 +362,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Error: You need to specify \'membership_gateway\' (value: %1$s), \'membership_gateway_environment\' (value: %2$s) and the \'membership_subscription_transaction_id\' (value: %3$s) to link active subscription plan(s) to order(s). (Unable to link subscription %1$s for this member\'s (ID: %4$s) order)',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$fields['membership_gateway'],
 				$fields['membership_gateway_environment'],
@@ -403,7 +403,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Warning: You have configured a Membership Cycle Period (%s) for the user (ID %d), but you haven\'t included the number of periods (\'membership_cycle_number\'). Can\'t import member data user with ID %1$d',
-					Import_Members_From_CSV::plugin_slug ),
+					Import_Members::plugin_slug ),
 				$fields['membership_cycle_period'],
 				$user_id
 			);
@@ -435,7 +435,7 @@ class Column_Validation {
 		}
 		
 		if ( ! empty( $fields['membership_subscription_transaction_id'] ) && empty( $fields['membership_payment_transaction_id'] ) ) {
-			$msg                                  = sprintf( __( 'Notice: You have defined a subscription_transaction_id (%s) without also including a payment_transaction_id for user (ID: %d)', Import_Members_From_CSV::plugin_slug ), $fields['membership_subscription_transaction_id'], $user_id );
+			$msg                                  = sprintf( __( 'Notice: You have defined a subscription_transaction_id (%s) without also including a payment_transaction_id for user (ID: %d)', Import_Members::plugin_slug ), $fields['membership_subscription_transaction_id'], $user_id );
 			$e20r_import_err['sub_id_no_paym_id'] = new \WP_Error( 'e20r_im_member', $msg );
 		}
 		
@@ -463,7 +463,7 @@ class Column_Validation {
 			
 			$msg = sprintf(
 				__(
-					'Notice: You specified a membership_gateway (%s), but you didn\'t specify the gateway environment to use (membership_gateway_environment). Using current PMPro setting.', Import_Members_From_CSV::plugin_slug ),
+					'Notice: You specified a membership_gateway (%s), but you didn\'t specify the gateway environment to use (membership_gateway_environment). Using current PMPro setting.', Import_Members::plugin_slug ),
 				$fields['membership_gateway']
 			);
 			
@@ -494,7 +494,7 @@ class Column_Validation {
 		
 		if ( ! isset( $fields['membership_id'] ) ) {
 			$msg = sprintf( __(
-				'Error: The membership ID (membership_id) column is not present in the import file (ID: %d). (Membership cannot be imported!)', Import_Members_From_CSV::plugin_slug ), $user_id );
+				'Error: The membership ID (membership_id) column is not present in the import file (ID: %d). (Membership cannot be imported!)', Import_Members::plugin_slug ), $user_id );
 			
 			$e20r_import_err["no_membership_id_column_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', $msg );
 			$has_error                                                        = true;
@@ -503,7 +503,7 @@ class Column_Validation {
 		if ( false ===  $has_error && false === is_numeric( $fields['membership_id'] ) ) {
 			
 			$msg = sprintf( __(
-				'Error: The membership ID (membership_id) column does not contain a numeric membership Level for user (ID: %d). (Membership data not imported!)', Import_Members_From_CSV::plugin_slug ), $user_id );
+				'Error: The membership ID (membership_id) column does not contain a numeric membership Level for user (ID: %d). (Membership data not imported!)', Import_Members::plugin_slug ), $user_id );
 			
 			$e20r_import_err["no_membership_id_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', $msg );
 			$has_error                                                 = true;
@@ -513,7 +513,7 @@ class Column_Validation {
 		if ( false ===  $has_error && empty( $fields['membership_id'] ) ) {
 			
 			$msg = sprintf( __(
-				'Warning: May cancel membership for user (ID: %d) since there is no membership ID assigned for them.', Import_Members_From_CSV::plugin_slug ), $user_id );
+				'Warning: May cancel membership for user (ID: %d) since there is no membership ID assigned for them.', Import_Members::plugin_slug ), $user_id );
 			
 			$e20r_import_err["cancelling_membership_level_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', $msg );
 			$has_error                                                            = false;
@@ -545,7 +545,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Error: The provided membership ID (%d) is not valid. (Membership data not imported for user (ID: %d)!)',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$fields['membership_id'],
 				$user_id
@@ -585,7 +585,7 @@ class Column_Validation {
 			$msg = sprintf(
 				__(
 					'Warning: You have an end date AND a recurring billing configuration (the membership_enddate, membership_billing_amount, membership_cycle_number and membership_cycle_period columns are not empty) user (ID: %d). Could result in an incorrectly configured membership for this user',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				),
 				$user_id
 			);
@@ -618,7 +618,7 @@ class Column_Validation {
 				'live',
 				'sandbox',
 			) ) ) {
-			$msg                                                              = sprintf( __( 'Error: You specified a payment gateway integration (membership_gateway) to use, but we do not recognize the gateway environment you have specified for this record (membership_gateway_environment: %2$s). (Skipping!)', Import_Members_From_CSV::plugin_slug ), $fields['membership_gateway_environment'] );
+			$msg                                                              = sprintf( __( 'Error: You specified a payment gateway integration (membership_gateway) to use, but we do not recognize the gateway environment you have specified for this record (membership_gateway_environment: %2$s). (Skipping!)', Import_Members::plugin_slug ), $fields['membership_gateway_environment'] );
 			$e20r_import_err["correct_gw_env_variable_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', $msg );
 			$has_error                                                        = true;
 		}
@@ -646,13 +646,13 @@ class Column_Validation {
 		
 		if ( ! empty( $fields['membership_gateway'] ) ) {
 			
-			$gateways = Import_Members_From_CSV::is_pmpro_active() ? pmpro_gateways() : array();
+			$gateways = Import_Members::is_pmpro_active() ? pmpro_gateways() : array();
 			
 			if ( ! in_array( $fields['membership_gateway'], array_keys( $gateways ) ) ) {
 				$msg = sprintf(
 					__(
 						'Warning: The payment gateway integration provided (membership_gateway: %s) is not one of the supported payment gateway integrations! (Changed and using the default value for user (ID: %d) )',
-						Import_Members_From_CSV::plugin_slug
+						Import_Members::plugin_slug
 					),
 					$fields['membership_gateway'],
 					$user_id

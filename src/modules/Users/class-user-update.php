@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Validate;
+namespace E20R\Import_Members\Validate;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Variables;
-use E20R\Paid_Memberships_Pro\Import_Members_From_CSV;
+use E20R\Import_Members\Variables;
+use E20R\Import_Members;
 
 class User_Update extends Validate {
 	

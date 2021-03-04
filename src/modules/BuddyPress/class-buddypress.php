@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\BuddyPress;
+namespace E20R\Import_Members\Modules\BuddyPress;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+use E20R\Import_Members\Data;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import_Members;
 
 class BuddyPress {
 	
@@ -78,7 +78,7 @@ class BuddyPress {
 			
 			$error_log->add_error_msg(
 				sprintf(
-					__( 'Error: table %s does not exists in the database!', Import_Members_From_CSV::plugin_slug ),
+					__( 'Error: table %s does not exists in the database!', Import_Members::plugin_slug ),
 					'bp_xprofile_fields'
 				)
 			);
@@ -97,7 +97,7 @@ class BuddyPress {
 		if ( false === $data->does_table_exist( 'bp_xprofile_groups' ) ) {
 			$error_log->add_error_msg(
 				sprintf(
-					__( 'Error: table %s does not exists in the database!', Import_Members_From_CSV::plugin_slug ),
+					__( 'Error: table %s does not exists in the database!', Import_Members::plugin_slug ),
 					'bp_xprofile_groups'
 				)
 			);

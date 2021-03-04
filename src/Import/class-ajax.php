@@ -17,16 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Import;
+namespace E20R\Import_Members\Import;
 
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Variables;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro\Import_Sponsors;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Variables;
+use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Modules\PMPro\Import_Sponsors;
 
 /**
  * Class Ajax
- * @package E20R\Paid_Memberships_Pro\Import_Members
+ * @package E20R\Import_Members
  */
 class Ajax {
 	
@@ -234,7 +234,7 @@ class Ajax {
 		/*
 		if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 			
-		    $msg = __( 'Insecure connection attempted!', Import_Members_From_CSV::plugin_slug );
+		    $msg = __( 'Insecure connection attempted!', Import_Members::plugin_slug );
 			
 			wp_send_json_error( array( 'status'  => - 1,
 			                           'message' => $msg,
@@ -251,7 +251,7 @@ class Ajax {
 		if ( empty( $filename ) ) {
 			wp_send_json_error( array(
 				'status'  => - 1,
-				'message' => __( "No import file provided!", Import_Members_From_CSV::plugin_slug ),
+				'message' => __( "No import file provided!", Import_Members::plugin_slug ),
 			) );
 			exit();
 		}
@@ -266,7 +266,7 @@ class Ajax {
 				array(
 					'status'  => - 1,
 					'message' => sprintf(
-						__( "File (%s) not found in %s\nIs the directory writable by the web server software?", Import_Members_From_CSV::plugin_slug ),
+						__( "File (%s) not found in %s\nIs the directory writable by the web server software?", Import_Members::plugin_slug ),
 						$filename,
 						$import_dir
 					),
@@ -304,7 +304,7 @@ class Ajax {
 		
 		if ( file_exists( $variables->get( 'logfile_path' ) ) ) {
 			$error_log_msg = sprintf(
-				__( ', please %1$scheck the error log%2$s', Import_Members_From_CSV::plugin_slug ),
+				__( ', please %1$scheck the error log%2$s', Import_Members::plugin_slug ),
 				sprintf( '<a href="%s">', esc_url_raw( $variables->get( 'logfile_url' ) ) ),
 				'</a>'
 			);
@@ -315,7 +315,7 @@ class Ajax {
 			
 			if ( file_exists( $variables->get( 'logfile_path' ) ) ) {
 				$error_log_msg = sprintf(
-					__( ', please %1$scheck the error log%2$s', Import_Members_From_CSV::plugin_slug ),
+					__( ', please %1$scheck the error log%2$s', Import_Members::plugin_slug ),
 					sprintf( '<a href="%s">', esc_url_raw( $variables->get( 'logfile_url' ) ) ),
 					'</a>'
 				);
@@ -323,13 +323,13 @@ class Ajax {
 			
 			switch ( $_REQUEST['import'] ) {
 				case 'file':
-					$status = sprintf( '<div class="error"><p><strong>%s</strong></p></div>', __( 'Error during file upload.', Import_Members_From_CSV::plugin_slug ) );
+					$status = sprintf( '<div class="error"><p><strong>%s</strong></p></div>', __( 'Error during file upload.', Import_Members::plugin_slug ) );
 					break;
 				case 'data':
-					$status = sprintf( '<div class="error"><p><strong>%s</strong></p></div>', __( 'Cannot extract data from uploaded file or no file was uploaded.', Import_Members_From_CSV::plugin_slug ) );
+					$status = sprintf( '<div class="error"><p><strong>%s</strong></p></div>', __( 'Cannot extract data from uploaded file or no file was uploaded.', Import_Members::plugin_slug ) );
 					break;
 				case 'success':
-					$status = sprintf( '<div class="updated"><p><strong>%s</strong></p></div>', __( 'Member import was successful.', Import_Members_From_CSV::plugin_slug ) );
+					$status = sprintf( '<div class="updated"><p><strong>%s</strong></p></div>', __( 'Member import was successful.', Import_Members::plugin_slug ) );
 					break;
 				default:
 					$status = null;
@@ -380,7 +380,7 @@ class Ajax {
 			
 			wp_send_json_error( array(
 				'status'         => false,
-				'message'        => sprintf( __( "Error during import (# of errors: %d):\n%s", Import_Members_From_CSV::plugin_slug ), count( $msgs ), implode( "\n", $msgs ) ),
+				'message'        => sprintf( __( "Error during import (# of errors: %d):\n%s", Import_Members::plugin_slug ), count( $msgs ), implode( "\n", $msgs ) ),
 				'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
 			) );
 			exit();
@@ -403,7 +403,7 @@ class Ajax {
 				$error_log->debug( "Warnings: " . print_r( $msgs, true ) );
 			}
 			
-			$status_msg = sprintf( __( "Imported %s", Import_Members_From_CSV::plugin_slug ), str_pad( '', count( $results['user_ids'] ), '.' ) ) . "\n";
+			$status_msg = sprintf( __( "Imported %s", Import_Members::plugin_slug ), str_pad( '', count( $results['user_ids'] ), '.' ) ) . "\n";
 			
 			if ( ! empty( $msgs ) ) {
 				$status_msg .= implode( "\n", $msgs ) . "\n";

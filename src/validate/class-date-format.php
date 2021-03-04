@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Validate;
+namespace E20R\Import_Members\Validate;
 
 
 class Date_Format {

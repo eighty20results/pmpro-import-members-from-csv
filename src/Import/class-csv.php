@@ -17,18 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Import;
+namespace E20R\Import_Members\Import;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\Users\Column_Validation as User_Validation;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\Users\Import_User;
-use E20R\Paid_Memberships_Pro\Import_Members\Status;
-use E20R\Paid_Memberships_Pro\Import_Members\Validate\User_ID;
-use E20R\Paid_Memberships_Pro\Import_Members\Validate_Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Variables;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+use E20R\Import_Members\Data;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
+use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Status;
+use E20R\Import_Members\Validate\User_ID;
+use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Variables;
+use E20R\Import_Members\Import_Members;
 
 class CSV {
 	
@@ -148,7 +148,7 @@ class CSV {
 		if ( empty( $saved_filename ) && true === $background_import ) {
 			
 			$error_log->add_error_msg(
-				__( 'CSV file not selected. Nothing to import!', Import_Members_From_CSV::plugin_slug ),
+				__( 'CSV file not selected. Nothing to import!', Import_Members::plugin_slug ),
 				'error'
 			);
 			
@@ -164,7 +164,7 @@ class CSV {
 				sprintf(
 					__(
 						"Unable to create directory on your server. Directory: %s",
-						Import_Members_From_CSV::$plugin_path
+						Import_Members::$plugin_path
 					),
 					$import_dir
 				),
@@ -247,7 +247,7 @@ class CSV {
 					sprintf(
 						__(
 							"Error uploading file: The %s file has been uploaded too many times. Please clean out the %s directory on your server.",
-							Import_Members_From_CSV::plugin_slug
+							Import_Members::plugin_slug
 						),
 						basename( $file_name ),
 						$dir_name
@@ -402,7 +402,7 @@ class CSV {
 				$msg = sprintf(
 					__(
 						'Missing ID, user_login and/or user_email information column at row %d',
-						Import_Members_From_CSV::$plugin_path
+						Import_Members::$plugin_path
 					),
 					$active_line_number
 				);
@@ -415,7 +415,7 @@ class CSV {
 				$msg       = sprintf(
 					__(
 						'WP User ID %d not found in database (from CSV file line: %d)',
-						Import_Members_From_CSV::$plugin_path
+						Import_Members::$plugin_path
 					),
 					$user_data['ID'],
 					$active_line_number
@@ -464,7 +464,7 @@ class CSV {
 			if ( false === $user_ids ) {
 				
 				$msg = sprintf(
-					__( 'Unable to import user data from row %d', Import_Members_From_CSV::$plugin_path ),
+					__( 'Unable to import user data from row %d', Import_Members::$plugin_path ),
 					$active_line_number
 				);
 				
@@ -505,7 +505,7 @@ class CSV {
 		$member_error = (bool) get_option( 'e20r_import_errors', false );
 		
 		if ( true === $member_error ) {
-			$error_log->add_error_msg( __( 'Data format error(s) detected during the import. Some records may not have been imported!', Import_Members_From_CSV::plugin_slug ), 'error' );
+			$error_log->add_error_msg( __( 'Data format error(s) detected during the import. Some records may not have been imported!', Import_Members::plugin_slug ), 'error' );
 			delete_option( 'e20r_import_errors' );
 		}
 		

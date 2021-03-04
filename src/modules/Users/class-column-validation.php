@@ -17,12 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\Users;
+namespace E20R\Import_Members\Modules\Users;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Variables;
-use E20R\Paid_Memberships_Pro\Import_Members\Status;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Variables;
+use E20R\Import_Members\Status;
 
 class Column_Validation {
 	

@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro;
+namespace E20R\Import_Members\Modules\PMPro;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
-use E20R\Paid_Memberships_Pro\Import_Members\Variables;
+use E20R\Import_Members\Data;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Variables;
 use E20R\Utilities\Licensing\Licensing;
 
 class Import_Sponsors {
@@ -306,7 +306,7 @@ class Import_Sponsors {
 		$error_loading_sponsor = false;
 		$errors                = Error_Log::get_instance();
 		
-		if ( false === Import_Members_From_CSV::is_pmpro_active() ) {
+		if ( false === Import_Members::is_pmpro_active() ) {
 			$errors_loading_sponsor = true;
 			$errors->add_error_msg( 'The PMPro plugin is inactive for this WordPress instance. Cannot import sponsor info!' );
 			

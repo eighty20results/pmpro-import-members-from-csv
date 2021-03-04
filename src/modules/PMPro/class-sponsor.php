@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro;
+namespace E20R\Import_Members\Modules\PMPro;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Data;
+use E20R\Import_Members\Data;
 
 class Sponsor {
 	

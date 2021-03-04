@@ -31,19 +31,21 @@
  * @credit https://github.com/strangerstudios/pmpro-import-users-from-csv - Jason Coleman - https://github.com/ideadude
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members;
+namespace E20R\Import_Members;
 
-use E20R\Paid_Memberships_Pro\Import_Members\Import\Ajax;
-use E20R\Paid_Memberships_Pro\Import_Members\Import\CSV;
-use E20R\Paid_Memberships_Pro\Import_Members\Import\Page;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\Users\Column_Validation;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\Users\Import_User;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro\Import_Member;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\Users\Column_Validation as User_Validation;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
-use E20R\Paid_Memberships_Pro\Import_Members\Modules\BuddyPress\Column_Validation as BuddyPress_Validation;
+use E20R\Import_Members\Import\Ajax;
+use E20R\Import_Members\Import\CSV;
+use E20R\Import_Members\Import\Page;
+use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Modules\PMPro\Import_Member;
+use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
+use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
+use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BuddyPress_Validation;
 
-use E20R\Utilities\Licensing\Licensing;
+
+use RecursiveCallbackFilterIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 if ( ! defined( 'E20R_IM_CSV_DELIMITER' ) ) {
 	define( 'E20R_IM_CSV_DELIMITER', ',' );
@@ -59,7 +61,7 @@ if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
 	define( 'E20R_IMPORT_VERSION', '3.0' );
 }
 
-class Import_Members_From_CSV {
+class Import_Members {
 	
 	const plugin_slug = 'pmpro-import-members-from-csv';
 	/**
@@ -72,12 +74,12 @@ class Import_Members_From_CSV {
 	/**
 	 * Instance of this class
 	 *
-	 * @var null|Import_Members_From_CSV $instance
+	 * @var null|Import_Members $instance
 	 */
 	private static $instance = null;
 	
 	/**
-	 * Import_Members_From_CSV constructor.
+	 * Import_Members constructor.
 	 */
 	private function __construct() {
 		self::$plugin_path = plugin_dir_path( __FILE__ );
@@ -112,28 +114,28 @@ class Import_Members_From_CSV {
 		$c_name     = strtolower( preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] ) );
 		$base_paths = array();
 		
-		if ( file_exists( plugin_dir_path( __FILE__ ) . 'src/' ) ) {
-			$base_paths[] = plugin_dir_path( __FILE__ ) . 'src/';
+		if ( file_exists( \plugin_dir_path( __FILE__ ) . 'src/' ) ) {
+			$base_paths[] = \plugin_dir_path( __FILE__ ) . 'src/';
 		}
 		
-		if ( file_exists( plugin_dir_path( __FILE__ ) . 'classes/' ) ) {
-			$base_paths[] = plugin_dir_path( __FILE__ ) . 'classes/';
+		if ( file_exists( \plugin_dir_path( __FILE__ ) . 'classes/' ) ) {
+			$base_paths[] = \plugin_dir_path( __FILE__ ) . 'classes/';
 		}
 		
-		if ( file_exists( plugin_dir_path( __FILE__ ) . 'class/' ) ) {
-			$base_paths[] = plugin_dir_path( __FILE__ ) . 'class/';
+		if ( file_exists( \plugin_dir_path( __FILE__ ) . 'class/' ) ) {
+			$base_paths[] = \plugin_dir_path( __FILE__ ) . 'class/';
 		}
 		
-		if ( file_exists( plugin_dir_path( __FILE__ ) . 'blocks/' ) ) {
-			$base_paths[] = plugin_dir_path( __FILE__ ) . 'blocks/';
+		if ( file_exists( \plugin_dir_path( __FILE__ ) . 'blocks/' ) ) {
+			$base_paths[] = \plugin_dir_path( __FILE__ ) . 'blocks/';
 		}
 		$filename = "class-{$c_name}.php";
 		
 		foreach ( $base_paths as $base_path ) {
 			
-			$iterator = new \RecursiveDirectoryIterator( $base_path, \RecursiveDirectoryIterator::SKIP_DOTS | \RecursiveIteratorIterator::SELF_FIRST | \RecursiveIteratorIterator::CATCH_GET_CHILD | \RecursiveDirectoryIterator::FOLLOW_SYMLINKS );
+			$iterator = new RecursiveDirectoryIterator( $base_path, RecursiveDirectoryIterator::SKIP_DOTS | RecursiveIteratorIterator::SELF_FIRST | RecursiveIteratorIterator::CATCH_GET_CHILD | RecursiveDirectoryIterator::FOLLOW_SYMLINKS );
 			
-			$filter = new \RecursiveCallbackFilterIterator( $iterator, function ( $current, $key, $iterator ) use ( $filename ) {
+			$filter = new RecursiveCallbackFilterIterator( $iterator, function ( $current, $key, $iterator ) use ( $filename ) {
 				
 				// Skip hidden files and directories.
 				if ( $current->getFilename()[0] == '.' || $current->getFilename() == '..' ) {
@@ -145,15 +147,15 @@ class Import_Members_From_CSV {
 					return $current->getFilename() === $filename;
 				} else {
 					// Only consume files of interest.
-					return strpos( $current->getFilename(), $filename ) === 0;
+					return str_starts_with( $current->getFilename(), $filename );
 				}
 			} );
 			
-			foreach ( new \ RecursiveIteratorIterator( $iterator ) as $f_filename => $f_file ) {
+			foreach ( new RecursiveIteratorIterator( $iterator ) as $f_filename => $f_file ) {
 				
 				$class_path = $f_file->getPath() . "/" . $f_file->getFilename();
 				
-				if ( $f_file->isFile() && false !== strpos( $class_path, $filename ) ) {
+				if ( $f_file->isFile() && false !== str_contains( $class_path, $filename ) ) {
 					
 					require_once( $class_path );
 				}
@@ -180,7 +182,7 @@ class Import_Members_From_CSV {
 	 **/
 	public function load_hooks() {
 		
-		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99 );
+		add_action( 'plugins_loaded', array( \E20R\Import_Members\Email_Templates::get_instance(), 'load_hooks' ), 99 );
 		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99 );
 		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99 );
 		
@@ -218,7 +220,7 @@ class Import_Members_From_CSV {
 	/**
 	 * Return or instantiate class for use
 	 *
-	 * @return Import_Members_From_CSV
+	 * @return Import_Members
 	 */
 	public static function get_instance() {
 		
@@ -247,7 +249,7 @@ class Import_Members_From_CSV {
 	public function load_i18n() {
 		
 		load_plugin_textdomain(
-			Import_Members_From_CSV::plugin_slug,
+			Import_Members::plugin_slug,
 			false,
 			basename( dirname( __FILE__ ) ) . '/languages'
 		);
@@ -262,7 +264,7 @@ class Import_Members_From_CSV {
 	 **/
 	public function admin_enqueue_scripts( $hook ) {
 		
-		if ( ! isset( $_REQUEST['page'] ) || $_REQUEST['page'] != Import_Members_From_CSV::plugin_slug ) {
+		if ( ! isset( $_REQUEST['page'] ) || $_REQUEST['page'] != Import_Members::plugin_slug ) {
 			return;
 		}
 		
@@ -285,10 +287,10 @@ class Import_Members_From_CSV {
 			error_log( "Setting JavaScript timeout for import operations to {$timeout_value} seconds" );
 		}
 		
-		wp_enqueue_style( Import_Members_From_CSV::plugin_slug, plugins_url( 'css/pmpro-import-members-from-csv.css', __FILE__ ), null, E20R_IMPORT_VERSION );
-		wp_register_script( Import_Members_From_CSV::plugin_slug, plugins_url( 'javascript/pmpro-import-members-from-csv.js', __FILE__ ), array( 'jquery' ), E20R_IMPORT_VERSION );
+		wp_enqueue_style( Import_Members::plugin_slug, plugins_url( 'css/pmpro-import-members-from-csv.css', __FILE__ ), null, E20R_IMPORT_VERSION );
+		wp_register_script( Import_Members::plugin_slug, plugins_url( 'javascript/pmpro-import-members-from-csv.js', __FILE__ ), array( 'jquery' ), E20R_IMPORT_VERSION );
 		
-		wp_localize_script( Import_Members_From_CSV::plugin_slug, 'e20r_im_settings',
+		wp_localize_script( Import_Members::plugin_slug, 'e20r_im_settings',
 			apply_filters( 'pmp_im_import_js_settings', array(
 					'timeout'                     => $timeout_value,
 					'background_import'           => intval( $settings->get( 'background_import' ) ),
@@ -304,24 +306,24 @@ class Import_Members_From_CSV {
 					'password_nag'                => intval( $settings->get( 'password_nag' ) ),
 					'per_partial'                 => intval( $settings->get( 'per_partial' ) ),
 					'site_id'                     => intval( $settings->get( 'site_id' ) ),
-					'admin_page'                  => add_query_arg( 'page', Import_Members_From_CSV::plugin_slug, admin_url( 'admin.php' ) ),
+					'admin_page'                  => add_query_arg( 'page', Import_Members::plugin_slug, admin_url( 'admin.php' ) ),
 					'import'                      => isset( $_REQUEST['import'] ) ? sanitize_text_field( $_REQUEST['import'] ) : null,
 					'lang'                        => array(
-						'whitespace_in_filename' => __( 'Error: Your file name contains one or more whitespace characters. Please rename the file and remove any whitespace characters from the file name.', Import_Members_From_CSV::plugin_slug ),
-						'pausing'                => __( 'Pausing. You may see one more update here as we clean up.', Import_Members_From_CSV::plugin_slug ),
-						'resuming'               => __( 'Resuming...', Import_Members_From_CSV::plugin_slug ),
-						'loaded'                 => __( 'JavaScript Loaded.', Import_Members_From_CSV::plugin_slug ),
-						'done'                   => __( 'Done!', Import_Members_From_CSV::plugin_slug ),
-						'alert_msg'              => __( 'Error with import. Close to reload the admin page.', Import_Members_From_CSV::plugin_slug ),
-						'error'                  => __( 'Error with import. Close to refresh the admin page.', Import_Members_From_CSV::plugin_slug ),
-						'excel_info'             => sprintf( __( 'If you use Microsoft Excel(tm) to view/edit your .CSV files, may we suggest you %1$stry using Google Sheets instead%2$s? Using Google Sheets may reduce/eliminate issues with date formats!', Import_Members_From_CSV::plugin_slug ), sprintf( '<a href="%s" target="_blank" title="%s">', 'http://docs.google.com/spreadsheets', __( 'To Google Sheets', Import_Members_From_CSV::plugin_slug ) ), '</a>' ),
+						'whitespace_in_filename' => __( 'Error: Your file name contains one or more whitespace characters. Please rename the file and remove any whitespace characters from the file name.', Import_Members::plugin_slug ),
+						'pausing'                => __( 'Pausing. You may see one more update here as we clean up.', Import_Members::plugin_slug ),
+						'resuming'               => __( 'Resuming...', Import_Members::plugin_slug ),
+						'loaded'                 => __( 'JavaScript Loaded.', Import_Members::plugin_slug ),
+						'done'                   => __( 'Done!', Import_Members::plugin_slug ),
+						'alert_msg'              => __( 'Error with import. Close to reload the admin page.', Import_Members::plugin_slug ),
+						'error'                  => __( 'Error with import. Close to refresh the admin page.', Import_Members::plugin_slug ),
+						'excel_info'             => sprintf( __( 'If you use Microsoft Excel(tm) to view/edit your .CSV files, may we suggest you %1$stry using Google Sheets instead%2$s? Using Google Sheets may reduce/eliminate issues with date formats!', Import_Members::plugin_slug ), sprintf( '<a href="%s" target="_blank" title="%s">', 'http://docs.google.com/spreadsheets', __( 'To Google Sheets', Import_Members::plugin_slug ) ), '</a>' ),
 					),
 					'display_errors'              => ( ! empty( $errors ) ? $errors : null ),
 				)
 			)
 		);
 		
-		wp_enqueue_script( Import_Members_From_CSV::plugin_slug );
+		wp_enqueue_script( Import_Members::plugin_slug );
 	}
 	
 	/**
@@ -354,21 +356,21 @@ class Import_Members_From_CSV {
 			$new_links = array(
 				'donate'        => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					esc_url_raw( 'https://www.paypal.me/eighty20results' ),
+					\esc_url_raw( 'https://www.paypal.me/eighty20results' ),
 					__( 'Donate to support updates, maintenance and tech support for this plugin', 'pmpro' ),
-					__( 'Donate', Import_Members_From_CSV::plugin_slug )
+					__( 'Donate', Import_Members::plugin_slug )
 				),
 				'documentation' => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
-					__( 'View the documentation', Import_Members_From_CSV::plugin_slug ),
-					__( 'Docs', Import_Members_From_CSV::plugin_slug )
+					\esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
+					__( 'View the documentation', Import_Members::plugin_slug ),
+					__( 'Docs', Import_Members::plugin_slug )
 				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
+					\esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
 					__( 'Visit the support forum', 'pmpro' ),
-					__( 'Support', Import_Members_From_CSV::plugin_slug )
+					__( 'Support', Import_Members::plugin_slug )
 				),
 			);
 			
@@ -379,15 +381,20 @@ class Import_Members_From_CSV {
 	}
 }
 
+# Load the composer autoloader for the 10quality utilities
+if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
+	require_once __DIR__ . '/inc/autoload.php';
+}
+
 try {
-	spl_autoload_register( 'E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV::auto_loader' );
+	spl_autoload_register( 'E20R\Import_Members\Import_Members::auto_loader' );
 } catch ( \Exception $exception ) {
 	error_log( "Unable to load PHP autoloader for the PMPro Import Members from CSV plugin!", E_USER_ERROR );
 	
 	return;
 }
 
-register_deactivation_hook( __FILE__, 'E20R\Paid_Memberships_Pro\Import_Members_From_CSV::deactivation' );
+\register_deactivation_hook( __FILE__, 'E20R\Import_Members::deactivation' );
 
 // Load the plugin.
-add_action( 'plugins_loaded', array( Import_Members_From_CSV::get_instance(), 'load_hooks' ), 10 );
+add_action( 'plugins_loaded', array( Import_Members::get_instance(), 'load_hooks' ), 10 );

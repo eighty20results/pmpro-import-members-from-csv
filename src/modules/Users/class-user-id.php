@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Validate;
+namespace E20R\Import_Members\Validate;
 
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Status;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Status;
+use E20R\Import_Members\Import_Members;
 
 class User_ID extends Validate {
 	
@@ -39,11 +39,11 @@ class User_ID extends Validate {
 		switch ( $status ) {
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
 				
-				$msg = __( 'Error: User ID exists but cannot be updated per the plugin settings', Import_Members_From_CSV::plugin_slug );
+				$msg = __( 'Error: User ID exists but cannot be updated per the plugin settings', Import_Members::plugin_slug );
 				break;
 			
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
-				$msg = __( 'Supplied information in ID column is not a number', Import_Members_From_CSV::plugin_slug );
+				$msg = __( 'Supplied information in ID column is not a number', Import_Members::plugin_slug );
 				break;
 				
 			default:

@@ -16,13 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace E20R\Paid_Memberships_Pro\Import_Members;
 
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+namespace E20R\Import_Members;
 
 /**
  * Class Email_Templates
- * @package E20R\Paid_Memberships_Pro\Import_Members
+ * @package E20R\Import_Members
  */
 class Email_Templates {
 	
@@ -268,7 +267,7 @@ class Email_Templates {
 		$pmproet_email_defaults['imported_member'] = array(
 			'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
 			'description' => __( 'Import: Welcome Member', 'pmpro-import-members-from-csv' ),
-			'body'        => file_get_contents( Import_Members_From_CSV::$plugin_path . '/emails/imported_member.html' ),
+			'body'        => file_get_contents( Import_Members::$plugin_path . '/emails/imported_member.html' ),
 		);
 	}
 	
@@ -281,7 +280,7 @@ class Email_Templates {
 		
 		Error_Log::get_instance()->add_error_msg(
 			sprintf(
-				__( 'Unable to send email message from Import operation: %s', Import_Members_From_CSV::plugin_slug ),
+				__( 'Unable to send email message from Import operation: %s', Import_Members::plugin_slug ),
 				$error->get_error_message( 'wp_mail_failed' )
 			),
 			'warning'

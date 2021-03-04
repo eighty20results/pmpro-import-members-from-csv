@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\BuddyPress;
+namespace E20R\Import_Members\Modules\BuddyPress;
 
 
 class Import_BuddyPress {
-	
+
 }

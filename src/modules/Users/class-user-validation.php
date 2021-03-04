@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Validate;
+namespace E20R\Import_Members\Validate;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
-use E20R\Paid_Memberships_Pro\Import_Members\Status;
+use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Status;
 
 class User_Validation extends Validate {
 	
@@ -45,14 +45,14 @@ class User_Validation extends Validate {
 			
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
 				
-				$msg = __( "The value specified in the 'ID' column is not numeric (integer)", Import_Members_From_CSV::plugin_slug );
+				$msg = __( "The value specified in the 'ID' column is not numeric (integer)", Import_Members::plugin_slug );
 				break;
 			
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
 				
 				$msg = __(
 					'User ID specified and user record exists but the "Update User Record" option is not selected',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				);
 				$should_exit = true;
 				break;
@@ -61,7 +61,7 @@ class User_Validation extends Validate {
 				
 				$msg = __(
 					'User exists, but the "Update User Record" option is not selected.',
-					Import_Members_From_CSV::plugin_slug
+					Import_Members::plugin_slug
 				);
 				
 				$should_exit = true;

@@ -35,15 +35,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members\Modules\PMPro;
+namespace E20R\Import_Members\Modules\PMPro;
 
 
-use E20R\Paid_Memberships_Pro\Import_Members\Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Email_Templates;
-use E20R\Paid_Memberships_Pro\Import_Members\Error_Log;
-use E20R\Paid_Memberships_Pro\Import_Members\Validate_Data;
-use E20R\Paid_Memberships_Pro\Import_Members\Variables;
-use E20R\Paid_Memberships_Pro\Import_Members\Import_Members_From_CSV;
+use E20R\Import_Members\Data;
+use E20R\Import_Members\Email_Templates;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Variables;
+use E20R\Import_Members\Import_Members;
 
 
 class Import_Member {
@@ -178,7 +178,7 @@ class Import_Member {
 		$user = get_userdata( $user_id );
 		
 		if ( empty( $user ) ) {
-			$e20r_import_err["no_user_found_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( "Unable to locate user with expected user ID of %d (Skipped!)", Import_Members_From_CSV::plugin_slug ), $user_id ) );
+			$e20r_import_err["no_user_found_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( "Unable to locate user with expected user ID of %d (Skipped!)", Import_Members::plugin_slug ), $user_id ) );
 			$has_error                                              = true;
 		}
 		
@@ -229,7 +229,7 @@ class Import_Member {
 		) {
 			$welcome_warning = __(
 				'Cannot send Welcome email to members who did not get imported as \'active\' members!',
-				Import_Members_From_CSV::plugin_slug
+				Import_Members::plugin_slug
 			);
 			
 			$error_log->debug( $welcome_warning );
@@ -274,7 +274,7 @@ class Import_Member {
 					) ) ) ) {
 					
 					$e20r_import_err["old_membership_error_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf(
-						__( 'Unable to cancel old membership level (ID: %d) for user (ID: %d)', Import_Members_From_CSV::plugin_slug ),
+						__( 'Unable to cancel old membership level (ID: %d) for user (ID: %d)', Import_Members::plugin_slug ),
 						$fields['membership_id'],
 						$user_id
 					) );
@@ -327,7 +327,7 @@ class Import_Member {
 					'e20r_im_member',
 					sprintf( __(
 						'Unable to configure membership level (ID: %d ) for user (user id: %d)',
-						Import_Members_From_CSV::plugin_slug
+						Import_Members::plugin_slug
 					),
 						$fields['membership_id'],
 						$user_id
@@ -391,7 +391,7 @@ class Import_Member {
 				) {
 					$membership_in_the_past = true;
 				} else {
-					$e20r_import_err["upd_error_status_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Unable to set \'inactive\' membership status/date for user (ID: %d) with membership level ID %d', Import_Members_From_CSV::plugin_slug ), $user_id, $fields['membership_id'] ) );
+					$e20r_import_err["upd_error_status_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Unable to set \'inactive\' membership status/date for user (ID: %d) with membership level ID %d', Import_Members::plugin_slug ), $user_id, $fields['membership_id'] ) );
 				}
 			}
 			
@@ -412,7 +412,7 @@ class Import_Member {
 						array( '%s', '%s' ),
 						array( '%d', '%d', '%d' )
 					) ) {
-					$e20r_import_err["import_status_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Unable to activate membership for user (ID: %d) with membership level ID %d', Import_Members_From_CSV::plugin_slug ), $user_id, $fields['membership_id'] ) );
+					$e20r_import_err["import_status_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Unable to activate membership for user (ID: %d) with membership level ID %d', Import_Members::plugin_slug ), $user_id, $fields['membership_id'] ) );
 				}
 			}
 		}
@@ -472,13 +472,13 @@ class Import_Member {
 			
 			$error_log->debug( "Adding PMPro order for {$fields['membership_id']}/{$user_id}" );
 			
-			$default_gateway     = Import_Members_From_CSV::is_pmpro_active() ? pmpro_getGateway() : $fields['membership_gateway'];
-			$default_environment = Import_Members_From_CSV::is_pmpro_active() ? pmpro_getOption( "gateway_environment" ) : $fields['membership_gateway_environment'];
+			$default_gateway     = Import_Members::is_pmpro_active() ? pmpro_getGateway() : $fields['membership_gateway'];
+			$default_environment = Import_Members::is_pmpro_active() ? pmpro_getOption( "gateway_environment" ) : $fields['membership_gateway_environment'];
 			
 			if ( false === $data->does_table_exist( 'pmpro_membership_orders' ) ) {
 				$error_log->add_error_msg(
 					sprintf(
-						__( 'Error: table %s does not exists in the database!', Import_Members_From_CSV::plugin_slug ),
+						__( 'Error: table %s does not exists in the database!', Import_Members::plugin_slug ),
 						'pmpro_membership_orders'
 					)
 				);
@@ -606,7 +606,7 @@ class Import_Member {
 					$timestamp = is_numeric( $fields['membership_timestamp'] ) ? $fields['membership_timestamp'] : null;
 					
 					if ( is_null( $timestamp ) ) {
-						$e20r_import_err["timestamp_{$user_id}_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Could not decode timezone value (%s)', Import_Members_From_CSV::plugin_slug ), $fields['membership_timestamp'] ) );
+						$e20r_import_err["timestamp_{$user_id}_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Could not decode timezone value (%s)', Import_Members::plugin_slug ), $fields['membership_timestamp'] ) );
 					}
 				}
 				
@@ -632,7 +632,7 @@ class Import_Member {
 					),
 					array( '%d', '%d', '%d', '%s' )
 				) ) {
-				$e20r_import_err["dc_usage_{$user_id}_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Unable to set update discount code usage for code (ID: %d ) for user (user/order id: %d/%s)', Import_Members_From_CSV::plugin_slug ), $fields['membership_code_id'], $user_id, $order->id ) );
+				$e20r_import_err["dc_usage_{$user_id}_{$active_line_number}"] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Unable to set update discount code usage for code (ID: %d ) for user (user/order id: %d/%s)', Import_Members::plugin_slug ), $fields['membership_code_id'], $user_id, $order->id ) );
 			}
 		}
 		

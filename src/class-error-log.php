@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Paid_Memberships_Pro\Import_Members;
+namespace E20R\Import_Members;
 
 class Error_Log {
 	
@@ -114,11 +114,11 @@ class Error_Log {
 		
 		$this->add_error_msg(
 			sprintf(
-				__( 'Errors or Warnings found: Please inspect the import %1$serror log%2$s', Import_Members_From_CSV::plugin_slug ),
+				__( 'Errors or Warnings found: Please inspect the import %1$serror log%2$s', Import_Members::plugin_slug ),
 				sprintf(
 					'<a href="%1$s" title="%2$s" target="_blank">',
 					esc_url_raw( $log_file_url ),
-						__( "Link to import error/warning log", Import_Members_From_CSV::plugin_slug )
+						__( "Link to import error/warning log", Import_Members::plugin_slug )
 					),
 					'</a>'
 				),
@@ -146,7 +146,7 @@ class Error_Log {
 				
 				if (  !empty( $message ) ) {
 					@fwrite( $log, sprintf(
-						               __( '[Line %1$s] %2$s', Import_Members_From_CSV::plugin_slug ),
+						               __( '[Line %1$s] %2$s', Import_Members::plugin_slug ),
 						               $line,
 						               $message
 					               ) . "\n"
@@ -158,7 +158,7 @@ class Error_Log {
 		} else {
 			$this->add_error_msg(
 				sprintf(
-					__( "Unable to write error log to: %s", Import_Members_From_CSV::plugin_slug ),
+					__( "Unable to write error log to: %s", Import_Members::plugin_slug ),
 					$log_file_path
 				),
 				'error'
