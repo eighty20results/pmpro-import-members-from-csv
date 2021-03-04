@@ -35,6 +35,7 @@ services:
 #      APACHE_RUN_USER: ${APACHE_RUN_USER}
 #      APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}
     volumes:
+      - ${UTILITIES_PLUGIN}:/var/www/html/wp-content/plugins/00-e20r-utilities
       - ${PLUGIN_DIR}:/var/www/html/wp-content/plugins/${E20R_PLUGIN_NAME}
       - ${PMPRO_DIR}:/var/www/html/wp-content/plugins/paid-memberships-pro
       - ${SQL_BACKUP_FILE}/${E20R_PLUGIN_NAME}.sql:/docker-entrypoint-initdb.d/${E20R_PLUGIN_NAME}.sql
