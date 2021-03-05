@@ -148,7 +148,7 @@ class CSV {
 		if ( empty( $saved_filename ) && true === $background_import ) {
 			
 			$error_log->add_error_msg(
-				__( 'CSV file not selected. Nothing to import!', Import_Members::plugin_slug ),
+				__( 'CSV file not selected. Nothing to import!', Import_Members::PLUGIN_SLUG ),
 				'error'
 			);
 			
@@ -247,7 +247,7 @@ class CSV {
 					sprintf(
 						__(
 							"Error uploading file: The %s file has been uploaded too many times. Please clean out the %s directory on your server.",
-							Import_Members::plugin_slug
+							Import_Members::PLUGIN_SLUG
 						),
 						basename( $file_name ),
 						$dir_name
@@ -505,7 +505,7 @@ class CSV {
 		$member_error = (bool) get_option( 'e20r_import_errors', false );
 		
 		if ( true === $member_error ) {
-			$error_log->add_error_msg( __( 'Data format error(s) detected during the import. Some records may not have been imported!', Import_Members::plugin_slug ), 'error' );
+			$error_log->add_error_msg( __( 'Data format error(s) detected during the import. Some records may not have been imported!', Import_Members::PLUGIN_SLUG ), 'error' );
 			delete_option( 'e20r_import_errors' );
 		}
 		
