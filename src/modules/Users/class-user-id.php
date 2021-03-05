@@ -24,8 +24,8 @@ use E20R\Import_Members\Status;
 use E20R\Import_Members\Import_Members;
 
 class User_ID extends Validate {
-	
-	
+
+
 	/**
 	 * Set the status/error message for the User_ID validation logic
 	 *
@@ -35,24 +35,26 @@ class User_ID extends Validate {
 	 * @return string
 	 */
 	public static function status_msg( $status, $allow_updates ) {
-		
+
 		switch ( $status ) {
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
-				
-				$msg = __( 'Error: User ID exists but cannot be updated per the plugin settings', Import_Members::PLUGIN_SLUG );
+				$msg = __(
+					'Error: User ID exists but cannot be updated per the plugin settings',
+					Import_Members::PLUGIN_SLUG
+				);
 				break;
-			
+
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
 				$msg = __( 'Supplied information in ID column is not a number', Import_Members::PLUGIN_SLUG );
 				break;
-				
+
 			default:
 				$msg = null;
 		}
-		
+
 		return $msg;
 	}
-	
+
 	/**
 	 * Validate user ID data (if present)
 	 *
@@ -62,32 +64,32 @@ class User_ID extends Validate {
 	 * @return bool|int
 	 */
 	public static function validate( $record, $allow_update ) {
-		
+
 		$error_log = Error_Log::get_instance();
-		
-		$has_ID = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
-		
-		if ( false === $has_ID ) {
-			$error_log->debug( "Is the user's ID value present? " . ( $has_ID ? 'Yes' : 'No' ) );
-			
+
+		$has_id = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
+
+		$error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
+
+		if ( false === $has_id ) {
 			return false;
 		}
-		
-		if ( true === $has_ID && false === is_int( $record['ID'] ) ) {
-			
+
+		if ( true === $has_id && false === is_int( $record['ID'] ) ) {
+
 			$error_log->debug( "'ID' column isn't a number" );
-			
+
 			return Status::E20R_ERROR_ID_NOT_NUMBER;
 		}
-		
-		if ( true === $has_ID && false !== get_user_by( 'ID', $record['ID'] ) && false === $allow_update ) {
+
+		if ( true === $has_id && false !== get_user_by( 'ID', $record['ID'] ) && false === $allow_update ) {
 			$error_log->debug( "'ID' column is for a current user _AND_ we're not allowing updates" );
-			
+
 			return Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED;
 		}
-		
-		$error_log->debug( "User ID is present and a number..." );
-		
+
+		$error_log->debug( 'User ID is present and a number...' );
+
 		return true;
 	}
 }
