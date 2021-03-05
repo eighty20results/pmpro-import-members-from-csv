@@ -78,7 +78,7 @@ class BuddyPress {
 			
 			$error_log->add_error_msg(
 				sprintf(
-					__( 'Error: table %s does not exists in the database!', Import_Members::plugin_slug ),
+					__( 'Error: table %s does not exists in the database!', Import_Members::PLUGIN_SLUG ),
 					'bp_xprofile_fields'
 				)
 			);
@@ -97,7 +97,7 @@ class BuddyPress {
 		if ( false === $data->does_table_exist( 'bp_xprofile_groups' ) ) {
 			$error_log->add_error_msg(
 				sprintf(
-					__( 'Error: table %s does not exists in the database!', Import_Members::plugin_slug ),
+					__( 'Error: table %s does not exists in the database!', Import_Members::PLUGIN_SLUG ),
 					'bp_xprofile_groups'
 				)
 			);

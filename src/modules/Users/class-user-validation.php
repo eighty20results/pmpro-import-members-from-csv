@@ -45,14 +45,14 @@ class User_Validation extends Validate {
 			
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
 				
-				$msg = __( "The value specified in the 'ID' column is not numeric (integer)", Import_Members::plugin_slug );
+				$msg = __( "The value specified in the 'ID' column is not numeric (integer)", Import_Members::PLUGIN_SLUG );
 				break;
 			
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
 				
 				$msg = __(
 					'User ID specified and user record exists but the "Update User Record" option is not selected',
-					Import_Members::plugin_slug
+					Import_Members::PLUGIN_SLUG
 				);
 				$should_exit = true;
 				break;
@@ -61,7 +61,7 @@ class User_Validation extends Validate {
 				
 				$msg = __(
 					'User exists, but the "Update User Record" option is not selected.',
-					Import_Members::plugin_slug
+					Import_Members::PLUGIN_SLUG
 				);
 				
 				$should_exit = true;

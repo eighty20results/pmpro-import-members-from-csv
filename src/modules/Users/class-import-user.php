@@ -162,7 +162,7 @@ class Import_User {
 			$msg = sprintf(
 				__(
 					'Created user login field for record at row %d',
-					Import_Members::plugin_slug ), $active_line_number );
+					Import_Members::PLUGIN_SLUG ), $active_line_number );
 			
 			$login                   = preg_replace( '/@.*/', '', $user_data['user_email'] );
 			$user_data['user_login'] = preg_replace( '/-|\.|\_|\+/', '', $login );
@@ -174,7 +174,7 @@ class Import_User {
 		if ( empty( $user_data['user_email'] ) || ( ! empty( $user_data['user_email'] ) && ! is_email( $user_data['user_email'] ) ) ) {
 			
 			$msg = sprintf(
-				__( "Invalid email in row %d (Not imported).", Import_Members::plugin_slug ),
+				__( "Invalid email in row %d (Not imported).", Import_Members::PLUGIN_SLUG ),
 				( $active_line_number )
 			);
 			
@@ -194,7 +194,7 @@ class Import_User {
 			$msg = sprintf(
 				__(
 					'No "%1$s" column found, or the "%1$s" was/were included, the user exists but the "Update user record" option was not selected (row: %2$d). Not imported!',
-					Import_Members::plugin_slug
+					Import_Members::PLUGIN_SLUG
 				),
 				$error_column,
 				$active_line_number ++
@@ -222,7 +222,7 @@ class Import_User {
 		} else {
 			$active_line_number ++;
 			
-			$e20r_import_err["user_not_imported_{$active_line_number}"] = new \WP_Error( 'e20r_im_account', sprintf( __( 'No update/insert action taken for %s', Import_Members::plugin_slug ), $user_data['user_email'] ) );
+			$e20r_import_err["user_not_imported_{$active_line_number}"] = new \WP_Error( 'e20r_im_account', sprintf( __( 'No update/insert action taken for %s', Import_Members::PLUGIN_SLUG ), $user_data['user_email'] ) );
 			$active_line_number;
 			
 			return $user_ids;
@@ -304,7 +304,7 @@ class Import_User {
 					$display_errors['user_registered'] = sprintf(
 						__(
 							'The %2$suser_registered column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected: \'%4$s\')',
-							Import_Members::plugin_slug
+							Import_Members::PLUGIN_SLUG
 						),
 						$user_data['user_registered'],
 						'<strong>',
@@ -379,10 +379,10 @@ class Import_User {
 		//Remove any non-printable chars from the login string to see if we have ended up with an empty username
 		$user_login = trim( $pre_user_login );
 		if ( empty( $user_login ) ) {
-			return new \WP_Error( 'empty_user_login', __( 'Cannot create a user with an empty login name.', Import_Members::plugin_slug ) );
+			return new \WP_Error( 'empty_user_login', __( 'Cannot create a user with an empty login name.', Import_Members::PLUGIN_SLUG ) );
 		}
 		if ( false === $update && username_exists( $user_login ) ) {
-			return new \WP_Error( 'existing_user_login', sprintf( __( 'Sorry, that username (%s) already exists!', Import_Members::plugin_slug ), $user_login ) );
+			return new \WP_Error( 'existing_user_login', sprintf( __( 'Sorry, that username (%s) already exists!', Import_Members::PLUGIN_SLUG ), $user_login ) );
 		}
 		if ( empty( $userdata['user_nicename'] ) ) {
 			$user_nicename = sanitize_title( $user_login );
@@ -418,7 +418,7 @@ class Import_User {
 		 */
 		$user_email = apply_filters( 'pre_user_email', $raw_user_email );
 		if ( false === $update && ! defined( 'WP_IMPORTING' ) && email_exists( $user_email ) ) {
-			return new \WP_Error( 'existing_user_email', sprintf( __( 'Sorry, that email address (%s) is already used!', Import_Members::plugin_slug ), $user_email ) );
+			return new \WP_Error( 'existing_user_email', sprintf( __( 'Sorry, that email address (%s) is already used!', Import_Members::PLUGIN_SLUG ), $user_email ) );
 		}
 		$nickname = empty( $userdata['nickname'] ) ? $user_login : $userdata['nickname'];
 		/**
@@ -452,7 +452,7 @@ class Import_User {
 				$display_name = $user_login;
 			} else if ( $meta['first_name'] && $meta['last_name'] ) {
 				/* translators: 1: first name, 2: last name */
-				$display_name = sprintf( _x( '%1$s %2$s', 'Display name based on first name and last name', Import_Members::plugin_slug ), $meta['first_name'], $meta['last_name'] );
+				$display_name = sprintf( _x( '%1$s %2$s', 'Display name based on first name and last name', Import_Members::PLUGIN_SLUG ), $meta['first_name'], $meta['last_name'] );
 			} else if ( $meta['first_name'] ) {
 				$display_name = $meta['first_name'];
 			} else if ( $meta['last_name'] ) {

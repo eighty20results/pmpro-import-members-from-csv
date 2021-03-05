@@ -132,7 +132,7 @@ class Data {
 			
 			if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 				
-				$msg = __( 'Insecure connection attempted!', Import_Members::plugin_slug );
+				$msg = __( 'Insecure connection attempted!', Import_Members::PLUGIN_SLUG );
 				
 				$error_log->debug( $msg );
 				$error_log->add_error_msg( $msg, 'error' );
@@ -269,7 +269,7 @@ class Data {
 					// Redirect to the page to run AJAX
 					$url = add_query_arg(
 						$settings + array(
-							'page'              => Import_Members::plugin_slug,
+							'page'              => Import_Members::PLUGIN_SLUG,
 							'import'            => 'resume',
 							'background_import' => true,
 							'partial'           => true,

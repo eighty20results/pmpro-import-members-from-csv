@@ -114,11 +114,11 @@ class Error_Log {
 		
 		$this->add_error_msg(
 			sprintf(
-				__( 'Errors or Warnings found: Please inspect the import %1$serror log%2$s', Import_Members::plugin_slug ),
+				__( 'Errors or Warnings found: Please inspect the import %1$serror log%2$s', Import_Members::PLUGIN_SLUG ),
 				sprintf(
 					'<a href="%1$s" title="%2$s" target="_blank">',
 					esc_url_raw( $log_file_url ),
-						__( "Link to import error/warning log", Import_Members::plugin_slug )
+						__( "Link to import error/warning log", Import_Members::PLUGIN_SLUG )
 					),
 					'</a>'
 				),
@@ -146,7 +146,7 @@ class Error_Log {
 				
 				if (  !empty( $message ) ) {
 					@fwrite( $log, sprintf(
-						               __( '[Line %1$s] %2$s', Import_Members::plugin_slug ),
+						               __( '[Line %1$s] %2$s', Import_Members::PLUGIN_SLUG ),
 						               $line,
 						               $message
 					               ) . "\n"
@@ -158,7 +158,7 @@ class Error_Log {
 		} else {
 			$this->add_error_msg(
 				sprintf(
-					__( "Unable to write error log to: %s", Import_Members::plugin_slug ),
+					__( "Unable to write error log to: %s", Import_Members::PLUGIN_SLUG ),
 					$log_file_path
 				),
 				'error'

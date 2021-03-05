@@ -39,11 +39,11 @@ class User_ID extends Validate {
 		switch ( $status ) {
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
 				
-				$msg = __( 'Error: User ID exists but cannot be updated per the plugin settings', Import_Members::plugin_slug );
+				$msg = __( 'Error: User ID exists but cannot be updated per the plugin settings', Import_Members::PLUGIN_SLUG );
 				break;
 			
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
-				$msg = __( 'Supplied information in ID column is not a number', Import_Members::plugin_slug );
+				$msg = __( 'Supplied information in ID column is not a number', Import_Members::PLUGIN_SLUG );
 				break;
 				
 			default:
