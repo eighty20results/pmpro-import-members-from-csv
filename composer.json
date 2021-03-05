@@ -49,7 +49,9 @@
         "codeception/module-cli": "^1.1.0",
         "codeception/util-universalframework": "^1.0.0",
         "spatie/phpunit-snapshot-assertions": "^4.2.5",
-        "brain/monkey": "^2.0.0"
+        "brain/monkey": "^2.0",
+        "szepeviktor/phpstan-wordpress": "^v0.7",
+        "phpstan/extension-installer": "^1.1"
     },
     "scripts": {
         "post-install-cmd": "inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
