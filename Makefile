@@ -64,6 +64,11 @@ db-backup:
 lint-test:
 	# TODO: Configure the linter test
 
+phpstan-test: start
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+        	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+        	wordpress php -d display_errors=on inc/bin/phpstan.phar --memory-limit=256M analyse -c ./phpstan.dist.neon
+
 phpcs-test: start
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
     	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
