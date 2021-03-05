@@ -97,3 +97,5 @@ fabric.properties
 /inc/autoload.php
 /inc/composer/
 /inc/bin/
+/inc/szepeviktor/
+/inc/php-stubs/
