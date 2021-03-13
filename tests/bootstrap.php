@@ -19,6 +19,9 @@
  *  You can contact us at mailto:info@eighty20results.com
  */
 
+// Load the composer autoloader
+require_once __DIR__ . '/../inc/autoload.php';
+
 /**
  * The following snippets uses `PLUGIN` to prefix
  * the constants and class names. You should replace
@@ -40,12 +43,11 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 	define( 'PLUGIN_PATH', __DIR__ . '/../pmpro-import-members-from-csv/' );
 }
 
-error_log("Loading Unit Test Bootstrapper");
-
-require_once __DIR__ . '/../inc/autoload.php';
-
-# Load the class autoloader
-require_once __DIR__ . '/../class.pmpro-import-members.php';
 
 // Include the class for PluginTestCase
-require_once __DIR__ . '/wpunit/inc/PluginTestCase.php';
+if ( file_exists( __DIR__ . '/wpunit/inc/PluginTestCase.php' ) ) {
+	require_once __DIR__ . '/wpunit/inc/PluginTestCase.php';
+}
+
+# Load the plugin class file
+require_once __DIR__ . '/../class.pmpro-import-members.php';
