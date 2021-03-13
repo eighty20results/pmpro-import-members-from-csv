@@ -395,7 +395,7 @@ class CSV {
 			
 			$error_log->debug( "Processed line #{$active_line_number}..." );
 			$user_validation = User_Validation::get_instance();
-			$user_id_status =apply_filters( 'e20r-import-users-validate-field-data', false, null,$user_data );
+			$user_id_status =apply_filters( 'e20r_import_users_validate_field_data', false, null,$user_data );
 			
 			if ( Status::E20R_ERROR_NO_USER_ID === $user_id_status ) {
 				

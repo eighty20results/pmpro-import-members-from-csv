@@ -61,19 +61,19 @@ class Column_Validation {
 	 */
 	public function load_actions() {
 		
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_membership_id' ), 1, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_invalid_membership_id' ), 2, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_no_startdate' ), 3, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_invalid_startdate' ), 4, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_invalid_enddate' ), 5, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'is_inactive_with_enddate' ), 6, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_valid_status' ), 7, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_valid_recurring_config', 8, 3 ) );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'can_link_subscription' ), 9, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_payment_id' ), 10, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_supported_gateway' ), 11, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'has_gateway_environment' ), 12, 3 );
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'correct_gw_environment' ), 13, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_membership_id' ), 1, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_invalid_membership_id' ), 2, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_no_startdate' ), 3, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_invalid_startdate' ), 4, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_invalid_enddate' ), 5, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'is_inactive_with_enddate' ), 6, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_valid_status' ), 7, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_valid_recurring_config', 8, 3 ) );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'can_link_subscription' ), 9, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_payment_id' ), 10, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_supported_gateway' ), 11, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'has_gateway_environment' ), 12, 3 );
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'correct_gw_environment' ), 13, 3 );
 	}
 	
 	/**

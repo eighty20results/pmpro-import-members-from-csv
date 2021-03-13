@@ -29,169 +29,169 @@ use E20R\Import_Members\Modules\PMPro\Import_Sponsors;
  * @package E20R\Import_Members
  */
 class Ajax {
-	
+
 	/**
 	 * @var null|Ajax $instance
 	 */
 	private static $instance = null;
-	
+
 	/**
 	 * @var null|string $filename
 	 */
 	private $filename = null;
-	
+
 	/**
 	 * Ajax_Import constructor.
 	 */
 	private function __construct() {
 	}
-	
+
 	/**
 	 * @return Ajax|null
 	 */
 	public static function get_instance() {
-		
+
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
-		
+
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Load Action and Filter hooks for this class
 	 */
 	public function load_hooks() {
-		
+
 		add_action( 'wp_ajax_import_from_csv', array( $this, 'wp_ajax_import_from_csv' ) );
 		add_action( 'wp_ajax_cleanup_csv', array( $this, 'wp_ajax_cleanup_csv' ) );
 		add_action( 'wp_ajax_clear_log', array( $this, 'wp_ajax_clear_log' ) );
-		
+
 		add_action( 'wp_ajax_e20r_visitor_clicked_donation', array( $this, 'save_donation_ip' ) );
 		add_action( 'wp_ajax_nopriv_e20r_visitor_clicked_donation', array( $this, 'save_donation_ip' ) );
 	}
-	
+
 	/**
 	 * Save IP address of client computer if the user clicks the "donate" button
 	 */
 	public function save_donation_ip() {
-		
+
 		$error_log = Error_Log::get_instance();
-		
+
 		$error_log->debug( "Visitor clicked the 'Donate' button: " . print_r( $_REQUEST, true ) );
-		
+
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
-		
-		$error_log->debug( "Nonce is good" );
-		
+
+		$error_log->debug( 'Nonce is good' );
+
 		$client_ip    = $this->get_client_ip();
 		$do_not_track = apply_filters( 'e20r_import_donation_tracking_disabled', false );
-		
+
 		if ( ! empty( $client_ip ) && false === $do_not_track ) {
-			
+
 			$donated               = get_option( 'e20r_import_has_donated', array() );
 			$donated[ $client_ip ] = current_time( 'timestamp' );
-			
+
 			if ( true === update_option( 'e20r_import_has_donated', $donated ) ) {
-				
+
 				$error_log->debug( "Visitor ({$client_ip}) clicked the 'Donate' button" );
 				wp_send_json_success();
 				exit();
 			}
 		}
-		
+
 		wp_send_json_error();
 		exit();
 	}
-	
+
 	/**
 	 * Get the IP address for the client/viewer of the page
 	 *
 	 * @return null|string
 	 */
 	public function get_client_ip() {
-		
+
 		$client    = @$_SERVER['HTTP_CLIENT_IP'];
 		$forward   = @$_SERVER['HTTP_X_FORWARDED_FOR'];
 		$remote    = $_SERVER['REMOTE_ADDR'];
 		$client_ip = null;
-		
+
 		if ( filter_var( $client, FILTER_VALIDATE_IP ) ) {
 			$client_ip = $client;
-		} else if ( filter_var( $forward, FILTER_VALIDATE_IP ) ) {
+		} elseif ( filter_var( $forward, FILTER_VALIDATE_IP ) ) {
 			$client_ip = $forward;
 		} else {
 			$client_ip = $remote;
 		}
-		
+
 		return $client_ip;
 	}
-	
+
 	/**
 	 * Clear (remove) the error log
 	 */
 	public function wp_ajax_clear_log() {
-		
+
 		$variables    = Variables::get_instance();
 		$error_log    = Error_Log::get_instance();
 		$logfile_path = $variables->get( 'logfile_path' );
-		
+
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
-		
+
 		$error_log->debug( "Nonce is good. Deleting -> {$logfile_path}" );
-		
+
 		if ( false === $this->delete_file( $logfile_path ) ) {
 			wp_send_json_error();
 			exit();
 		}
-		
+
 		// Return success
 		wp_send_json_success();
 		exit();
 	}
-	
+
 	/**
 	 * Remove the import source file upon successful/complete import
 	 */
 	public function wp_ajax_cleanup_csv() {
-		
+
 		$error_log = Error_Log::get_instance();
 		$sponsors  = Import_Sponsors::get_instance();
-		
-		$error_log->debug( "Import is complete... " );
-		
+
+		$error_log->debug( 'Import is complete... ' );
+
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
-		
+
 		$file_name = CSV::get_import_file_path( null );
-		
+
 		if ( empty( $file_name ) ) {
-			$error_log->debug("File not found/not available. Nothing to clean!");
+			$error_log->debug( 'File not found/not available. Nothing to clean!' );
 			wp_send_json_success();
 			exit();
 		}
-		
+
 		$file = basename( $file_name );
-		
+
 		$error_log->debug( "Nonce is good. Cleaning up: {$file_name}" );
-		$error_log->debug( "Does the file exist??? " . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
-		
+		$error_log->debug( 'Does the file exist??? ' . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
+
 		if ( false === $this->delete_file( $file_name ) ) {
-			
+
 			wp_send_json_error();
 			exit();
 		}
-		
+
 		delete_option( "e20rcsv_{$file}" );
 		delete_transient( 'e20r_import_filename' );
-		
-		$error_log->debug( "Do we have sponsors to link..?" );
-		
+
+		$error_log->debug( 'Do we have sponsors to link..?' );
+
 		$sponsors->trigger_sponsor_updates();
-		
+
 		wp_send_json_success();
 		exit();
 	}
-	
+
 	/**
 	 * Unlink/delete the specified file (if found)
 	 *
@@ -200,73 +200,75 @@ class Ajax {
 	 * @return bool
 	 */
 	private function delete_file( $file_name = null ) {
-		
+
 		$error_log = Error_Log::get_instance();
-		
+
 		if ( ! empty( $file_name ) && file_exists( $file_name ) ) {
-			
+
 			$error_log->debug( "Removing {$file_name}" );
-			
+
 			return unlink( $file_name );
 		}
-		
+
 		// Nothing to unlink so we're successful.
 		return true;
 	}
-	
+
 	/**
 	 * AJAX service that does the heavy loading to import a CSV file
 	 *
 	 * @since 2.0
 	 */
 	public function wp_ajax_import_from_csv() {
-		
+
 		$error_log = Error_Log::get_instance();
-		
-		$error_log->debug( "Processing AJAX request to import data?" );
-		
+
+		$error_log->debug( 'Processing AJAX request to import data?' );
+
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
-		
-		$error_log->debug( "Nonce verified in import_members_from_csv()" );
-		
+
+		$error_log->debug( 'Nonce verified in import_members_from_csv()' );
+
 		$csv       = CSV::get_instance();
 		$variables = Variables::get_instance();
 		/*
 		if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
-			
-		    $msg = __( 'Insecure connection attempted!', Import_Members::PLUGIN_SLUG );
-			
+
+			$msg = __( 'Insecure connection attempted!', Import_Members::PLUGIN_SLUG );
+
 			wp_send_json_error( array( 'status'  => - 1,
-			                           'message' => $msg,
+									   'message' => $msg,
 			) );
 			exit();
 		}
 		*/
-		
+
 		// Get our settings
 		$variables->load_settings();
 		$filename = basename( $variables->get( 'filename' ) );
-		
+
 		// Error message to return
 		if ( empty( $filename ) ) {
-			wp_send_json_error( array(
-				'status'  => - 1,
-				'message' => __( "No import file provided!", Import_Members::PLUGIN_SLUG ),
-			) );
+			wp_send_json_error(
+				array(
+					'status'  => - 1,
+					'message' => __( 'No import file provided!', Import_Members::PLUGIN_SLUG ),
+				)
+			);
 			exit();
 		}
-		
+
 		//figure out upload dir
 		$upload_dir = wp_upload_dir();
-		$import_dir = $upload_dir['basedir'] . "/e20r_imports";
-		
+		$import_dir = $upload_dir['basedir'] . '/e20r_imports';
+
 		//make sure file exists
 		if ( ! file_exists( "{$import_dir}/{$filename}" ) ) {
 			wp_send_json_error(
 				array(
 					'status'  => - 1,
 					'message' => sprintf(
-						__( "File (%s) not found in %s\nIs the directory writable by the web server software?", Import_Members::PLUGIN_SLUG ),
+						__( "File (%1\$s) not found in %2\$s\nIs the directory writable by the web server software?", Import_Members::PLUGIN_SLUG ),
 						$filename,
 						$import_dir
 					),
@@ -274,7 +276,7 @@ class Ajax {
 			);
 			exit();
 		}
-		
+
 		//import next few lines of file
 		$args = array(
 			'partial'                     => true,
@@ -293,15 +295,15 @@ class Ajax {
 			'site_id'                     => $variables->get( 'site_id' ),
 			'create_order'                => $variables->get( 'create_order' ),
 		);
-		
+
 		$args = apply_filters( 'e20r-import-arguments', $args );
-		
+
 		$error_log->debug( "Path to import file: {$import_dir}/{$filename}" );
-		
+
 		$results       = $csv->process( "{$import_dir}/{$filename}", $args );
 		$status        = null;
 		$error_log_msg = null;
-		
+
 		if ( file_exists( $variables->get( 'logfile_path' ) ) ) {
 			$error_log_msg = sprintf(
 				__( ', please %1$scheck the error log%2$s', Import_Members::PLUGIN_SLUG ),
@@ -309,10 +311,10 @@ class Ajax {
 				'</a>'
 			);
 		}
-		
+
 		if ( isset( $_REQUEST['import'] ) ) {
 			$error_log_msg = '';
-			
+
 			if ( file_exists( $variables->get( 'logfile_path' ) ) ) {
 				$error_log_msg = sprintf(
 					__( ', please %1$scheck the error log%2$s', Import_Members::PLUGIN_SLUG ),
@@ -320,105 +322,123 @@ class Ajax {
 					'</a>'
 				);
 			}
-			
+
 			switch ( $_REQUEST['import'] ) {
 				case 'file':
-					$status = sprintf( '<div class="error"><p><strong>%s</strong></p></div>', __( 'Error during file upload.', Import_Members::PLUGIN_SLUG ) );
+					$status = sprintf(
+						'<div class="error"><p><strong>%s</strong></p></div>',
+						__( 'Error during file upload.', Import_Members::PLUGIN_SLUG )
+					);
 					break;
 				case 'data':
-					$status = sprintf( '<div class="error"><p><strong>%s</strong></p></div>', __( 'Cannot extract data from uploaded file or no file was uploaded.', Import_Members::PLUGIN_SLUG ) );
+					$status = sprintf(
+						'<div class="error"><p><strong>%s</strong></p></div>',
+						__(
+							'Cannot extract data from uploaded file or no file was uploaded.',
+							Import_Members::PLUGIN_SLUG
+						)
+					);
 					break;
 				case 'success':
-					$status = sprintf( '<div class="updated"><p><strong>%s</strong></p></div>', __( 'Member import was successful.', Import_Members::PLUGIN_SLUG ) );
+					$status = sprintf(
+						'<div class="updated"><p><strong>%s</strong></p></div>',
+						__( 'Member import was successful.', Import_Members::PLUGIN_SLUG )
+					);
 					break;
 				default:
 					$status = null;
 			}
 		}
-		
+
 		$buffered_text = ob_get_clean();
-		
+
 		// No users imported (or done)
 		if ( empty( $results['user_ids'] ) ) {
-			
+
 			$file = basename( $filename );
-			
+
 			//Clear the file
 			unlink( "{$import_dir}/{$filename}" );
-			
+
 			//Clear position
 			delete_option( "e20rcsv_{$file}" );
 			$display_errors = $variables->get( 'display_errors' );
-			
+
 			// Delete the transient storing the file name
 			delete_transient( 'e20r_import_filename' );
-			
-			wp_send_json_success( array(
-				'status'         => true,
-				'message'        => $status,
-				'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
-			) );
+
+			wp_send_json_success(
+				array(
+					'status'         => true,
+					'message'        => $status,
+					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
+				)
+			);
 			exit();
-			
-		} else if ( ! empty( $results['errors'] ) ) {
-			
+
+		} elseif ( ! empty( $results['errors'] ) ) {
+
 			/**
 			 * @var string[] $msgs
 			 */
 			$msgs = array();
-			
+
 			/**
 			 * @var \WP_Error $error
 			 */
 			foreach ( $results['errors'] as $error ) {
-				
-				if ( !empty( $error )) {
-					$error_log->debug( "Type of error info: " . print_r( $error, true ) );
+
+				if ( ! empty( $error ) ) {
+					$error_log->debug( 'Type of error info: ' . print_r( $error, true ) );
 					$msgs[] = $error->get_error_message();
 				}
 			}
-			
-			wp_send_json_error( array(
-				'status'         => false,
-				'message'        => sprintf( __( "Error during import (# of errors: %d):\n%s", Import_Members::PLUGIN_SLUG ), count( $msgs ), implode( "\n", $msgs ) ),
-				'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
-			) );
+
+			wp_send_json_error(
+				array(
+					'status'         => false,
+					'message'        => sprintf( __( "Error during import (# of errors: %1\$d):\n%2\$s", Import_Members::PLUGIN_SLUG ), count( $msgs ), implode( "\n", $msgs ) ),
+					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
+				)
+			);
 			exit();
 		} else {
-			
+
 			/**
 			 * @param string[] $msgs
 			 */
 			$msgs = array();
-			
+
 			if ( ! empty( $results['warnings'] ) ) {
-				
+
 				/**
 				 * @var \WP_Error $error
 				 */
 				foreach ( $results['warnings'] as $error ) {
 					$msgs[] = $error->get_error_message();
 				}
-				
-				$error_log->debug( "Warnings: " . print_r( $msgs, true ) );
+
+				$error_log->debug( 'Warnings: ' . print_r( $msgs, true ) );
 			}
-			
-			$status_msg = sprintf( __( "Imported %s", Import_Members::PLUGIN_SLUG ), str_pad( '', count( $results['user_ids'] ), '.' ) ) . "\n";
-			
+
+			$status_msg = sprintf( __( 'Imported %s', Import_Members::PLUGIN_SLUG ), str_pad( '', count( $results['user_ids'] ), '.' ) ) . "\n";
+
 			if ( ! empty( $msgs ) ) {
 				$status_msg .= implode( "\n", $msgs ) . "\n";
 			}
-			
-			wp_send_json_success( array(
-				'status'         => true,
-				'message'        => $status_msg,
-				'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
-			) );
+
+			wp_send_json_success(
+				array(
+					'status'         => true,
+					'message'        => $status_msg,
+					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
+				)
+			);
 			exit();
 		}
 	}
-	
+
 	private function remove_file( $file_name ) {
-	
+
 	}
 }

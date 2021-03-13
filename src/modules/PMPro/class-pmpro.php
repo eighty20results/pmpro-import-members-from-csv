@@ -101,7 +101,7 @@ class PMPro {
 		add_filter( 'e20r-import-members-supported-field-list', array( $this, 'load_fields' ), 1, 1 );
 		add_filter( 'e20r-import-members-set-default-field-values', array( $this, 'update_field_values' ), 2, 3 );
 		
-		add_filter( 'e20r-import-members-continue-member-import', array(
+		add_filter( 'e20r_import_members_continue_member_import', array(
 			$this,
 			'continue_importing_member_data',
 		), 1, 3 );

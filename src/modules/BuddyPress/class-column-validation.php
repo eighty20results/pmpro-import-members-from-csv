@@ -41,14 +41,14 @@ namespace E20R\Import_Members\Modules\BuddyPress;
 use E20R\Import_Members\Error_Log;
 
 class Column_Validation {
-	
+
 	/**
 	 * Instance of the column validation logic for BuddyPress
 	 *
 	 * @var null|Column_Validation
 	 */
 	private static $instance = null;
-	
+
 	/**
 	 * Column_Validation constructor.
 	 *
@@ -56,33 +56,33 @@ class Column_Validation {
 	 */
 	private function __construct() {
 	}
-	
+
 	/**
 	 * Get or instantiate and get the current class
 	 *
 	 * @return Column_Validation|null
 	 */
 	public static function get_instance() {
-		
+
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
-		
+
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Load action and filter handlers for PMPro validation
 	 */
 	public function load_actions() {
-		
+
 		if ( ! function_exists( 'bp_core_new_nav_default' ) ) {
 			return;
 		}
-		
-		add_filter( 'e20r-import-members-validate-field-data', array( $this, 'bp_field_exists' ), 1, 3 );
+
+		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'bp_field_exists' ), 1, 3 );
 	}
-	
+
 	/**
 	 * Example: check of membership ID for the BuddyPress column value validation
 	 *
@@ -93,31 +93,31 @@ class Column_Validation {
 	 * @return bool
 	 */
 	public function bp_field_exists( $has_error, $user_id, $fields ) {
-		
+
 		$error_log   = Error_Log::get_instance();
 		$buddy_press = BuddyPress::get_instance();
 		$buddy_press->load_fields( array() );
-		
+
 		if ( ! isset( $fields['bp_field_name'])) {
 			$error_log->debug("No need to process 'bp_field_name' column");
 			return $has_error;
 		}
-		
+
 		if ( ! isset( $fields['bp_field_name'] ) && in_array( 'bp_field_name', array_keys( $fields ) ) ) {
 			$error_log->debug( "'bp_field_name' is doesn't need to be processed..." );
-			
+
 			return $has_error;
 		}
-		
+
 		if ( isset( $fields['bp_field_name'] ) && empty( $fields['bp_field_name'] ) ) {
 			$has_error = $has_error && true;
 		}
-		
+
 		// FIXME: Add check for 'bp_field_exists' for the supplied fields/data
-		
+
 		return $has_error;
 	}
-	
+
 	/**
 	 * Disable the __clone() magic method
 	 *

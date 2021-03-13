@@ -73,7 +73,7 @@ class Import_Sponsors {
 	public function load_sponsor_import() {
 		
 		if ( true === Licensing::is_licensed( 'import_sponsors' ) ) {
-			add_action( 'e20r-after-user-import', array( $this, 'maybe_add_sponsor_info' ) );
+			add_action( 'e20r_after_user_import', array( $this, 'maybe_add_sponsor_info' ) );
 		}
 	}
 	
