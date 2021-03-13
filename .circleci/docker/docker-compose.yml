@@ -40,7 +40,7 @@ services:
       - ${PMPRO_DIR}:/var/www/html/wp-content/plugins/paid-memberships-pro
       - ${SQL_BACKUP_FILE}/${E20R_PLUGIN_NAME}.sql:/docker-entrypoint-initdb.d/${E20R_PLUGIN_NAME}.sql
     depends_on:
-      - "database"
+      - database
 
   database:
     image: mariadb:latest
