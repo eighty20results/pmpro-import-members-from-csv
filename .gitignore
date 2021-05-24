@@ -78,3 +78,4 @@ bin/prepare-docker.sh
 composer.lock
 composer.phar
 /inc/
+.idea
