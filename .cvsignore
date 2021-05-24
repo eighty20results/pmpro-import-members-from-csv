@@ -57,3 +57,6 @@ docker-env/
 bin/prepare-docker.sh
 /docker-env/
 /bin/
+composer.lock
+composer.phar
+/inc/
