@@ -1,0 +1,9 @@
+ARG WP_TAG=wordpress:latest
+FROM ${WP_TAG}
+
+# LABEL about the custom image
+LABEL maintainer="thomas@eighty20results.com"
+LABEL description="This is a custom Docker image for Codeception based WordPress Unit testing"
+
+RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install pcov

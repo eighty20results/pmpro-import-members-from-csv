@@ -9,6 +9,8 @@ MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
 WORDPRESS_DB_HOST ?= localhost
+WP_RELEASE ?= latest
+IMAGE_NAME ?= eighty20results/wp-codeception
 
 # PROJECT := $(shell basename ${PWD}) # This is the default as long as the plugin name matches
 PROJECT := $(E20R_PLUGIN_NAME)
@@ -36,10 +38,25 @@ clean:
 #		-path 10quality -prune \
 #		-type d -print
 #		-exec rm -rf {} \;
+build:
+#      context: /Users/sjolshag/PhpStormProjects/Utilities/tests
+#      dockerfile: docker/Dockerfile
+#      args:
+#        WP_TAG: wordpress:${WP_RELEASE}
+
+build-docker: tests/docker/Dockerfile.unittests
+	IMAGE_VERSION="$$(docker image ls $(IMAGE_NAME) | tail -n 1 | awk '{ printf \'%.1f\', ($2 + 1) }' )" \
+	TAG_NAME="$(IMAGE_NAME):${IMAGE_VERSION}" \
+	docker build \
+		--build-arg WP_TAG="wordpress:$(WP_RELEASE)" \
+		--tag ${TAG_NAME} \
+		--file ./tests/docker/Dockerfile.unittests \
+		--rm \
+			./
 
 start:
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach
-	@bin/wait-for-db.sh '$(MYSQL_USER)' '$(MYSQL_PASSWORD)' '$(WORDPRESS_DB_HOST)'
+	@bin/wait-for-db.sh '$(MYSQL_USER)' '$(MYSQL_PASSWORD)' '$(WORDPRESS_DB_HOST)' '$(E20R_PLUGIN_NAME)'
 	@echo "Loading the ${E20R_PLUGIN_NAME}.sql data"
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T database \
@@ -78,12 +95,12 @@ phpcs-test: start
 unit-test: start
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-	wordpress inc/bin/codecept run wpunit
+	wordpress inc/bin/codecept run --coverage --coverage-xml --coverage-html wpunit
 
 acceptance-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
-	 wordpress inc/bin/codecept run acceptance
+	 wordpress inc/bin/codecept run --coverage --coverage-xml --coverage-html acceptance
 
 build-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \

@@ -177,6 +177,7 @@ class Import_Members {
 	 * @param null|string[] $active_plugins - Used by unit tests
 	 *
 	 * @return bool
+	 * @test \\E20R\Test\ImportMembersTest::test_is_pmpro_active
 	 */
 	public static function is_pmpro_active( $active_plugins = null ) {
 

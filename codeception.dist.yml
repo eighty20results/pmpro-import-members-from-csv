@@ -21,3 +21,10 @@ params:
 settings:
   lint: true
   colors: true
+coverage:
+    enabled: true
+    include:
+        - src/*
+        - "*.php"
+    exclude:
+        - tests/*
