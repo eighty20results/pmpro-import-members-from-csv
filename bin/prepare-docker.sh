@@ -2,7 +2,7 @@
 DEV_ENVIRONMENT=$(ipconfig getifaddr en0) ; export DEV_ENVIRONMENT
 PROJECT_NAME='pmpro-import-members-from-csv' ; export PROJECT_NAME
 PLUGIN_DIR=../docker-env
-PLUGIN_LIST="paid-memberships-pro ${PROJECT_NAME}"
+PLUGIN_LIST="paid-memberships-pro 00-e20r-utilities ${PROJECT_NAME}"
 #PLUGIN_LIST="paid-memberships-pro pmpro-email-confirmation"
 CURRENT_DIR=$(pwd)
 
