@@ -61,6 +61,7 @@
     "autoload": {
         "psr-4": {
             "E20R": "",
+            "E20R\\Import_Members\\Import": "src/import",
             "E20R\\Import_Members": [
                 "./",
                 "src/"
@@ -71,6 +72,7 @@
         "psr-4": {
             "E20R": "",
             "E20R\\Test": "tests/",
+            "E20R\\Import_Members\\Import": "src/import",
             "E20R\\Import_Members": [
                 "./",
                 "src/"
