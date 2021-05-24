@@ -163,7 +163,7 @@ class Import_Members {
 
 				$class_path = $f_file->getPath() . '/' . $f_file->getFilename();
 
-				if ( $f_file->isFile() && false !== str_contains( $class_path, $filename ) ) {
+				if ( $f_file->isFile() && false !== stripos( $class_path, $filename ) ) {
 
 					require_once $class_path;
 				}
@@ -385,7 +385,7 @@ class Import_Members {
 	 */
 	public function plugin_row_meta( $links, $file ) {
 
-		if ( true === str_contains( $file, 'class.pmpro-import-members.php' ) ) {
+		if ( true === stripos( $file, 'class.pmpro-import-members.php' ) ) {
 
 			// Add (new) 'Import Users from CSV' links to plugin listing
 			$new_links = array(
