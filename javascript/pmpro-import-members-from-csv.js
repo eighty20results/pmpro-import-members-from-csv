@@ -198,7 +198,7 @@
                                     self.complete_btn.show();
                                 }
 
-                                if ( typeof response.data.display_errors !== 'undefined' ) {
+                                if ( typeof response.data.display_errors !== 'undefined' && response.data.display_errors !== null ) {
                                     self.process_errors( response.data.display_errors );
                                 }
                             }
@@ -219,7 +219,7 @@
                                 window.alert(e20r_im_settings.lang.error);
                             }
 
-                            if ( typeof response.data.display_errors !== 'undefined' ) {
+                            if ( typeof response.data.display_errors !== 'undefined' && response.data.display_errors !== null ) {
                                 self.process_errors( response.data.display_errors );
                             }
                         }
@@ -328,6 +328,3 @@
     });
 
 })(jQuery);
-
-
-
