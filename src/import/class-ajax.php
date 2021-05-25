@@ -296,7 +296,7 @@ class Ajax {
 			'create_order'                => $variables->get( 'create_order' ),
 		);
 
-		$args = apply_filters( 'e20r-import-arguments', $args );
+		$args = apply_filters( 'e20r_import_arguments', $args );
 
 		$error_log->debug( "Path to import file: {$import_dir}/{$filename}" );
 
@@ -366,7 +366,8 @@ class Ajax {
 
 			// Delete the transient storing the file name
 			delete_transient( 'e20r_import_filename' );
-
+			$error_log->debug("Display Errors = " . print_r( $display_errors, true ) );
+			
 			wp_send_json_success(
 				array(
 					'status'         => true,

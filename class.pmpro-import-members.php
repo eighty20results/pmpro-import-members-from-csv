@@ -215,7 +215,7 @@ class Import_Members {
 
 		// PMPro specific import functionality
 		add_action( 'e20r-pre-member-import', array( CSV::get_instance(), 'pre_import' ), 10, 2 );
-		add_filter( 'e20r-import-usermeta', array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
+		add_filter( 'e20r_import_usermeta', array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
 		add_action(
 			'e20r_after_user_import',
 			array(
@@ -223,9 +223,9 @@ class Import_Members {
 				'import_membership_info',
 			),
 			- 1,
-			2
+			3
 		);
-		add_action( 'e20r_after_user_import', array( Data::get_instance(), 'cleanup' ), 9999, 2 );
+		add_action( 'e20r_after_user_import', array( Data::get_instance(), 'cleanup' ), 9999, 3 );
 
 		// Set URIs in plugin listing to plugin support
 		add_filter( 'plugin_row_meta', array( self::get_instance(), 'plugin_row_meta' ), 10, 2 );
