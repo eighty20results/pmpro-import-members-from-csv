@@ -294,7 +294,7 @@ class CSV {
 		
 		$user_ids = array();
 		$defaults = apply_filters( 'pmp_im_import_default_settings', $variables->get_defaults() );
-		$defaults = apply_filters( 'e20r-default-import-settings', $defaults );
+		$defaults = apply_filters( 'e20r_import_default_settings', $defaults );
 		
 		// Securely extract variables
 		$settings = wp_parse_args( $args, $defaults );
@@ -308,7 +308,7 @@ class CSV {
 		$partial         = (bool) $settings['partial'];
 		$site_id         = $settings['site_id'];
 		$per_partial     = apply_filters( 'pmp_im_import_records_per_scan', intval( $settings['per_partial'] ) );
-		$per_partial     = apply_filters( 'e20r-import-records-per-scan', $per_partial );
+		$per_partial     = apply_filters( 'e20r_import_records_per_scan', $per_partial );
 		
 		// Mac CR+LF fix
 		ini_set( 'auto_detect_line_endings', true );
@@ -441,14 +441,14 @@ class CSV {
 			// A plugin may need to filter the data and meta
 			$user_data = apply_filters( 'is_iu_import_userdata', $user_data, $user_meta, $settings );
 			$user_data = apply_filters( 'pmp_im_import_userdata', $user_data, $user_meta, $settings );
-			$user_data = apply_filters( 'e20r-import-userdata', $user_data, $user_meta, $settings );
+			$user_data = apply_filters( 'e20r_import_userdata', $user_data, $user_meta, $settings );
 			$user_meta = apply_filters( 'is_iu_import_usermeta', $user_meta, $user_data, $settings );
 			$user_meta = apply_filters( 'pmp_im_import_usermeta', $user_meta, $user_data, $settings );
-			$user_meta = apply_filters( 'e20r-import-usermeta', $user_meta, $user_data, $settings );
+			$user_meta = apply_filters( 'e20r_import_usermeta', $user_meta, $user_data, $headers );
 			
 			// If no user data, bailout!
 			if ( empty( $user_data ) ) {
-				$msg = sprintf( __( "No user data found at row #%d", "pmpro-import-members-from-csv" ), ( $active_line_number + 1 ) );
+				$msg = sprintf( __( "No user data found at row #%d", Import_Members::$plugin_path ), ( $active_line_number + 1 ) );
 				
 				$warnings["warning_userdata_{$active_line_number}"] = new \WP_Error( 'e20r_im_nodata', $msg );
 				
@@ -459,7 +459,7 @@ class CSV {
 			
 			$error_log->debug( "Importing user data" );
 			// Try to import user record and trigger other import modules
-			$user_ids = $import_user->import( $user_data, $user_meta, $headers );
+			$user_id = $import_user->import( $user_data, $user_meta, $headers );
 			
 			if ( false === $user_ids ) {
 				
@@ -473,13 +473,12 @@ class CSV {
 				$e20r_import_err["user_data_missing_{$active_line_number}"] = new \WP_Error( 'e20r_im_missing_data', $msg );
 			}
 			
-			// FIXME: Doing a partial import, save our location and then exit
+			/** BUG FIX: Didn't save the created user's ID */
+			$user_ids[] = $user_id;
+			
 			if ( ! empty( $partial ) && ! empty( $active_line_number ) ) {
-				
 				$active_line_number = ( $file_object->key() + 1 );
-				
 				update_option( "e20rcsv_{$file}", $active_line_number, 'no' );
-				break;
 			}
 			
 			$current_line_number ++;
@@ -492,7 +491,7 @@ class CSV {
 		// One more thing to do after all imports?
 		do_action( 'is_iu_post_users_import', $user_ids, $e20r_import_err );
 		do_action( 'pmp_im_post_members_import', $user_ids, $e20r_import_err );
-		do_action( 'e20r-after-members-import', $user_ids, $e20r_import_err );
+		do_action( 'e20r_import_post_members', $user_ids, $e20r_import_err );
 		
 		// Let's log the errors
 		$error_log->log_errors( array_merge( $e20r_import_err, $warnings ) );
