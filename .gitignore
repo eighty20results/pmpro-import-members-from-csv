@@ -101,3 +101,4 @@ fabric.properties
 /inc/bin/
 /inc/szepeviktor/
 /inc/php-stubs/
+/docker-env/pmpro-import-members-from-csv.sql
