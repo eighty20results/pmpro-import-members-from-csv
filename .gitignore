@@ -103,3 +103,4 @@ fabric.properties
 /inc/php-stubs/
 /docker-env/pmpro-import-members-from-csv.sql
 /docker.hub.key
+/inc/wp_plugins/
