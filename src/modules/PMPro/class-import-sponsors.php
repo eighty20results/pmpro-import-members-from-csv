@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -73,7 +73,7 @@ class Import_Sponsors {
 	public function load_sponsor_import() {
 		
 		if ( true === Licensing::is_licensed( 'import_sponsors' ) ) {
-			add_action( 'e20r_after_user_import', array( $this, 'maybe_add_sponsor_info' ) );
+			add_action( 'e20r_after_user_import', array( $this, 'maybe_add_sponsor_info' ), 100, 3 );
 		}
 	}
 	
@@ -81,9 +81,10 @@ class Import_Sponsors {
 	 * Add PMPro Sponsored Memberships add-on sponsor ID and info for the (sponsored) user if applicable
 	 *
 	 * @param int   $user_id
-	 * @param array $fields
+	 * @param array $user_data
+	 * @param array $user_meta
 	 */
-	public function maybe_add_sponsor_info( $user_id, $fields ) {
+	public function maybe_add_sponsor_info( $user_id, $user_data, $user_meta ) {
 		
 		global $e20r_import_err;
 		global $active_line_number;
@@ -97,7 +98,7 @@ class Import_Sponsors {
 		$variables = Variables::get_instance();
 		
 		// Can we import the sponsor info
-		if ( ! empty( $fields['pmprosm_sponsor'] ) ) {
+		if ( ! empty( $user_meta['pmprosm_sponsor'] ) ) {
 			
 			$delayed_sponsor_link = $variables->get( '_delayed_sponsor_link' );
 			
@@ -108,11 +109,11 @@ class Import_Sponsors {
 			$error->debug( "Should we import the sponsor info for this user {$user_id}?" );
 			
 			try {
-				$sponsor = new Sponsor( $fields['pmprosm_sponsor'] );
+				$sponsor = new Sponsor( $user_meta['pmprosm_sponsor'] );
 			} catch ( \Exception $e ) {
 				
-				$delayed_sponsor_link[ $user_id ]                                      = $fields['pmprosm_sponsor'];
-				$e20r_import_err["sponsor_not_found_{$user_id}_{$active_line_number}"] = new \WP_Error( 'e20r_im_sponsor', sprintf( __( "WP_User record not found for user %d's sponsor (key: %s)", 'pmpro-import-members-from-csv' ), $user_id, $fields['pmprosm_sponsor'] ) );
+				$delayed_sponsor_link[ $user_id ]                                      = $user_meta['pmprosm_sponsor'];
+				$e20r_import_err["sponsor_not_found_{$user_id}_{$active_line_number}"] = new \WP_Error( 'e20r_im_sponsor', sprintf( __( "WP_User record not found for user %d's sponsor (key: %s)", 'pmpro-import-members-from-csv' ), $user_id, $user_data['pmprosm_sponsor'] ) );
 			}
 			
 			
