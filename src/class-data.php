@@ -360,7 +360,11 @@ class Data {
 			return false;
 		}
 		
-		$sql = $wpdb->prepare( "SELECT COUNT(table_name) FROM information_schema.tables WHERE table_schema = %s AND table_name = %s", $db_name, $table_name );
+		$sql = $wpdb->prepare(
+			"SELECT COUNT(table_name) FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
+			$db_name,
+			sprintf( '%1$s%2$s', $wpdb->prefix, $table_name )
+		);
 		
 		return (bool) $wpdb->get_var( $sql );
 	}
