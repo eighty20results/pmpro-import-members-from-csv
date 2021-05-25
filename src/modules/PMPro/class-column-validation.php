@@ -89,11 +89,11 @@ class Column_Validation {
 	 *
 	 * @param bool  $has_error
 	 * @param int   $user_id
-	 * @param array $fields
+	 * @param array $record
 	 *
 	 * @return bool
 	 */
-	public function has_invalid_membership_id( $has_error, $user_id, $fields ) {
+	public function has_invalid_membership_id( $has_error, $user_id, $record ) {
 		
 		global $e20r_import_err;
 		
@@ -103,33 +103,37 @@ class Column_Validation {
 			$e20r_import_err = array();
 		}
 		
+		$this->error_log->debug( "Is the error code for membership_id set? " . ( isset( $e20r_import_err['no_membership_id'] ) ? 'Yes' : 'No' ) );
+		$this->error_log->debug( "Is the membership_id value set? " . ( isset( $record['membership_id'] ) ? 'Yes' : 'No' ) );
+		$this->error_log->debug( "Is the membership_id value numeric? " . ( is_numeric( $record['membership_id'] ) ? 'Yes' : 'No' ) );
+		$this->error_log->debug( "Is the membership_id value ({$record['membership_id']}) > 0? " . ( 0 <= intval( $record['membership_id'] ) ? 'Yes' : 'No' ) );
+		
 		if (
-			isset( $e20r_import_err['no_membership_id'] ) ||
-			! isset( $fields['membership_id'] ) ||
-			( isset( $fields['membership_id'] ) &&
-			  ( ! is_numeric($fields['membership_id']) || 0 <= intval( $fields['membership_id'] ) )
-			)
+			( isset( $e20r_import_err['no_membership_id'] ) && ! empty( $e20r_import_err['no_membership_id'] ) ) ||
+			( ! isset( $record['membership_id'] ) )
 		) {
-			$this->error_log->debug("No valid value in the membership_id field to process. Exiting");
+			$this->error_log->debug("membership_id field wasn't found, so no level to test the validity of");
 			return $has_error;
 		}
 		
-		$found_level = function_exists( 'pmpro_getLevel' ) ? pmpro_getLevel( $fields['membership_id'] ) : 0;
+		$found_level = function_exists( 'pmpro_getLevel' ) ? pmpro_getLevel( $record['membership_id'] ) : 0;
 		
-		if ( empty( $found_level ) ) {
-			$msg = sprintf( __(
-				// translators: %d: numeric PMPro membership id
-				'Error: The membership ID (%d) specified for this user (ID: %d) is not a defined membership level, so we can\'t assign it. (Membership data not imported!)',
-				Import_Members::PLUGIN_SLUG
-			),
-				$fields['membership_id'],
-				$user_id
-			);
-			
-			$e20r_import_err['invalid_membership_id'] = new \WP_Error( 'e20r_im_member', $msg );
-			$has_error                                = true;
+		if ( ! empty( $found_level ) ) {
+			return $has_error;
 		}
 		
+		$msg = sprintf( __(
+			// translators: %d: numeric PMPro membership id
+			'Error: The membership ID (%1$d) specified for this user (ID: %2$d) is not a defined membership level, so we can\'t assign it. (Membership data not imported!)',
+			Import_Members::PLUGIN_SLUG
+		),
+			$record['membership_id'],
+			$user_id
+		);
+		
+		$e20r_import_err['invalid_membership_id'] = new \WP_Error( 'e20r_im_member', $msg );
+		$has_error                                = true;
+	
 		return $has_error;
 	}
 	
