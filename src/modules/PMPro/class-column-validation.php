@@ -36,7 +36,7 @@ class Column_Validation {
 	 */
 	private static $instance = null;
 	
-	private $utils = null;
+	private $error_log = null;
 	
 	/**
 	 * Column_Validation constructor.
@@ -44,7 +44,7 @@ class Column_Validation {
 	 * @access private
 	 */
 	private function __construct() {
-		$this->utils = Utilities::get_instance();
+		$this->error_log = Error_Log::get_instance();
 	}
 	
 	/**
@@ -66,7 +66,7 @@ class Column_Validation {
 	 */
 	public function load_actions() {
 		
-		$this->utils->log("Loading default field validation checks!");
+		$this->error_log->debug("Loading default field validation checks!");
 		
 		add_filter( 'e20r_import_members_validate_field_data', array( self::get_instance(), 'has_membership_id' ), 1, 3 );
 		add_filter( 'e20r_import_members_validate_field_data', array( self::get_instance(), 'has_invalid_membership_id' ), 2, 3 );
@@ -97,7 +97,7 @@ class Column_Validation {
 		
 		global $e20r_import_err;
 		
-		$this->utils->log( "Running 'has_invalid_membership_id' validations" );
+		$this->error_log->debug( "Running 'has_invalid_membership_id' validations" );
 		
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
@@ -110,7 +110,7 @@ class Column_Validation {
 			  ( ! is_numeric($fields['membership_id']) || 0 <= intval( $fields['membership_id'] ) )
 			)
 		) {
-			$this->utils->log("No valid value in the membership_id field to process. Exiting");
+			$this->error_log->debug("No valid value in the membership_id field to process. Exiting");
 			return $has_error;
 		}
 		
@@ -145,10 +145,10 @@ class Column_Validation {
 	public function has_invalid_startdate( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'has_invalid_startdate' validations" );
+		$this->error_log->debug( "Running 'has_invalid_startdate' validations" );
 		
 		if ( ! isset( $fields['membership_startdate'] ) ) {
-			$this->utils->log("No membership_startdate field in the record. Returning...");
+			$this->error_log->debug("No membership_startdate field in the record. Returning...");
 			return $has_error;
 		}
 		
@@ -195,7 +195,7 @@ class Column_Validation {
 		
 		global $e20r_import_err;
 		
-		$this->utils->log( "Running 'has_no_startdate' validations" );
+		$this->error_log->debug( "Running 'has_no_startdate' validations" );
 		
 		$validate = Validate_Data::get_instance();
 		
@@ -253,7 +253,7 @@ class Column_Validation {
 	public function has_invalid_enddate( $has_error, $user_id, $fields ) {
 		
 		$validate = Validate_Data::get_instance();
-		$this->utils->log( "Running 'has_invalid_enddate' validations" );
+		$this->error_log->debug( "Running 'has_invalid_enddate' validations" );
 		
 		global $e20r_import_err;
 		
@@ -262,7 +262,7 @@ class Column_Validation {
 		}
 		
 		if ( ! isset( $fields['membership_enddate'] ) ) {
-			$this->utils->log("No membership_enddate log set. Returning from check");
+			$this->error_log->debug("No membership_enddate log set. Returning from check");
 			return $has_error;
 		}
 		
@@ -303,14 +303,14 @@ class Column_Validation {
 	public function is_inactive_with_enddate( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'is_inactive_with_enddate' validations" );
+		$this->error_log->debug( "Running 'is_inactive_with_enddate' validations" );
 		
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
 		}
 		
 		if ( ! ( isset( $fields['membership_enddate'] ) && isset( $fields['membership_status'] ) ) ) {
-			$this->utils->log("membership_enddate and membership_status need to both be present for check...");
+			$this->error_log->debug("membership_enddate and membership_status need to both be present for check...");
 			return $has_error;
 		}
 		
@@ -348,14 +348,14 @@ class Column_Validation {
 	public function has_valid_status( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'has_valid_status' validations" );
+		$this->error_log->debug( "Running 'has_valid_status' validations" );
 		
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
 		}
 		
 		if ( ! isset( $fields['membership_status'] )  ) {
-			$this->utils->log("membership_status not present for this record...");
+			$this->error_log->debug("membership_status not present for this record...");
 			return $has_error;
 		}
 		
@@ -390,7 +390,7 @@ class Column_Validation {
 	public function can_link_subscription( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'can_link_subscription' validations" );
+		$this->error_log->debug( "Running 'can_link_subscription' validations" );
 		
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
@@ -403,7 +403,7 @@ class Column_Validation {
 			isset( $fields['membership_gateway_environment'] )
 		)
 		) {
-			$this->utils->log("No 'membership_subscription_transaction_id', 'membership_gateway', 'membership_gateway_environment' fields found for record. Skipping 'can_link_subscription' check...");
+			$this->error_log->debug("No 'membership_subscription_transaction_id', 'membership_gateway', 'membership_gateway_environment' fields found for record. Skipping 'can_link_subscription' check...");
 			return $has_error;
 		}
 		
@@ -441,10 +441,10 @@ class Column_Validation {
 	public function has_valid_recurring_config( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'has_valid_recurring_config' validations" );
+		$this->error_log->debug( "Running 'has_valid_recurring_config' validations" );
 		
 		if ( ! ( isset( $fields['membership_cycle_number'] ) && isset( $fields['membership_cycle_period'] ) ) ) {
-			$this->utils->log("membership_cycle_number and membership_cycle_period need to both exist for check" );
+			$this->error_log->debug("membership_cycle_number and membership_cycle_period need to both exist for check" );
 			return $has_error;
 		}
 		
@@ -487,10 +487,10 @@ class Column_Validation {
 	public function has_payment_id( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'has_payment_id' validations" );
+		$this->error_log->debug( "Running 'has_payment_id' validations" );
 		
 		if ( ! ( isset( $fields['membership_subscription_transaction_id'] ) && isset( $fields['membership_payment_transaction_id'] ) ) ) {
-			$this->utils->log("membership_subscription_transaction_id and membership_payment_transaction_id need to both exist for check" );
+			$this->error_log->debug("membership_subscription_transaction_id and membership_payment_transaction_id need to both exist for check" );
 			return $has_error;
 		}
 		
@@ -518,10 +518,10 @@ class Column_Validation {
 	public function has_gateway_environment( $has_error, $user_id, $fields ) {
 		
 		global $e20r_import_err;
-		$this->utils->log( "Running 'has_gateway_environment' validations" );
+		$this->error_log->debug( "Running 'has_gateway_environment' validations" );
 		
 		if ( ! ( isset( $fields['membership_gateway'] ) && isset( $fields['membership_gateway_environment'] ) ) ) {
-			$this->utils->log("membership_gateway and membership_gateway_environment need to both exist for check" );
+			$this->error_log->debug("membership_gateway and membership_gateway_environment need to both exist for check" );
 			return $has_error;
 		}
 		
@@ -557,14 +557,14 @@ class Column_Validation {
 		global $e20r_import_err;
 		global $active_line_number;
 		
-		$this->utils->log( "Running 'has_membership_id' validations" );
+		$this->error_log->debug( "Running 'has_membership_id' validations" );
 		
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
 		}
 		
 		if ( ! isset( $fields['membership_id'] ) ) {
-			$this->utils->log("Record doesn't contain membership id? -> " . print_r( $fields, true ) );
+			$this->error_log->debug("Record doesn't contain membership id? -> " . print_r( $fields, true ) );
 			
 			$msg = sprintf( __(
 				'Error: The membership ID (membership_id) column is not present in the import file (ID: %d). (Membership cannot be imported!)', Import_Members::PLUGIN_SLUG ), $user_id );
@@ -609,10 +609,10 @@ class Column_Validation {
 		global $e20r_import_err;
 		global $active_line_number;
 		
-		$this->utils->log( "Running 'level_exists' validations" );
+		$this->error_log->debug( "Running 'level_exists' validations" );
 		
 		if ( ! isset( $fields['membership_id'] ) ) {
-			$this->utils->log("membership_id needs to exist in the record for check to make sense" );
+			$this->error_log->debug("membership_id needs to exist in the record for check to make sense" );
 			return $has_error;
 		}
 		
@@ -653,14 +653,14 @@ class Column_Validation {
 		
 		global $e20r_import_err;
 		global $active_line_number;
-		$this->utils->log( "Running 'recurring_and_enddate' validations" );
+		$this->error_log->debug( "Running 'recurring_and_enddate' validations" );
 		
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
 		}
 		
 		if ( ! ( isset( $fields['membership_enddate'] ) && isset( $fields['membership_cycle_number'] ) && isset( $fields['membership_cycle_period'] ) ) ) {
-			$this->utils->log("membership_enddate, membership_cycle_number and membership_cycle_period needs to exist in record to test it");
+			$this->error_log->debug("membership_enddate, membership_cycle_number and membership_cycle_period needs to exist in record to test it");
 			return $has_error;
 		}
 		
@@ -695,10 +695,10 @@ class Column_Validation {
 		
 		global $e20r_import_err;
 		global $active_line_number;
-		$this->utils->log( "Running 'correct_gw_environment' validations" );
+		$this->error_log->debug( "Running 'correct_gw_environment' validations" );
 		
 		if ( ! ( isset( $fields['membership_gateway'] ) && isset( $fields['membership_gateway_environment'] ) ) ) {
-			$this->utils->log("membership_gateway, membership_gateway_environment need to exist in record to test it");
+			$this->error_log->debug("membership_gateway, membership_gateway_environment need to exist in record to test it");
 			return $has_error;
 		}
 		
@@ -733,10 +733,10 @@ class Column_Validation {
 		global $e20r_import_err;
 		global $active_line_number;
 		
-		$this->utils->log( "Running 'has_supported_gateway' validations" );
+		$this->error_log->debug( "Running 'has_supported_gateway' validations" );
 		
 		if ( ! isset( $fields['membership_gateway'] ) ) {
-			$this->utils->log("membership_gateway needs to exist in record to test it");
+			$this->error_log->debug("membership_gateway needs to exist in record to test it");
 			return $has_error;
 		}
 		
