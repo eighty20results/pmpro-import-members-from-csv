@@ -84,7 +84,7 @@ class Error_Log {
 			$tid  = sprintf( "%08x", abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
 			$time = date( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
 			
-			error_log( "[{$tid}]({$time}) {$from} - {$msg}",E_USER_NOTICE );
+			error_log( "[{$tid}]({$time}) {$from} - {$msg}\n",E_USER_NOTICE );
 		}
 	}
 	
@@ -125,37 +125,9 @@ class Error_Log {
 				'warning'
 			);
 		
-		if ( false !== ( $log = fopen( $log_file_path, 'a' ) ) ) {
-			
-			foreach ( $errors as $key => $error ) {
-				
-				if ( is_numeric( $key ) ) {
-					$line = $key + 1;
-				} else {
-					$key_info = explode( '_', $key );
-					$line = (int)$key_info[ ( count( $key_info ) -1 ) ] + 1;
-				}
-				
-				
-				// Handle weird/unexpected formats for error message(s)
-				if ( is_wp_error( $error ) ) {
-					$message = $error->get_error_message();
-				} else if ( is_string( $error ) ) {
-					$message = $error;
-				}
-				
-				if (  !empty( $message ) ) {
-					@fwrite( $log, sprintf(
-						               __( '[Line %1$s] %2$s', Import_Members::PLUGIN_SLUG ),
-						               $line,
-						               $message
-					               ) . "\n"
-					);
-				}
-			}
-			
-			fclose( $log );
-		} else {
+		$log = fopen( $log_file_path, 'a' );
+		
+		if ( false === $log ) {
 			$this->add_error_msg(
 				sprintf(
 					__( "Unable to write error log to: %s", Import_Members::PLUGIN_SLUG ),
@@ -163,7 +135,38 @@ class Error_Log {
 				),
 				'error'
 			);
+			fclose( $log );
+			return;
 		}
+		
+        foreach ( $errors as $key => $error ) {
+            
+            if ( is_numeric( $key ) ) {
+                $line = $key + 1;
+            } else {
+                $key_info = explode( '_', $key );
+                $line = (int)$key_info[ ( count( $key_info ) -1 ) ] + 1;
+            }
+            
+            
+            // Handle weird/unexpected formats for error message(s)
+            if ( is_wp_error( $error ) ) {
+                $message = $error->get_error_message();
+            } else if ( is_string( $error ) ) {
+                $message = $error;
+            }
+            
+            if (  !empty( $message ) ) {
+                @fwrite( $log, sprintf(
+                                   __( '[Line %1$s] %2$s', Import_Members::PLUGIN_SLUG ),
+                                   $line,
+                                   $message
+                               ) . "\n"
+                );
+            }
+        }
+        
+        fclose( $log );
 	}
 	
 	/**
