@@ -133,7 +133,7 @@ class Import_User {
 			$user = get_user_by( 'ID', $user_data['ID'] );
 		} else {
 			$e20r_import_err[] = User_ID::status_msg( $user_id_exists, $allow_update );
-			$error_log->debug( print_r( $e20r_import_err, true ) );
+			$error_log->debug( 'User ID exists? -> ' . print_r( $e20r_import_err, true ) );
 		}
 
 		$error_log->debug( 'User data received: ' . print_r( $user_data, true ) );
@@ -188,7 +188,7 @@ class Import_User {
 			$e20r_import_err[ "warn_invalid_email_{$active_line_number}" ] = new WP_Error(
 				'e20r_im_email',
 				$msg,
-				isset( $user_data['user_email'] ) ? $user_data['user_email'] : null
+				$user_data['user_email'] ?? null
 			);
 
 			return $user_ids;
