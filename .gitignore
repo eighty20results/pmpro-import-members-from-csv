@@ -102,3 +102,4 @@ fabric.properties
 /inc/szepeviktor/
 /inc/php-stubs/
 /docker-env/pmpro-import-members-from-csv.sql
+/docker.hub.key
