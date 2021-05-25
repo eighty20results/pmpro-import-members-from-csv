@@ -1,24 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
- * ALL RIGHTS RESERVED
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -85,14 +67,14 @@ class Import_User {
 	 * Load action and filter hooks for import
 	 */
 	public function load_actions() {
-		add_action( 'e20r-import-usermeta', array( $this, 'import_usermeta' ), - 1 );
+		add_action( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), - 1, 3 );
 	}
 
 	/**
 	 * Process and import user data/user meta data
 	 *
-	 * @param mixed[]  $user_data
-	 * @param mixed[]  $user_meta
+	 * @param array    $user_data
+	 * @param array    $user_meta
 	 * @param string[] $headers
 	 *
 	 * @throws \Exception
@@ -114,11 +96,15 @@ class Import_User {
 		$user_ids       = array();
 		$msg_target     = 'admin';
 		$site_id        = $variables->get( 'site_id' );
-
+		
+		if ( empty( $display_errors ) ) {
+			$display_errors = array();
+		}
+		
 		// Something to be done before importing one user?
 		do_action( 'is_iu_pre_user_import', $user_data, $user_meta );
 		do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
-		do_action( 'e20r_pre_user_import', $user_data, $user_meta );
+		do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
 		$user_id      = false;
 		$user         = $user_id;
@@ -132,12 +118,13 @@ class Import_User {
 		if ( true === $user_id_exists ) {
 			$user = get_user_by( 'ID', $user_data['ID'] );
 		} else {
-			$e20r_import_err[] = User_ID::status_msg( $user_id_exists, $allow_update );
-			$error_log->debug( 'User ID exists? -> ' . print_r( $e20r_import_err, true ) );
+			$status_msg = User_ID::status_msg( $user_id_exists, $allow_update );
+			$error_log->debug( 'User ID exists? -> ' . ( empty( $status_msg ) ? 'No' : 'Yes' ) );
+			if ( !empty( $status_msg ) ) {
+				$e20r_import_err[] = $status_msg;
+			}
 		}
-
-		$error_log->debug( 'User data received: ' . print_r( $user_data, true ) );
-
+		
 		if ( empty( $user ) && true === $allow_update ) {
 
 			if ( empty( $user ) && isset( $user_data['user_email'] ) ) {
@@ -329,10 +316,10 @@ class Import_User {
 
 			$settings = $variables->get();
 
-			// Some plugins may need to do things after one user has been imported. Who know?
+			// Some plugins may need to do things after one user has been imported. Who knows?
 			do_action( 'is_iu_post_user_import', $user_id, $settings );
 			do_action( 'pmp_im_post_member_import', $user_id, $settings );
-			do_action( 'e20r_after_user_import', $user_id, $settings );
+			do_action( 'e20r_after_user_import', $user_id, $user_data, $user_meta );
 
 			$user_ids[] = $user_id;
 		}
