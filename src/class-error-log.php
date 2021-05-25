@@ -84,7 +84,11 @@ class Error_Log {
 			$tid  = sprintf( "%08x", abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
 			$time = date( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
 			
-			error_log( "[{$tid}]({$time}) {$from} - {$msg}\n",E_USER_NOTICE );
+			// Save to the HTTP server error log as a Notice (not a warning/error)
+			error_log(
+			        sprintf( '[%1$s](%2$s) %3$s - %4$s', $tid, $time, $from, $msg ),
+                    E_USER_NOTICE
+            );
 		}
 	}
 	
