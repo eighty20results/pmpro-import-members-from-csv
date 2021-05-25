@@ -63,7 +63,7 @@ class Column_Validation {
 			'e20r_import_users_validate_field_data',
 			array( $this, 'validate_user_id' ),
 			1,
-			4
+			3
 		);
 	}
 
@@ -111,7 +111,12 @@ class Column_Validation {
 		if ( empty( $field_name ) ) {
 			return $has_error;
 		}
-
+		
+		if ( ! ( isset( $record['ID'] ) || isset( $record['user_email'] ) || isset( $record['user_login'] ) ) ) {
+			$error_log->debug("Cannot find one of the expected column(s): ID, user_email, user_login");
+			return $has_error;
+		}
+		
 		if ( is_array( $field_name ) ) {
 			// TODO: Process list of fields
 		}

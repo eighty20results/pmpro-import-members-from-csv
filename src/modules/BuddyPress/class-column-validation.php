@@ -79,7 +79,7 @@ class Column_Validation {
 		if ( ! function_exists( 'bp_core_new_nav_default' ) ) {
 			return;
 		}
-
+		
 		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'bp_field_exists' ), 1, 3 );
 	}
 
