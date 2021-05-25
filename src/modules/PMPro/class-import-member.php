@@ -200,7 +200,7 @@ class Import_Member {
 
 		// Generate PMPro specific member value(s)
 		foreach ( $fields as $var_name => $field_value ) {
-			$fields[ $var_name ] = isset( $user->{"imported_{$var_name}"} ) ? $user->{"imported_{$var_name}"} : $fields[ $var_name ];
+			$fields[ $var_name ] = $user->{"imported_{$var_name}"} ?? $field_value;
 		}
 
 		$error_log->debug( "Adding membership info for: {$user_id}" );
@@ -284,7 +284,13 @@ class Import_Member {
 		}
 
 		//Change membership level
-		if ( ( is_numeric( $fields['membership_id'] ) && 0 <= $fields['membership_id'] ) || ! empty( $fields['membership_id'] ) ) {
+		if (
+			isset( $fields['membership_id'] ) &&
+			(
+				( is_numeric( $fields['membership_id'] ) && 0 <= $fields['membership_id'] )
+				|| ! empty( $fields['membership_id'] )
+			)
+		) {
 
 			// Cancel previously existing (active) memberships (Should support MMPU add-on)
 			// without triggering cancellation emails, etc
@@ -548,7 +554,7 @@ class Import_Member {
 			)
 		) {
 
-			$error_log->debug( "Adding PMPro order for {$fields['membership_id']}/{$user_id}" );
+			$error_log->debug( "Adding PMPro order for {$user_id}..?" );
 
 			$default_gateway     = Import_Members::is_pmpro_active() ? pmpro_getGateway() : $fields['membership_gateway'];
 			$default_environment = Import_Members::is_pmpro_active() ? pmpro_getOption( 'gateway_environment' ) : $fields['membership_gateway_environment'];
@@ -585,7 +591,7 @@ class Import_Member {
 
 			$order                 = new \MemberOrder();
 			$order->user_id        = $user_id;
-			$order->membership_id  = $fields['membership_id'];
+			$order->membership_id  = isset( $fields['membership_id'] ) ?? $fields['membership_id'];
 			$order->InitialPayment = ! empty( $fields['membership_initial_payment'] ) ? $fields['membership_initial_payment'] : null;
 
 			/**
