@@ -1,24 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
- * ALL RIGHTS RESERVED
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -89,8 +71,8 @@ class Import_Member {
 	 * Add action & filter handlers (run early)
 	 */
 	public function load_actions() {
-		add_action( 'e20r_pre_user_import', array( $this, 'pre_member_import' ), - 1 );
-		add_action( 'e20r-import-post-user-import', array( $this, 'import_membership_info' ), - 1, 2 );
+		add_action( 'e20r_before_user_import', array( $this, 'pre_member_import' ), - 1 );
+		add_action( 'e20r_after_user_import', array( $this, 'import_membership_info' ), - 1, 3 );
 	}
 
 	/**
@@ -140,7 +122,8 @@ class Import_Member {
 	 * After the new user was created, import PMPro membership metadata
 	 *
 	 * @param int   $user_id
-	 * @param array $settings
+	 * @param array $user_data
+	 * @param array $user_meta
 	 *
 	 * @since 2.9 BUG FIX: A little too silent when the imported file is mis-configured
 	 * @since 2.9 BUG FIX: MS Excel causing trouble w/first column import values (Improved UTF BOM handling)
@@ -151,7 +134,7 @@ class Import_Member {
 	 * @since 2.22 ENHANCEMENT: Move data checks to own method (validate_membership_data())
 	 *
 	 */
-	public function import_membership_info( $user_id, $settings = array() ) {
+	public function import_membership_info( $user_id, $user_data, $user_meta ) {
 
 		global $wpdb;
 		global $e20r_import_err;
@@ -169,8 +152,7 @@ class Import_Member {
 
 		$has_error              = false;
 		$membership_in_the_past = false;
-		$fields                 = $variables->get( 'fields' );
-
+		
 		// Define table names
 		$pmpro_member_table  = "{$wpdb->prefix}pmpro_memberships_users";
 		$pmpro_dc_table      = "{$wpdb->prefix}pmpro_discount_codes";
@@ -199,8 +181,8 @@ class Import_Member {
 		}
 
 		// Generate PMPro specific member value(s)
-		foreach ( $fields as $var_name => $field_value ) {
-			$fields[ $var_name ] = $user->{"imported_{$var_name}"} ?? $field_value;
+		foreach ( $user_meta as $var_name => $field_value ) {
+			$user_meta[ $var_name ] = $user->{"imported_{$var_name}"} ?? $field_value;
 		}
 
 		$error_log->debug( "Adding membership info for: {$user_id}" );
@@ -220,7 +202,7 @@ class Import_Member {
 			'e20r_import_members_validate_field_data',
 			$has_error,
 			$user_id,
-			$fields
+			$user_meta
 		);
 		$error_log->debug( "Error while validating data for {$user_id}? " . ( $has_error ? 'Yes' : 'No' ) );
 
@@ -231,7 +213,7 @@ class Import_Member {
 				'e20r_import_members_continue_member_import',
 				$import_member_data,
 				$user_id,
-				$fields
+				$user_meta
 			);
 			$error_log->debug(
 				'Should we continue importing member data in spite of error? ' .
@@ -249,8 +231,8 @@ class Import_Member {
 		 */
 		if ( empty( $welcome_warning ) &&
 			 true === $send_email &&
-			 ( ! isset( $fields['membership_status'] ) ||
-			   ( isset( $fields['membership_status'] ) && 'active' !== trim( $fields['membership_status'] ) )
+			 ( ! isset( $user_data['membership_status'] ) ||
+			   ( isset( $user_data['membership_status'] ) && 'active' !== trim( $user_data['membership_status'] ) )
 			 )
 		) {
 			$welcome_warning = __(
@@ -270,25 +252,25 @@ class Import_Member {
 		}
 
 		//Look up the discount code when included
-		if ( ! empty( $fields['membership_discount_code'] ) && empty( $fields['membership_code_id'] ) ) {
-
-			$fields['membership_code_id'] = $wpdb->get_var(
+		if ( ! empty( $user_meta['membership_discount_code'] ) && empty( $user_meta['membership_code_id'] ) ) {
+			
+			$user_meta['membership_code_id'] = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT dc.id
                               FROM {$pmpro_dc_table} AS dc
                               WHERE dc.code = %s
                               LIMIT 1",
-					$fields['membership_discount_code']
+					$user_data['membership_discount_code']
 				)
 			);
 		}
 
 		//Change membership level
 		if (
-			isset( $fields['membership_id'] ) &&
+			isset( $user_meta['membership_id'] ) &&
 			(
-				( is_numeric( $fields['membership_id'] ) && 0 <= $fields['membership_id'] )
-				|| ! empty( $fields['membership_id'] )
+				( is_numeric( $user_meta['membership_id'] ) && 0 <= $user_meta['membership_id'] )
+				|| ! empty( $user_meta['membership_id'] )
 			)
 		) {
 
@@ -304,7 +286,7 @@ class Import_Member {
 					array( 'status' => 'admin_cancelled' ),
 					array(
 						'user_id'       => $user_id,
-						'membership_id' => $fields['membership_id'],
+						'membership_id' => $user_meta['membership_id'],
 						'status'        => 'active',
 					)
 				);
@@ -319,7 +301,7 @@ class Import_Member {
 								'Unable to cancel old membership level (ID: %1$d) for user (ID: %2$d)',
 								Import_Members::PLUGIN_SLUG
 							),
-							$fields['membership_id'],
+							$user_meta['membership_id'],
 							$user_id
 						)
 					);
@@ -328,24 +310,24 @@ class Import_Member {
 
 			$custom_level = array(
 				'user_id'         => $user_id,
-				'membership_id'   => $fields['membership_id'],
-				'code_id'         => ! empty( $fields['membership_code_id'] ) ? $fields['membership_code_id'] : 0,
-				'initial_payment' => ! empty( $fields['membership_initial_payment'] ) ? $fields['membership_initial_payment'] : '',
-				'billing_amount'  => ! empty( $fields['membership_billing_amount'] ) ? $fields['membership_billing_amount'] : '',
-				'cycle_number'    => ! empty( $fields['membership_cycle_number'] ) ? $fields['membership_cycle_number'] : '',
-				'cycle_period'    => ! empty( $fields['membership_cycle_period'] ) ? $fields['membership_cycle_period'] : 'Month',
-				'billing_limit'   => ! empty( $fields['membership_billing_limit'] ) ? $fields['membership_billing_limit'] : '',
-				'trial_amount'    => ! empty( $fields['membership_trial_amount'] ) ? $fields['membership_trial_amount'] : '',
-				'trial_limit'     => ! empty( $fields['membership_trial_limit'] ) ? $fields['membership_trial_limit'] : '',
-				'startdate'       => ! empty( $fields['membership_startdate'] ) ? $fields['membership_startdate'] : null,
+				'membership_id'   => $user_meta['membership_id'],
+				'code_id'         => ! empty( $user_meta['membership_code_id'] ) ? $user_meta['membership_code_id'] : 0,
+				'initial_payment' => ! empty( $user_meta['membership_initial_payment'] ) ? $user_meta['membership_initial_payment'] : '',
+				'billing_amount'  => ! empty( $user_meta['membership_billing_amount'] ) ? $user_meta['membership_billing_amount'] : '',
+				'cycle_number'    => ! empty( $user_meta['membership_cycle_number'] ) ? $user_meta['membership_cycle_number'] : '',
+				'cycle_period'    => ! empty( $user_meta['membership_cycle_period'] ) ? $user_meta['membership_cycle_period'] : 'Month',
+				'billing_limit'   => ! empty( $user_meta['membership_billing_limit'] ) ? $user_meta['membership_billing_limit'] : '',
+				'trial_amount'    => ! empty( $user_meta['membership_trial_amount'] ) ? $user_meta['membership_trial_amount'] : '',
+				'trial_limit'     => ! empty( $user_meta['membership_trial_limit'] ) ? $user_meta['membership_trial_limit'] : '',
+				'startdate'       => ! empty( $user_meta['membership_startdate'] ) ? $user_meta['membership_startdate'] : null,
 			);
 
 			// Add the enddate
-			$custom_level['enddate'] = ! empty( $fields['membership_enddate'] ) ? $fields['membership_enddate'] : null;
+			$custom_level['enddate'] = ! empty( $user_meta['membership_enddate'] ) ? $user_meta['membership_enddate'] : null;
 
 			// Set the status of the membership
-			if ( ! empty( $fields['membership_status'] ) ) {
-				$custom_level['status'] = $fields['membership_status'];
+			if ( ! empty( $user_meta['membership_status'] ) ) {
+				$custom_level['status'] = $user_meta['membership_status'];
 			}
 
 			/**
@@ -380,13 +362,14 @@ class Import_Member {
 				$e20r_import_err[ "user_level_{$active_line_number}" ] = new \WP_Error(
 					'e20r_im_member',
 					sprintf(
-						// translators: %1$d PMPro membership level id, %2$d user id
+						// translators: %1$d PMPro membership level id, %2$d user id, %3$d line number in CSV file
 						__(
-							'Unable to configure membership level (ID: %1$d ) for user (user id: %2$d)',
+							'Unable to configure membership level (ID: %1$d ) for user (user id: %2$d on line # %3$d)',
 							Import_Members::PLUGIN_SLUG
 						),
-						$fields['membership_id'],
-						$user_id
+						$user_meta['membership_id'],
+						$user_id,
+						$active_line_number
 					)
 				);
 
@@ -419,30 +402,30 @@ class Import_Member {
 			}
 
 			// If membership ended in the past, make it inactive for now
-			if ( ( 'inactive' == strtolower( $fields['membership_status'] ) && ! empty( $record_id ) ) ||
-				 ( ! empty( $fields['membership_enddate'] ) &&
-				   strtoupper( $fields['membership_enddate'] ) != 'NULL' &&
-				   strtotime( $fields['membership_enddate'], current_time( 'timestamp' ) ) < current_time( 'timestamp' )
+			if ( ( 'inactive' == strtolower( $user_meta['membership_status'] ) && ! empty( $record_id ) ) ||
+				 ( ! empty( $user_meta['membership_enddate'] ) &&
+				   strtoupper( $user_meta['membership_enddate'] ) != 'NULL' &&
+				   strtotime( $user_meta['membership_enddate'], current_time( 'timestamp' ) ) < current_time( 'timestamp' )
 				 )
 			) {
 
 				/**
 				 * @since 2.11 - BUG FIX: Didn't handle 'inactive' status with no membership_enddate supplied
 				 */
-				if ( empty( $fields['membership_enddate'] ) ) {
-					$fields['membership_enddate'] = date_i18n( 'Y-m-d h:i:s', current_time( 'timestamp' ) );
+				if ( empty( $user_meta['membership_enddate'] ) ) {
+					$user_meta['membership_enddate'] = date_i18n( 'Y-m-d h:i:s', current_time( 'timestamp' ) );
 				}
 
 				if ( false !== $wpdb->update(
 					$pmpro_member_table,
 					array(
 						'status'  => 'inactive',
-						'enddate' => $fields['membership_enddate'],
+						'enddate' => $user_meta['membership_enddate'],
 					),
 					array(
 						'id'            => $record_id,
 						'user_id'       => $user_id,
-						'membership_id' => $fields['membership_id'],
+						'membership_id' => $user_meta['membership_id'],
 					),
 					array( '%s', '%s' ),
 					array( '%d', '%d', '%d' )
@@ -459,28 +442,28 @@ class Import_Member {
 								Import_Members::PLUGIN_SLUG
 							),
 							$user_id,
-							$fields['membership_id']
+							$user_meta['membership_id']
 						)
 					);
 				}
 			}
 
-			if ( 'active' === strtolower( $fields['membership_status'] ) &&
-				 ( empty( $fields['membership_enddate'] ) ||
-				   'NULL' === strtoupper( $fields['membership_enddate'] ) ||
-				   strtotime( $fields['membership_enddate'], current_time( 'timestamp' ) ) >= current_time( 'timestamp' ) )
+			if ( 'active' === strtolower( $user_meta['membership_status'] ) &&
+				 ( empty( $user_meta['membership_enddate'] ) ||
+				   'NULL' === strtoupper( $user_meta['membership_enddate'] ) ||
+				   strtotime( $user_meta['membership_enddate'], current_time( 'timestamp' ) ) >= current_time( 'timestamp' ) )
 			) {
 
 				if ( false === $wpdb->update(
 					$pmpro_member_table,
 					array(
 						'status'  => 'active',
-						'enddate' => $fields['membership_enddate'],
+						'enddate' => $user_meta['membership_enddate'],
 					),
 					array(
 						'id'            => $record_id,
 						'user_id'       => $user_id,
-						'membership_id' => $fields['membership_id'],
+						'membership_id' => $user_meta['membership_id'],
 					),
 					array( '%s', '%s' ),
 					array( '%d', '%d', '%d' )
@@ -494,16 +477,16 @@ class Import_Member {
 								Import_Members::PLUGIN_SLUG
 							),
 							$user_id,
-							$fields['membership_id']
+							$user_meta['membership_id']
 						)
 					);
 				}
 			}
 		}
 
-		$this->maybe_add_order( $user_id, $fields, $membership_in_the_past );
+		$this->maybe_add_order( $user_id, $user_data, $membership_in_the_past );
 
-		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $fields );
+		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data );
 
 		$error_log->debug( "Should we send welcome email ({$send_email})? " . ( $send_email ? 'Yes' : 'No' ) );
 		$emails->maybe_send_email( $user );
@@ -527,10 +510,10 @@ class Import_Member {
 	 * Add order for the user if applicable
 	 *
 	 * @param int   $user_id
-	 * @param array $fields
+	 * @param array $record
 	 * @param bool  $membership_in_the_past
 	 */
-	public function maybe_add_order( $user_id, $fields, $membership_in_the_past ) {
+	public function maybe_add_order( $user_id, $record, $membership_in_the_past ) {
 
 		global $wpdb;
 		global $e20r_import_err;
@@ -545,19 +528,22 @@ class Import_Member {
 		$error_log = Error_Log::get_instance();
 		$data      = Data::get_instance();
 		$user      = get_user_by( 'ID', $user_id );
-
+		$order     = null;
+		
+		// If we don't need to create the order record, we'll exit here.
+		if ( false === (bool) $variables->get( 'create_order' ) ) {
+			return;
+		}
+		
 		$pmpro_dc_uses_table = "{$wpdb->base_prefix}pmpro_discount_codes_uses";
-
+		
 		// Add a PMPro order record so integration with gateway doesn't cause surprises
-		if ( true === $variables->get( 'create_order' ) || (
-				! empty( $fields['membership_subscription_transaction_id'] ) && ! empty( $fields['membership_gateway'] )
-			)
-		) {
+		if ( ! empty( $record['membership_subscription_transaction_id'] ) && ! empty( $record['membership_gateway'] ) ) {
 
 			$error_log->debug( "Adding PMPro order for {$user_id}..?" );
 
-			$default_gateway     = Import_Members::is_pmpro_active() ? pmpro_getGateway() : $fields['membership_gateway'];
-			$default_environment = Import_Members::is_pmpro_active() ? pmpro_getOption( 'gateway_environment' ) : $fields['membership_gateway_environment'];
+			$default_gateway     = Import_Members::is_pmpro_active() ? pmpro_getGateway() : $record['membership_gateway'];
+			$default_environment = Import_Members::is_pmpro_active() ? pmpro_getOption( 'gateway_environment' ) : $record['membership_gateway_environment'];
 
 			if ( false === $data->does_table_exist( 'pmpro_membership_orders' ) ) {
 				$error_log->add_error_msg(
@@ -576,23 +562,23 @@ class Import_Member {
 			 */
 			$order_fields = $data->get_table_info( 'pmpro_membership_orders' );
 
-			if ( empty( $fields['membership_initial_payment'] ) && empty( $fields['membership_billing_amount'] ) && ! empty( $fields['membership_id'] ) ) {
+			if ( empty( $record['membership_initial_payment'] ) && empty( $record['membership_billing_amount'] ) && ! empty( $record['membership_id'] ) ) {
 
-				$default_level = pmpro_getLevel( $fields['membership_id'] );
+				$default_level = pmpro_getLevel( $record['membership_id'] );
 
 				if ( ! empty( $default_level ) ) {
-					$fields['membership_initial_payment'] = $default_level->initial_payment;
-					$fields['membership_billing_amount']  = $default_level->billing_amount;
-					$fields['membership_billing_limit']   = $default_level->billing_limit;
-					$fields['membership_cycle_number']    = $default_level->cycle_number;
-					$fields['membership_cycle_period']    = $default_level->cycle_period;
+					$record['membership_initial_payment'] = $default_level->initial_payment;
+					$record['membership_billing_amount']  = $default_level->billing_amount;
+					$record['membership_billing_limit']   = $default_level->billing_limit;
+					$record['membership_cycle_number']    = $default_level->cycle_number;
+					$record['membership_cycle_period']    = $default_level->cycle_period;
 				}
 			}
 
 			$order                 = new \MemberOrder();
 			$order->user_id        = $user_id;
-			$order->membership_id  = isset( $fields['membership_id'] ) ?? $fields['membership_id'];
-			$order->InitialPayment = ! empty( $fields['membership_initial_payment'] ) ? $fields['membership_initial_payment'] : null;
+			$order->membership_id  = isset( $record['membership_id'] ) ?? $record['membership_id'];
+			$order->InitialPayment = ! empty( $record['membership_initial_payment'] ) ? $record['membership_initial_payment'] : null;
 
 			/**
 			 * Dynamically provide data for all configured Order fields...
@@ -630,23 +616,23 @@ class Import_Member {
 				if ( false === $process_billing_info && ( ! isset( $order->{$field_name} ) || ( isset( $order->{$field_name} ) && empty( $order->{$field_name} ) ) ) ) {
 
 					// Process payment (amount)
-					if ( 'total' === $field_name && ! empty( $fields['membership_initial_payment'] ) ) {
+					if ( 'total' === $field_name && ! empty( $record['membership_initial_payment'] ) ) {
 
-						$order->total = $fields['membership_initial_payment'];
+						$order->total = $record['membership_initial_payment'];
 
 					} elseif ( 'total' === $field_name && (
-							empty( $fields['membership_initial_payment'] ) &&
-							! empty( $fields['membership_billing_amount'] )
+							empty( $record['membership_initial_payment'] ) &&
+							! empty( $record['membership_billing_amount'] )
 						) ) {
 
-						$order->total = $fields['membership_billing_amount'];
+						$order->total = $record['membership_billing_amount'];
 
 					} elseif ( 'total' !== $field_name ) {
 
 						if ( 'status' === $field_name ) {
-							$order->{$field_name} = ( 'active' === $fields[ $full_field_name ] ? 'success' : 'cancelled' );
+							$order->{$field_name} = ( isset( $record[ $full_field_name ] ) && 'active' === $record[ $full_field_name ] ? 'success' : 'cancelled' );
 						} else {
-							$order->{$field_name} = ! empty( $fields[ $full_field_name ] ) ? $fields[ $full_field_name ] : null;
+							$order->{$field_name} = ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null;
 						}
 					} else {
 
@@ -655,12 +641,12 @@ class Import_Member {
 				}
 			}
 
-			if ( strtolower( $default_gateway ) !== strtolower( $fields['membership_gateway'] ) ) {
-				$order->setGateway( $fields['membership_gateway'] );
+			if ( isset( $record['membership_gateway'] ) && strtolower( $default_gateway ) !== strtolower( $record['membership_gateway'] ) ) {
+				$order->setGateway( $record['membership_gateway'] );
 			}
 
-			if ( strtolower( $default_environment ) !== strtolower( $fields['membership_gateway_environment'] ) ) {
-				$order->gateway_environment = strtolower( $fields['membership_gateway_environment'] );
+			if ( isset( $record['membership_gateway_environment'] ) && strtolower( $default_environment ) !== strtolower( $record['membership_gateway_environment'] ) ) {
+				$order->gateway_environment = strtolower( $record['membership_gateway_environment'] );
 			}
 
 			if ( true === $membership_in_the_past ) {
@@ -683,15 +669,15 @@ class Import_Member {
 			}
 
 			//update timestamp of order?
-			if ( ! empty( $fields['membership_timestamp'] ) ) {
+			if ( ! empty( $record['membership_timestamp'] ) ) {
 
-				if ( true === $validate->date( $fields['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
-					$timestamp = strtotime( $fields['membership_timestamp'], current_time( 'timestamp' ) );
+				if ( true === $validate->date( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
+					$timestamp = strtotime( $record['membership_timestamp'], current_time( 'timestamp' ) );
 				} else {
-					$timestamp = is_numeric( $fields['membership_timestamp'] ) ? $fields['membership_timestamp'] : null;
+					$timestamp = is_numeric( $record['membership_timestamp'] ) ? $record['membership_timestamp'] : null;
 
 					if ( is_null( $timestamp ) ) {
-						$e20r_import_err[ "timestamp_{$user_id}_{$active_line_number}" ] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Could not decode timezone value (%s)', Import_Members::PLUGIN_SLUG ), $fields['membership_timestamp'] ) );
+						$e20r_import_err[ "timestamp_{$user_id}_{$active_line_number}" ] = new \WP_Error( 'e20r_im_member', sprintf( __( 'Could not decode timezone value (%s)', Import_Members::PLUGIN_SLUG ), $record['membership_timestamp'] ) );
 					}
 				}
 
@@ -705,12 +691,12 @@ class Import_Member {
 		}
 
 		// Add any Discount Code use for this user
-		if ( ! empty( $fields['membership_code_id'] ) && ! empty( $order ) && ! empty( $order->id ) ) {
+		if ( ! empty( $record['membership_code_id'] ) && ! empty( $order ) && ! empty( $order->id ) ) {
 
 			if ( false === $wpdb->insert(
 				$pmpro_dc_uses_table,
 				array(
-					'code_id'   => $fields['membership_code_id'],
+					'code_id'   => $record['membership_code_id'],
 					'user_id'   => $user_id,
 					'order_id'  => $order->id,
 					'timestamp' => 'CURRENT_TIMESTAMP',
@@ -725,14 +711,13 @@ class Import_Member {
 							'Unable to set update discount code usage for code (ID: %1$d ) for user (user/order id: %2$d/%3$s)',
 							Import_Members::PLUGIN_SLUG
 						),
-						$fields['membership_code_id'],
+						$record['membership_code_id'],
 						$user_id,
 						$order->id
 					)
 				);
 			}
 		}
-
 	}
 
 	/**
