@@ -210,7 +210,7 @@ class ImportMembersTest extends Unit {
 			->once()
 			->with( array( Import_Members::get_instance(), 'admin_enqueue_scripts' ) );
 
-		Filters\expectAdded( 'e20r-import-usermeta' )
+		Filters\expectAdded( 'e20r_import_usermeta' )
 			->once()
 			->with( array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
 
