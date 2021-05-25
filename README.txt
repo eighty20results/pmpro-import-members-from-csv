@@ -358,8 +358,6 @@ Nag tracking can be disabled altogether with the `e20r_import_donation_tracking_
 1. Ongoing (background) import screen
 1. Default settings on the user import screen
 
-== Changelog ==
-
 == Known Issues ==
 
 N/A
