@@ -95,7 +95,7 @@ class ImportMembersTest extends Unit {
 	 */
 	public function fixture_plugin_row_meta_data() {
 		return array(
-			array( array(), 'class.pmpro-import-members.php', E20R_UNITTEST_ROW_COUNT ),
+			array( array(), 'class.pmpro-import-members.php', 0 ),
 			array(
 				array(
 					'settings' => sprintf(
@@ -106,7 +106,7 @@ class ImportMembersTest extends Unit {
 					),
 				),
 				'class.pmpro-import-members.php',
-				( E20R_UNITTEST_ROW_COUNT + 1 ),
+				1,
 			),
 			array( array(), 'class-loader.php', 0 ),
 			array(
@@ -134,7 +134,7 @@ class ImportMembersTest extends Unit {
 					),
 				),
 				'class.pmpro-import-members.php',
-				E20R_UNITTEST_ROW_COUNT,
+				3,
 			),
 			array(
 				array(
@@ -161,7 +161,7 @@ class ImportMembersTest extends Unit {
 					),
 				),
 				'class-pmpro-import-members.php', // Note, not the correct plugin file string
-				E20R_UNITTEST_ROW_COUNT,
+				3,
 			),
 		);
 	}
@@ -173,7 +173,7 @@ class ImportMembersTest extends Unit {
 	 * @test
 	 */
 	public function test_load_hooks() {
-
+		
 		Actions\expectAdded( 'plugins_loaded' )
 			->once()
 			->with( array( Ajax::get_instance(), 'load_hooks' ), 99 );
@@ -268,6 +268,8 @@ class ImportMembersTest extends Unit {
 		if ( ! function_exists( 'get_site_option' ) ) {
 			Functions\expect( 'get_site_option' )
 				->andReturn( $plugin_list );
+		} else {
+			echo "Unexpected outcome: The get_site_option() function is defined!?!";
 		}
 
 		$result = Import_Members::is_pmpro_active();
@@ -326,12 +328,13 @@ class ImportMembersTest extends Unit {
 
 		if ( ! function_exists( 'delete_option' ) ) {
 			Functions\expect( 'delete_option' )
-				->once()
 				->with( 'e20r_import_has_donated' );
 
 			Functions\expect( 'delete_option' )
 				->once()
 				->with( 'e20r_link_for_sponsor' );
+		} else {
+			echo "Unexpected outcome: The delete_option() function is defined!?!";
 		}
 
 		Import_Members::deactivation();
