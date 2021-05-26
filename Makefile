@@ -2,6 +2,7 @@ DOCKER_USER ?= eighty20results
 E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
 WP_IMAGE_VERSION ?= 1.0
 COMPOSER_VERSION ?= 1.29.2
+UTILITIES_VER ?= 1.0.9
 
 ###
 # Standard settings for Makefile - Probably won't need to change anything here
@@ -27,6 +28,7 @@ DB_VERSION ?= latest
 WORDPRESS_DB_HOST ?= localhost
 WP_VERSION ?= latest
 WP_DEPENDENCIES ?= paid-memberships-pro
+E20R_UTILITIES_PATH ?= ../Utilities/build/kits
 WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
@@ -165,7 +167,17 @@ docker-compose:
 		sudo chmod +x /usr/local/bin/docker-compose ; \
 	fi
 
-deps: clean docker-compose composer-dev
+00-e20r-utilities:
+	@echo "Loading the Utilities plugin dependency from $(E20R_UTILITIES_PATH)/00-e20r-utilities-$(UTILITIES_VER).zip"
+	@if [[ -f $(E20R_UTILITIES_PATH)/00-e20r-utilities-$(UTILITIES_VER).zip ]]; then \
+  		echo "Copying utilities .zip file to destination" && \
+  		mkdir -p "inc/wp_plugins/00-e20r-utilities" && \
+		cp -r $(E20R_UTILITIES_PATH)/00-e20r-utilities-$(UTILITIES_VER).zip ./inc/wp_plugins/ && \
+		$(UNZIP) -o "inc/wp_plugins/00-e20r-utilities-$(UTILITIES_VER).zip" -d inc/wp_plugins/ 2>&1 > /dev/null && \
+		  rm -f "inc/wp_plugins/00-e20r-utilities-$(UTILITIES_VER).zip"; \
+	fi
+
+deps: clean docker-compose composer-dev 00-e20r-utilities
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "inc/wp_plugins/$${dep_plugin}" ]]; then \
@@ -243,7 +255,8 @@ code-standard-test:
 wp-unit-test: deps start-stack db-import
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress "pwd && inc/bin/codecept run -v wpunit --coverage --coverage-html"
+		wordpress inc/bin/codecept run -v wpunit
+		# --coverage --coverage-html
 
 acceptance-test: deps start-stack db-import
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
