@@ -2,7 +2,6 @@ DOCKER_USER ?= eighty20results
 E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
 WP_IMAGE_VERSION ?= 1.0
 COMPOSER_VERSION ?= 1.29.2
-UTILITIES_VER ?= 1.0.9
 
 ###
 # Standard settings for Makefile - Probably won't need to change anything here
@@ -19,7 +18,7 @@ COMPOSER_BIN := composer.phar
 APACHE_RUN_USER ?= $(shell id -u)
 # APACHE_RUN_GROUP ?= $(shell id -g)
 APACHE_RUN_GROUP ?= $(shell id -u)
-SQL_BACKUP_FILE ?= $(PWD)/docker/test/db_backup
+SQL_BACKUP_FILE ?= $(PWD)/.circleci/docker/test/db_backup
 MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
@@ -28,8 +27,9 @@ DB_VERSION ?= latest
 WORDPRESS_DB_HOST ?= localhost
 WP_VERSION ?= latest
 WP_DEPENDENCIES ?= paid-memberships-pro
-E20R_UTILITIES_PATH ?= ../Utilities/build/kits
+E20R_DEPENDENCIES ?= 00-e20r-utilities
 WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
+E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 CONTAINER_ACCESS_TOKEN := $(shell [[ -f ./docker.hub.key ]] && cat ./docker.hub.key)
@@ -168,14 +168,16 @@ docker-compose:
 	fi
 
 00-e20r-utilities:
-	@echo "Loading the Utilities plugin dependency from $(E20R_UTILITIES_PATH)/00-e20r-utilities-$(UTILITIES_VER).zip"
-	@if [[ -f $(E20R_UTILITIES_PATH)/00-e20r-utilities-$(UTILITIES_VER).zip ]]; then \
-  		echo "Copying utilities .zip file to destination" && \
-  		mkdir -p "inc/wp_plugins/00-e20r-utilities" && \
-		cp -r $(E20R_UTILITIES_PATH)/00-e20r-utilities-$(UTILITIES_VER).zip ./inc/wp_plugins/ && \
-		$(UNZIP) -o "inc/wp_plugins/00-e20r-utilities-$(UTILITIES_VER).zip" -d inc/wp_plugins/ 2>&1 > /dev/null && \
-		  rm -f "inc/wp_plugins/00-e20r-utilities-$(UTILITIES_VER).zip"; \
-	fi
+	@echo "Loading E20R custom plugin dependencies"
+	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
+  		if [[ ! -d "inc/wp_plugins/$${e20r_plugin}" ]]; then \
+  		  echo "Download and install $${e20r_plugin} to inc/wp_plugins/$${e20r_plugin}" && \
+		  mkdir -p "inc/wp_plugins/$${e20r_plugin}" && \
+		  $(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "inc/wp_plugins/$${e20r_plugin}.zip" -s && \
+		  $(UNZIP) -o "inc/wp_plugins/$${e20r_plugin}.zip" -d inc/wp_plugins/ 2>&1 > /dev/null && \
+		  rm -f "inc/wp_plugins/$${e20r_plugin}.zip" ; \
+		fi ; \
+  	done
 
 deps: clean docker-compose composer-dev 00-e20r-utilities
 	@echo "Loading WordPress plugin dependencies"
@@ -183,7 +185,7 @@ deps: clean docker-compose composer-dev 00-e20r-utilities
   		if [[ ! -d "inc/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to inc/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "inc/wp_plugins/$${dep_plugin}" && \
-  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o i"nc/wp_plugins/$${dep_plugin}.zip" -s && \
+  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "inc/wp_plugins/$${dep_plugin}.zip" -s && \
   		  $(UNZIP) -o "inc/wp_plugins/$${dep_plugin}.zip" -d inc/wp_plugins/ 2>&1 > /dev/null && \
   		  rm -f "inc/wp_plugins/$${dep_plugin}.zip" ; \
   		fi ; \
@@ -204,9 +206,11 @@ db-import: start-stack
 	@bin/wait-for-db.sh '$(MYSQL_USER)' '$(MYSQL_PASSWORD)' '$(WORDPRESS_DB_HOST)' '$(E20R_PLUGIN_NAME)'
 	@if [[ -f "$(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql" ]]; then \
   		echo "Loading WordPress data to use for testing $(E20R_PLUGIN_NAME)"; \
-	  	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-        	exec -T database \
-        	/usr/bin/mysql -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) < $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql; \
+  		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+	  		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+        		exec -T database \
+        		/usr/bin/mysql -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) < $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql; \
   	fi
 
 stop-stack:
