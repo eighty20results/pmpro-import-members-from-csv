@@ -39,16 +39,10 @@ namespace E20R\Import_Members\Modules\BuddyPress;
 
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Validate\Base_Validation;
 
-class Column_Validation {
-
-	/**
-	 * Instance of the column validation logic for BuddyPress
-	 *
-	 * @var null|Column_Validation
-	 */
-	private static $instance = null;
-
+class Column_Validation extends Base_Validation {
+	
 	/**
 	 * Column_Validation constructor.
 	 *
@@ -66,6 +60,12 @@ class Column_Validation {
 
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
+			
+			// Add list of errors to ignore for the pmpro module
+			self::$instance->errors_to_ignore = apply_filters(
+				'e20r_import_errors_to_ignore',
+				'buddypress'
+			);
 		}
 
 		return self::$instance;

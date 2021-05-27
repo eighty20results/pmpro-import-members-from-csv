@@ -23,29 +23,12 @@ namespace E20R\Import_Members\Modules\PMPro;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Validate\Validate;
+use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Import_Members;
 use E20R\Utilities\Utilities;
 
-class Column_Validation {
-	
-	/**
-	 * Instance of the column validation logic for PMPro
-	 *
-	 * @var null|Column_Validation
-	 */
-	private static $instance = null;
-	
-	private $error_log = null;
-	
-	/**
-	 * Column_Validation constructor.
-	 *
-	 * @access private
-	 */
-	private function __construct() {
-		$this->error_log = Error_Log::get_instance();
-	}
+class Column_Validation extends Base_Validation {
 	
 	/**
 	 * Get or instantiate and get the current class
@@ -56,6 +39,12 @@ class Column_Validation {
 		
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
+			
+			// Add list of errors to ignore for the pmpro module
+			self::$instance->errors_to_ignore = apply_filters(
+				'e20r_import_errors_to_ignore',
+				'pmpro'
+			);
 		}
 		
 		return self::$instance;

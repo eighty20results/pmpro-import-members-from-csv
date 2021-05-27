@@ -20,18 +20,12 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
 
-class Column_Validation {
-
-	/**
-	 * Instance of the column validation logic for PMPro
-	 *
-	 * @var null|Column_Validation
-	 */
-	private static $instance = null;
-
+class Column_Validation extends Base_Validation {
+	
 	/**
 	 * Column_Validation constructor.
 	 *
