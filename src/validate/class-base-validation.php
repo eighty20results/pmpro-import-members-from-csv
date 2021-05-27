@@ -51,7 +51,7 @@ abstract class Base_Validation {
 	 *
 	 * @access private
 	 */
-	private function __construct() {
+	protected function __construct() {
 		$this->error_log = Error_Log::get_instance();
 	}
 	
