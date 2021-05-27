@@ -56,6 +56,22 @@ abstract class Base_Validation {
 	}
 	
 	/**
+	 * Should we ignore the column validation error type specified?
+	 *
+	 * @param string $error_key
+	 *
+	 * @return bool
+	 */
+	protected function ignore_validation_error( $error_key ) {
+		
+		if ( in_array( $error_key, $this->errors_to_ignore, true ) ) {
+			return $this->errors_to_ignore[$error_key];
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Get or instantiate and get the current class
 	 *
 	 * @return Column_Validation|null
@@ -68,4 +84,13 @@ abstract class Base_Validation {
 	 * @return null
 	 */
 	abstract public function load_actions();
+	
+	/**
+	 * Load error keys that represents non-fatal validation errors for a given module
+	 *
+	 * @param array $ignored_error_list - Error keys we can treat as non-fatal
+	 * @param string $module_name - Name of the module we're processing
+	 * @return array
+	 */
+	abstract public function load_ignored_module_errors( $ignored_error_list, $module_name = 'base');
 }
