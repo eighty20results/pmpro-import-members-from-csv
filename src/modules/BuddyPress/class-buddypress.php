@@ -59,7 +59,7 @@ class BuddyPress {
 	 */
 	public function load_hooks() {
 		
-		add_filter( 'e20r-import-members-supported-field-list', array( $this, 'load_fields' ), 2, 1 );
+		add_filter( 'e20r_import_supported_field_list', array( $this, 'load_fields' ), 2, 1 );
 	}
 	
 	/**
