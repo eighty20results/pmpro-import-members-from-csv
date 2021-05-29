@@ -25,7 +25,7 @@ namespace E20R\TestFrameworkInATweet;
  * @param string $m - Text to describe the expected test outcome
  * @param mixed $p Unit test function definition
  */
-function it( $m, $p ) {
+function runner( $m, $p ) {
 	$d                      = \debug_backtrace( 0 )[0];
 	\is_callable( $p ) && $p = $p();
 	global $e;
