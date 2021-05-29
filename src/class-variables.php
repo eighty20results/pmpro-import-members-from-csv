@@ -218,7 +218,7 @@ class Variables {
 			$upload_dir          = wp_upload_dir();
 			$class->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
 			$class->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
-			$class->fields       = apply_filters( 'e20r-import-members-supported-field-list', array() );
+			$class->fields       = apply_filters( 'e20r_import_supported_field_list', array() );
 			
 			/**
 			 * @since v2.60 - ENHANCEMENT: Trigger attempted link of sponsor info after everything is done
@@ -298,8 +298,8 @@ class Variables {
 		$error_log = Error_Log::get_instance();
 		$csv_file  = CSV::get_instance();
 		
-		$tmp_name       = isset( $_FILES['members_csv']['tmp_name'] ) ? $_FILES['members_csv']['tmp_name'] : $this->filename;
-		$this->filename = isset( $_FILES['members_csv']['name'] ) ? $_FILES['members_csv']['name'] : $this->filename;
+		$tmp_name       = $_FILES['members_csv']['tmp_name'] ?? $this->filename;
+		$this->filename = $_FILES['members_csv']['name'] ?? $this->filename;
 		
 		if ( empty( $this->filename ) ) {
 			$this->filename = basename( get_transient( 'e20r_import_filename' ) );
