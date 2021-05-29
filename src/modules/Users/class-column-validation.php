@@ -20,19 +20,12 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import_Members;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
 
 class Column_Validation extends Base_Validation {
-	
-	/**
-	 * Column_Validation constructor.
-	 *
-	 * @access private
-	 */
-	private function __construct() {
-	}
 
 	/**
 	 * Get or instantiate and get the current class
@@ -43,6 +36,20 @@ class Column_Validation extends Base_Validation {
 
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
+			
+			add_filter(
+				'e20r_import_errors_to_ignore',
+				array( self::$instance, 'load_ignored_module_errors' ),
+				10,
+				2
+			);
+			
+			// Add list of errors to ignore for the BuddyPress module
+			self::$instance->errors_to_ignore = apply_filters(
+				'e20r_import_errors_to_ignore',
+				self::$instance->errors_to_ignore,
+				'users'
+			);
 		}
 
 		return self::$instance;
@@ -60,7 +67,30 @@ class Column_Validation extends Base_Validation {
 			3
 		);
 	}
-
+	
+	/**
+	 * Define the module specific errors to ignore
+	 *
+	 * @param array $ignored_error_list - List of error keys to ignore/treat as non-fatal
+	 * @param string $module_name - Name of the module (Users)
+	 *
+	 * @return array
+	 */
+	public function load_ignored_module_errors( $ignored_error_list, $module_name = 'users' ) {
+		
+		if ( $module_name !== 'users' ) {
+			return $ignored_error_list;
+		}
+		
+		$this->error_log->debug("Loading WP User specific error(s) to ignore");
+		
+		$this->errors_to_ignore = array(
+			'' => true
+		);
+		
+		return $ignored_error_list + $this->errors_to_ignore;
+	}
+	
 	/**
 	 * @param array $record
 	 *
@@ -98,7 +128,10 @@ class Column_Validation extends Base_Validation {
 	 * @return bool|int|false
 	 */
 	public function validate_user_id( $has_error, $user_id, $record, $field_name = null ) {
-
+		
+		global $e20r_import_err;
+		
+		
 		$error_log = Error_Log::get_instance();
 		$variables = Variables::get_instance();
 
@@ -127,10 +160,12 @@ class Column_Validation extends Base_Validation {
 		$error_log->debug( 'Record being processed: ' . print_r( $record, true ) );
 
 		if ( false === $has_id && false === $has_login && false === $has_email ) {
+			$e20r_import_err['error_no_id'] = __( '', Import_Members::$plugin_path );
 			return Status::E20R_ERROR_NO_USER_ID;
 		}
 
 		if ( false === $has_email && true === $has_login ) {
+			$e20r_import_err['error_no_email'] = __( 'Error: No email address supplied for user record # %d', Import_Members::$plugin_path );
 			return Status::E20R_ERROR_NO_EMAIL;
 		}
 

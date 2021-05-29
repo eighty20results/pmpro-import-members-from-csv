@@ -197,30 +197,17 @@ class Import_Member {
 			$pmpro_dc_table      = "{$wpdb->base_prefix}pmpro_discount_codes";
 			$pmpro_dc_uses_table = "{$wpdb->base_prefix}pmpro_discount_codes_uses";
 		}
-
+		
 		$has_error = apply_filters(
 			'e20r_import_members_validate_field_data',
 			$has_error,
 			$user_id,
 			$user_meta
 		);
+		
 		$error_log->debug( "Error while validating data for {$user_id}? " . ( $has_error ? 'Yes' : 'No' ) );
-
 		$import_member_data = ( ! $has_error );
-
-		if ( true === $has_error ) {
-			$import_member_data = apply_filters(
-				'e20r_import_members_continue_member_import',
-				$import_member_data,
-				$user_id,
-				$user_meta
-			);
-			$error_log->debug(
-				'Should we continue importing member data in spite of error? ' .
-				( $import_member_data ? 'Yes' : 'No' )
-			);
-		}
-
+		
 		$error_log->debug( "Data for {$user_id} has been validated..." );
 
 		$welcome_warning = $variables->get( 'welcome_mail_warning' );

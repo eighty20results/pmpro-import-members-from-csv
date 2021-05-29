@@ -40,9 +40,17 @@ class Column_Validation extends Base_Validation {
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
 			
+			add_filter(
+				'e20r_import_errors_to_ignore',
+				array( self::$instance, 'load_ignored_module_errors' ),
+				10,
+				2
+			);
+			
 			// Add list of errors to ignore for the pmpro module
 			self::$instance->errors_to_ignore = apply_filters(
 				'e20r_import_errors_to_ignore',
+				self::$instance->errors_to_ignore,
 				'pmpro'
 			);
 		}
@@ -70,6 +78,31 @@ class Column_Validation extends Base_Validation {
 		add_filter( 'e20r_import_members_validate_field_data', array( self::get_instance(), 'has_supported_gateway' ), 11, 3 );
 		add_filter( 'e20r_import_members_validate_field_data', array( self::get_instance(), 'has_gateway_environment' ), 12, 3 );
 		add_filter( 'e20r_import_members_validate_field_data', array( self::get_instance(), 'correct_gw_environment' ), 13, 3 );
+	}
+	
+	/**
+	 * Define the module specific errors to ignore
+	 *
+	 * @param array $ignored_error_list - List of error keys to ignore/treat as non-fatal
+	 * @param string $module_name - Name of the module (BuddyPress)
+	 *
+	 * @return array
+	 */
+	public function load_ignored_module_errors( $ignored_error_list, $module_name = 'buddypress' ) {
+		
+		if ( $module_name !== 'buddypress' ) {
+			return $ignored_error_list;
+		}
+		
+		$this->error_log->debug("Loading BuddyPress specific error(s)");
+		
+		// List of validation errors we should ignore
+		// (don't prevent importing the record as a result of this validation error)
+		$this->errors_to_ignore = array(
+			'inactive_and_enddate' => true
+		);
+		
+		return $ignored_error_list + $this->errors_to_ignore;
 	}
 	
 	/**
@@ -121,7 +154,7 @@ class Column_Validation extends Base_Validation {
 		);
 		
 		$e20r_import_err['invalid_membership_id'] = new \WP_Error( 'e20r_im_member', $msg );
-		$has_error                                = true;
+		$has_error                                = true && ( ! $this->ignore_validation_error( 'invalid_membership_id' ) );;
 	
 		return $has_error;
 	}
@@ -164,12 +197,22 @@ class Column_Validation extends Base_Validation {
 			);
 			
 			$errors[]  = new \WP_Error( 'e20r_im_member', $msg );
-			$has_error = true;
 			
 			$should_be = Time::convert( $fields['membership_startdate'] );
 			$should_be = false === $should_be ? current_time( 'timestamp' ) : $should_be;
 			
-			$e20r_import_err['startdate_format'] = sprintf( __( 'Error: The %2$smembership_startdate column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected format: \'%4$s\'). Membership data will not be imported for this user (ID: %5$d )!', Import_Members::PLUGIN_SLUG ), $fields['membership_startdate'], '<strong>', '</strong>', date( 'Y-m-d h:i:s', $should_be ), $user_id );
+			$e20r_import_err['startdate_format'] = sprintf(
+				__(
+					'Error: The %2$smembership_startdate column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected format: \'%4$s\'). Membership data will not be imported for this user (ID: %5$d )!',
+					Import_Members::PLUGIN_SLUG ),
+				$fields['membership_startdate'],
+				'<strong>',
+				'</strong>',
+				date( 'Y-m-d h:i:s', $should_be ),
+				$user_id
+			);
+			
+			$has_error = true && ( ! $this->ignore_validation_error( 'startdate_format' ) );
 		}
 		
 		return $has_error;
@@ -228,7 +271,7 @@ class Column_Validation extends Base_Validation {
 			);
 			
 			$e20r_import_err['no_startdate'] = new \WP_Error( 'e20r_im_member', $msg );
-			$has_error                       = true;
+			$has_error                       = true && ( ! $this->ignore_validation_error( 'no_startdate' ) );;;
 		}
 		
 		return $has_error;
@@ -268,7 +311,7 @@ class Column_Validation extends Base_Validation {
 			$msg = sprintf( __( 'Error: The membership end date (membership_enddate) column for the user (ID: %d) in the import .CSV file must use a MySQL formatted date (YYYY-MM-DD HH:MM:SS). You appear to have used \'%s\' (Membership data not imported!)', Import_Members::PLUGIN_SLUG ), $user_id, $fields['membership_enddate'] );
 			
 			$e20r_import_err['bad_format_enddate'] = new \WP_Error( 'e20r_im_member', $msg );
-			$has_error                             = true;
+			$has_error                             = true && ( ! $this->ignore_validation_error( 'bad_format_enddate' ) );;
 			
 			$should_be = Time::convert( $fields['membership_enddate'] );
 			$should_be = false === $should_be ? current_time( 'timestamp' ) : $should_be;
@@ -324,6 +367,7 @@ class Column_Validation extends Base_Validation {
 			);
 			
 			$e20r_import_err['inactive_and_enddate'] = new \WP_Error( 'e20r_im_member', $msg );
+			$has_error                               = true && ( ! $this->ignore_validation_error( 'inactive_and_enddate' ) );
 		}
 		
 		return $has_error;
@@ -365,7 +409,7 @@ class Column_Validation extends Base_Validation {
 			$msg = sprintf( __( "Error: The membership_status column for user (ID: %d) contains an unexpected value (expected values: 'active' or 'inactive'). You used '%s' (Membership data not imported!)", Import_Members::PLUGIN_SLUG ), $fields['membership_status'], $user_id );
 			
 			$e20r_import_err['valid_status'] = new \WP_Error( 'e20r_im_member', $msg );
-			$has_error                       = true;
+			$has_error                       = true && ( ! $this->ignore_validation_error( 'valid_status' ) );;
 		}
 		
 		return $has_error;
@@ -416,7 +460,7 @@ class Column_Validation extends Base_Validation {
 			);
 			
 			$e20r_import_err['link_subscription'] = new \WP_Error( 'e20r_im_member', $msg );
-			$has_error                            = true;
+			$has_error                            = true && ( ! $this->ignore_validation_error( 'link_subscription' ) );
 		}
 		
 		return $has_error;
