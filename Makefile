@@ -256,6 +256,9 @@ code-standard-test:
 		--extensions=php \
 		*.php src/members-list/admin/*/*.php
 
+unit-test: deps
+	@inc/bin/codecept run --debug unit
+
 wp-unit-test: deps start-stack db-import
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
