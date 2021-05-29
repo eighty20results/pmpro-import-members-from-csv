@@ -75,6 +75,9 @@
         "psr-4": {
             "E20R\\": "",
             "E20R\\Test\\": "tests/",
+            "E20R\\Test\\Unit\\": "tests/unit",
+            "E20R\\Test\\Unit\\Inc\\": "tests/unit/inc",
+            "E20R\\Test\\Unit\\Fixtures\\": "tests/unit/fixtures",
             "E20R\\Import_Members\\Import\\": "src/import",
             "E20R\\Import_Members\\Modules\\Users\\": "src/modules/Users",
             "E20R\\Import_Members\\Modules\\PMPro\\": "src/modules/PMPro",
