@@ -98,36 +98,9 @@ class PMPro {
 	 */
 	public function load_hooks() {
 		
-		add_filter( 'e20r-import-members-supported-field-list', array( $this, 'load_fields' ), 1, 1 );
-		add_filter( 'e20r-import-members-set-default-field-values', array( $this, 'update_field_values' ), 2, 3 );
-		
-		add_filter( 'e20r_import_members_continue_member_import', array(
-			$this,
-			'continue_importing_member_data',
-		), 1, 3 );
-		
-	}
-	
-	/**
-	 * @param bool  $continue
-	 * @param int   $user_id
-	 * @param array $fields
-	 *
-	 * @return bool
-	 */
-	public function continue_importing_member_data( $continue, $user_id, $fields ) {
-		
-		global $e20r_import_err;
-		
-		$fatal_error_fields = array(
-			isset( $e20r_import_err[''] ),
-		);
-		
-		if ( in_array( true, $fatal_error_fields, true ) ) {
-			$continue = false;
-		}
-		
-		return $continue;
+		add_filter( 'e20r_import_supported_field_list', array( $this, 'load_fields' ), 1, 1 );
+		// TODO: Add apply_filters() for e20r_import_default_field_values
+		add_filter( 'e20r_import_default_field_values', array( $this, 'update_field_values' ), 2, 3 );
 	}
 	
 	

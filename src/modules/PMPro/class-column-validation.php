@@ -99,7 +99,10 @@ class Column_Validation extends Base_Validation {
 		// List of validation errors we should ignore
 		// (don't prevent importing the record as a result of this validation error)
 		$this->errors_to_ignore = array(
-			'inactive_and_enddate' => true
+			'unrecognized_enddate' => true,
+			'inactive_and_enddate' => true,
+			'link_subscription'    => true,
+
 		);
 		
 		return $ignored_error_list + $this->errors_to_ignore;
