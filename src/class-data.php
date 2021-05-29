@@ -411,13 +411,10 @@ class Data {
 					break; // Skip
 				
 				case 'membership_id':
-					$db_columns[ $col->Field ] = null;
-					break;
-				
 				case 'user_id':
 					$db_columns[ $col->Field ] = null;
 					break;
-				
+					
 				default:
 					$db_columns["membership_{$col->Field}"] = null;
 			}
