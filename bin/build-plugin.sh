@@ -7,6 +7,7 @@ short_name="pmpro-import-members-from-csv"
 remote_server="eighty20results.com"
 declare -a include=( \
 	"css" \
+	"docs" \
 	"emails" \
 	"examples" \
 	"inc" \
