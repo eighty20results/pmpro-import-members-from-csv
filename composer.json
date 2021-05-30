@@ -61,32 +61,27 @@
     "autoload": {
         "psr-4": {
             "E20R\\": "",
+            "E20R\\Import\\": "./",
             "E20R\\Import_Members\\Import\\": "src/import",
             "E20R\\Import_Members\\Modules\\Users\\": "src/modules/Users",
             "E20R\\Import_Members\\Modules\\PMPro\\": "src/modules/PMPro",
             "E20R\\Import_Members\\Modules\\BuddyPress\\": "src/modules/BuddyPress",
-            "E20R\\Import_Members\\": [
-                "./",
-                "src/"
-            ]
+            "E20R\\Import_Members\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "E20R\\": "",
+            "E20R\\Import\\": "./",
             "E20R\\Test\\": "tests/",
             "E20R\\Test\\Unit\\": "tests/unit",
-            "E20R\\Test\\Unit\\Inc\\": "tests/unit/inc",
             "E20R\\Test\\Unit\\Fixtures\\": "tests/unit/fixtures",
             "E20R\\Import_Members\\Import\\": "src/import",
             "E20R\\Import_Members\\Modules\\Users\\": "src/modules/Users",
             "E20R\\Import_Members\\Modules\\PMPro\\": "src/modules/PMPro",
             "E20R\\Import_Members\\Modules\\BuddyPress\\": "src/modules/BuddyPress",
             "E20R\\Import_Members\\Validate\\": "src/validate",
-            "E20R\\Import_Members\\": [
-                "./",
-                "src/"
-            ]
+            "E20R\\Import_Members\\": "src/"
         }
     }
 }
