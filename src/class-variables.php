@@ -256,7 +256,7 @@ class Variables {
 		$this->per_partial = apply_filters( 'e20r_import_records_per_scan', $this->per_partial );
 		
 		// User data fields list used to differentiate with user meta
-		$this->user_fields = apply_filters( 'e20r-import-members-wpuser-fields', array(
+		$this->user_fields = apply_filters( 'e20r_import_wpuser_fields', array(
 				'ID',
 				'user_login',
 				'user_pass',
@@ -377,12 +377,12 @@ class Variables {
 		
 		// Add time for creating order(s) (reduces # of records per iteration)
 		if ( true === (bool) $class->create_order ) {
-			$per_record_time += apply_filters( 'e20r_order_link_time', 1 );
+			$per_record_time += apply_filters( 'e20r_import_order_link_timeout', 1 );
 		}
 		
 		// Add time for sending the welcome message (reduces # of records per iteration)
 		if ( true === (bool) $class->send_welcome_email ) {
-			$per_record_time += apply_filters( 'e20r_weclome_msg_time', 4 );
+			$per_record_time += apply_filters( 'e20r_import_welcome_email_time', 4 );
 		}
 		
 		return $per_record_time;
@@ -456,12 +456,7 @@ class Variables {
 	private function get_current_vars() {
 		
 		$settings = array();
-		$excluded = apply_filters( 'e20r-import-settings-to-exclude',
-			array(
-				'instance',
-			
-			)
-		);
+		$excluded = array( 'instance', );
 		
 		foreach ( get_object_vars( $this ) as $var_name => $value ) {
 			
