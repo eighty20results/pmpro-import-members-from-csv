@@ -19,22 +19,18 @@
  *  You can contact us at mailto:info@eighty20results.com
  */
 
-namespace E20R\Test\Unit\Includes;
+namespace E20R\Test\Unit\Test_In_A_Tweet;
 
 if ( ! defined( 'BASE_SRC_PATH' ) ) {
 	define( 'BASE_SRC_PATH', '/../..' );
 }
 
-require_once __DIR__ . BASE_SRC_PATH . '/../inc/autoload.php';
-require_once __DIR__ . '/test-framework-in-a-tweet.php';
-
 use Brain\Monkey;
 use Codeception\Test\Unit;
-use Brain\Monkey\Functions;
-use E20R\TestFrameworkInATweet;
-use function E20R\TestFrameworkInATweet\runner;
 
-abstract class BM_Base extends Unit {
+abstract class TFIAT extends Unit {
+	
+	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 	
 	/**
 	 * Unit Test harness using the test-framework-in-a-tweet
@@ -52,7 +48,7 @@ abstract class BM_Base extends Unit {
 			$this->loadStubs();
 			$this->loadTestSources();
 			ob_start();
-			TestFrameworkInATweet\runner( $message, $function );
+			$this->runner( $message, $function );
 			$output = \ob_get_clean();
 			Monkey\tearDown();
 			echo "${output}";
@@ -62,6 +58,21 @@ abstract class BM_Base extends Unit {
 			echo  "\e[31m✘ It {$message} \e[0m";
 			echo "FAIL in: {$d['file']} #{$d['line']}. $msg\n";
 		}
+	}
+	
+	/**
+	 * The base Test Framework In a Tweet execution function
+	 *
+	 * @param string $m - Text to describe the expected test outcome
+	 * @param mixed $p Unit test function definition
+	 */
+	function runner( string $m, $p ) {
+		$d                      = \debug_backtrace( 0 )[0];
+		\is_callable( $p ) && $p = $p();
+		global $e;
+		$e = $e || ! $p;
+		$o = \esc_attr__( 'e[3' . ( $p ? '2m✔' : '1m✘' ) . " It ${m}e[0m" );
+		echo \esc_attr__( ( $p ? "${o}n" : "${o} FAIL in: {$d['file']} #{$d['line']}n" ) );
 	}
 	
 	/**
@@ -79,3 +90,10 @@ abstract class BM_Base extends Unit {
 	 */
 	public abstract function loadTestSources() : void;
 }
+
+\register_shutdown_function(
+	function() {
+		global $e;
+		( ! empty( $e ) ) && die( 1 );
+	}
+);

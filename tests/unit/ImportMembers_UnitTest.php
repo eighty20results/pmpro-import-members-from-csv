@@ -1,19 +1,19 @@
 <?php
 namespace E20R\Test\Unit;
 
-require_once __DIR__ . '/includes/BM_Base.php';
+require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
 require_once __DIR__ . '/fixtures/fixtures.php';
 
 use Brain\Monkey\Functions;
 use E20R\Import_Members\Import_Members;
-use PHPUnit\Framework;
-use E20R\Test\Unit\Includes\BM_Base;
+use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
 
 // Functions to import from other namespaces
 use function E20R\Test\Unit\Fixtures\plugin_row_meta_data;
+use function PHPUnit\Framework\assertEquals;
 
 
-class UnitImportMembersTest extends BM_Base {
+class ImportMembers_UnitTest extends TFIAT {
 	
 	/**
 	 * Load all function mocks we need (with namespaces)
@@ -54,12 +54,15 @@ class UnitImportMembersTest extends BM_Base {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
+		require_once __DIR__ . BASE_SRC_PATH . '/src/class-import-members.php';
+
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-variables.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-csv.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-page.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-ajax.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/class.pmpro-import-members.php';
+		require_once __DIR__ . BASE_SRC_PATH . '/inc/autoload.php';
 	}
 	
 	/**
@@ -91,10 +94,11 @@ class UnitImportMembersTest extends BM_Base {
 }
 
 // Instantiate the Unit test class we defined
-$bm = new UnitImportMembersTest();
+$bm = new ImportMembers_UnitTest();
 
 /**
  * Tests the plugin_row_meta() method in Import_Members()
+ * @dataProvider \E20R\Test\Unit\Fixtures\plugin_row_meta_data()
  */
 $bm->it(
 	'should test that we generate the expected plugin metadata',
@@ -103,14 +107,11 @@ $bm->it(
 		$fixture_list = plugin_row_meta_data();
 		
 		foreach ( $fixture_list as $fixture ) {
-			# echo "Fixture: " . print_r( $fixture, true );
 			list( $row_meta_list, $file_name, $expected_result ) = $fixture;
 			$class    = Import_Members::get_instance();
 			$row_list = $class->plugin_row_meta( $row_meta_list, $file_name );
-			
 			$result = \count( $row_list );
-			echo "Result: {$result} for row list: " . print_r( $row_list, true  );
-			Framework\assertEquals( $expected_result, $result );
+			assertEquals( $expected_result, $result );
 		}
 	}
 );
