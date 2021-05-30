@@ -365,3 +365,6 @@ N/A
 == Changelog ==
 
 See the official [CHANGELOG.md file](CHANGELOG.md).
+
+== Supported Filters and Actions ==
+The list of filters and actions supported by this plugin can be found in the [Filters](./FILTERS.md) and [Actions](./ACTIONS.md) documentation.
