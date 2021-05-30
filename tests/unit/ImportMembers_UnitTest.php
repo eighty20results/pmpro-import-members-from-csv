@@ -1,8 +1,24 @@
 <?php
+/**
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * ALL RIGHTS RESERVED
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 namespace E20R\Test\Unit;
 
 require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
-require_once __DIR__ . '/fixtures/fixtures.php';
 
 use Brain\Monkey\Functions;
 use E20R\Import_Members\Import_Members;
@@ -54,6 +70,7 @@ class ImportMembers_UnitTest extends TFIAT {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
+		require_once __DIR__ . '/fixtures/plugin_row_meta_data.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-import-members.php';
 
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
