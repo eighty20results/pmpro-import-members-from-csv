@@ -214,7 +214,7 @@ class ImportMembersTest extends Unit {
 			->once()
 			->with( array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
 
-		Actions\expectAdded( 'e20r-pre-member-import' )
+		Actions\expectAdded( 'e20r_before_user_import' )
 			->once()
 			->with( array( CSV::get_instance(), 'pre_import' ), 10, 2 );
 
