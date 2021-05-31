@@ -237,11 +237,11 @@ class ImportMembersTest extends Unit {
 		// TODO: Mock the remove_action call for is_iu_post_user_import"
 		// with `"pmprosm_is_iu_post_user_import", 20` as the function arguments
 
-		Actions\expectDone( 'e20r-import-load-licensed-modules' )
+		Actions\expectDone( 'e20r_import_load_licensed_modules' )
 			->atLeast()
 			->once();
 
-		Actions\expectDone( 'e20r-import-load-licensed-modules' )
+		Actions\expectDone( 'e20r_import_load_licensed_modules' )
 			->atLeast()
 			->once();
 

@@ -63,10 +63,10 @@ class Import_Sponsors {
 	 * Load action and filter handlers for the Import_Sponsors class
 	 */
 	public function load_actions() {
-		
-		add_action( 'e20r-import-load-licensed-modules', array( $this, 'load_sponsor_import' ) );
+
+		add_action( 'e20r_import_load_licensed_modules', array( $this, 'load_sponsor_import' ) );
 	}
-	
+
 	/**
 	 * Load licensed module(s) if license is active
 	 */
