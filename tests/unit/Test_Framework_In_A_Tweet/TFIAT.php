@@ -26,12 +26,13 @@ if ( ! defined( 'BASE_SRC_PATH' ) ) {
 }
 
 use Brain\Monkey;
-use Codeception\Test\Unit;
+use PHPUnit_Framework_TestCase;
+use function Brain\Monkey\Functions\stubEscapeFunctions;
 
-abstract class TFIAT extends Unit {
-	
+abstract class TFIAT extends PHPUnit_Framework_TestCase {
+
 	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-	
+
 	/**
 	 * Unit Test harness using the test-framework-in-a-tweet
 	 *
@@ -41,9 +42,10 @@ abstract class TFIAT extends Unit {
 	 * @param mixed $function - Function that will perform the test
 	 */
 	public function it( string $message, $function ): void {
-		$d = debug_backtrace( 0 )[0];
+		$d = debug_backtrace( 0 )[0]; // phpcs:ignore
 		try {
 			Monkey\setUp();
+			stubEscapeFunctions();
 			$this->loadMocks();
 			$this->loadStubs();
 			$this->loadTestSources();
