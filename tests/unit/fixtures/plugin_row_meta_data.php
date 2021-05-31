@@ -44,8 +44,8 @@ function plugin_row_meta_data() {
 				'settings' => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url( '/wp-admin/?page=pmpro-import-members' ),
-					__( 'Settings Page', Import_Members::PLUGIN_SLUG ),
-					__( 'Settings Page', Import_Members::PLUGIN_SLUG )
+					\__( 'Settings Page', 'pmpro-import-members-from-csv' ),
+					\__( 'Settings Page', 'pmpro-import-members-from-csv' )
 				),
 			),
 			'class.pmpro-import-members.php',
@@ -57,23 +57,23 @@ function plugin_row_meta_data() {
 				'donate'        => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url_raw( 'https://www.paypal.me/eighty20results' ),
-					__(
+					\__(
 						'Donate to support updates, maintenance and tech support for this plugin',
-						Import_Members::PLUGIN_SLUG
+						'pmpro-import-members-from-csv'
 					),
-					__( 'Donate', Import_Members::PLUGIN_SLUG )
+					\__( 'Donate', 'pmpro-import-members-from-csv' )
 				),
 				'documentation' => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
-					__( 'View the documentation', Import_Members::PLUGIN_SLUG ),
-					__( 'Docs', Import_Members::PLUGIN_SLUG )
+					\__( 'View the documentation', 'pmpro-import-members-from-csv' ),
+					\__( 'Docs', 'pmpro-import-members-from-csv' )
 				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
-					__( 'Visit the support forum', Import_Members::PLUGIN_SLUG ),
-					__( 'Support', Import_Members::PLUGIN_SLUG )
+					\__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
+					\__( 'Support', 'pmpro-import-members-from-csv' )
 				),
 			),
 			'class.pmpro-import-members.php',
@@ -84,23 +84,23 @@ function plugin_row_meta_data() {
 				'donate'        => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url_raw( 'https://www.paypal.me/eighty20results' ),
-					__(
+					\__(
 						'Donate to support updates, maintenance and tech support for this plugin',
-						Import_Members::PLUGIN_SLUG
+						'pmpro-import-members-from-csv'
 					),
-					__( 'Donate', Import_Members::PLUGIN_SLUG )
+					\__( 'Donate', 'pmpro-import-members-from-csv' )
 				),
 				'documentation' => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
-					__( 'View the documentation', Import_Members::PLUGIN_SLUG ),
-					__( 'Docs', Import_Members::PLUGIN_SLUG )
+					\__( 'View the documentation', 'pmpro-import-members-from-csv' ),
+					\__( 'Docs', 'pmpro-import-members-from-csv' )
 				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					\esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
-					__( 'Visit the support forum', Import_Members::PLUGIN_SLUG ),
-					__( 'Support', Import_Members::PLUGIN_SLUG )
+					\__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
+					\__( 'Support', 'pmpro-import-members-from-csv' )
 				),
 			),
 			'class-pmpro-import-members.php', // Note, not the correct plugin file string
