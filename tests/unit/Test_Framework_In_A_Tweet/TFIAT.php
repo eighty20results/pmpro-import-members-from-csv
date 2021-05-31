@@ -26,6 +26,7 @@ if ( ! defined( 'BASE_SRC_PATH' ) ) {
 }
 
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit_Framework_TestCase;
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
@@ -42,26 +43,31 @@ abstract class TFIAT extends PHPUnit_Framework_TestCase {
 	 * @param mixed $function - Function that will perform the test
 	 */
 	public function it( string $message, $function ): void {
-		$d = debug_backtrace( 0 )[0]; // phpcs:ignore
+		// @codingStandardsIgnoreStart
+		$d = debug_backtrace( 0 )[0];
 		try {
-			Monkey\setUp();
-			stubEscapeFunctions();
 			$this->loadMocks();
 			$this->loadStubs();
+			Monkey\setUp();
 			$this->loadTestSources();
 			ob_start();
 			$this->runner( $message, $function );
 			$output = \ob_get_clean();
 			Monkey\tearDown();
-			echo "${output}";
+			printf( '%s', $output );
 		} catch ( \Throwable $t ) {
 			$GLOBALS['e'] = true;
-			$msg          = $t->getMessage();
-			echo  "\e[31m✘ It {$message} \e[0m";
-			echo "FAIL in: {$d['file']} #{$d['line']}. $msg\n";
+			printf( '\e[31m✘ It %s \e[0m', $message );
+			printf(
+				'FAIL in: %s #%d. %s\n',
+				$d['file'],
+				$d['line'],
+				$t->getMessage()
+			);
 		}
+		// @codingStandardsIgnoreEnd
 	}
-	
+
 	/**
 	 * The base Test Framework In a Tweet execution function
 	 *
