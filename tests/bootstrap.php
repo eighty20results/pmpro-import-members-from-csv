@@ -45,9 +45,25 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 
 
 // Include the class for PluginTestCase
-if ( file_exists( __DIR__ . '/wpunit/inc/PluginTestCase.php' ) ) {
-	require_once __DIR__ . '/wpunit/inc/PluginTestCase.php';
-}
+//if ( file_exists( __DIR__ . '/wpunit/inc/PluginTestCase.php' ) ) {
+//	require_once __DIR__ . '/wpunit/inc/PluginTestCase.php';
+//}
+
+use AspectMock\Kernel;
+
+$loader = require __DIR__ . '/../inc/autoload.php';
+$loader->add( 'AspectMock', __DIR__ . '/../src' );
+$loader->add( 'demo', __DIR__ . '/_data' );
+$loader->register();
+
+$kernel = Kernel::getInstance();
+$kernel->init(
+	array(
+		'cacheDir'           => __DIR__ . '/_data/cache',
+		'includePaths'       => array( __DIR__ . '/_data/demo' ),
+		'interceptFunctions' => true,
+	)
+);
 
 # Load the plugin class file
-require_once __DIR__ . '/../class.pmpro-import-members.php';
+// require_once __DIR__ . '/../class.pmpro-import-members.php';
