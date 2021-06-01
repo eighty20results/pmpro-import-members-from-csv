@@ -28,9 +28,10 @@ if ( ! defined( 'BASE_SRC_PATH' ) ) {
 use Brain\Monkey;
 use PHPUnit_Framework_TestCase;
 use Brain\Monkey\Functions;
+use Codeception\Test\Unit;
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
-abstract class TFIAT extends PHPUnit_Framework_TestCase {
+abstract class TFIAT extends Unit {
 
 	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
@@ -58,9 +59,9 @@ abstract class TFIAT extends PHPUnit_Framework_TestCase {
 			printf( '%s', $output );
 		} catch ( \Throwable $t ) {
 			$GLOBALS['e'] = true;
-			printf( '\e[31m✘ It %s \e[0m', $message );
+			printf( "\e[31m✘ It %s \e[0m", $message );
 			printf(
-				'FAIL in: %s #%d. %s\n',
+				"FAIL in: %1\$s #%2\$d. %3\$s\n",
 				$d['file'],
 				$d['line'],
 				$t->getMessage()
@@ -86,13 +87,13 @@ abstract class TFIAT extends PHPUnit_Framework_TestCase {
 		\is_callable( $p ) && $p = $p();
 		global $e;
 		$e = $e || ! $p;
-		$o = sprintf( 'e[3%1$s It %2$se[0m', ( $p ? '2m✔' : '1m✘' ), $m );
+		$o = sprintf( "e[3%1\$s It %2\$se[0m", ( $p ? '2m✔' : '1m✘' ), $m ); // phpcs:ignore
 		printf(
-			'%1$s',
+			"%1\$s\n",
 			(
 				$p ?
-					sprintf( '%1$sn', $o ) :
-					sprintf( '%1$s FAIL in: %2$s #%3$sn', $o, $d['file'], $d['line'] )
+					sprintf( "%1\$s\n", $o ) :
+					sprintf( "%1\$s FAIL in: %2\$s \n #%3\$s", $o, $d['file'], $d['line'] )
 			)
 		);
 		// echo \esc_attr__( ( $p ? "${o}n" : "${o} FAIL in: {$d['file']} #{$d['line']}n" ) );

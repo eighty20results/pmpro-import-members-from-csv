@@ -72,13 +72,13 @@ class BuddyPress {
 	public function load_fields( $field_list ) {
 		
 		$data = Data::get_instance();
-		$error_log = Error_Log::get_instance();
+		$error_log = new Error_Log();
 		
 		if ( false === $data->does_table_exist( 'bp_xprofile_fields' ) ) {
 			
 			$error_log->add_error_msg(
 				sprintf(
-					__( 'Error: table %s does not exists in the database!', Import_Members::PLUGIN_SLUG ),
+					__( 'Error: table %s does not exists in the database!', 'pmpro-import-members-from-csv' ),
 					'bp_xprofile_fields'
 				)
 			);
@@ -97,7 +97,7 @@ class BuddyPress {
 		if ( false === $data->does_table_exist( 'bp_xprofile_groups' ) ) {
 			$error_log->add_error_msg(
 				sprintf(
-					__( 'Error: table %s does not exists in the database!', Import_Members::PLUGIN_SLUG ),
+					__( 'Error: table %s does not exists in the database!', 'pmpro-import-members-from-csv' ),
 					'bp_xprofile_groups'
 				)
 			);
