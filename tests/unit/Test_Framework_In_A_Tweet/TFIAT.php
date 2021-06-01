@@ -27,6 +27,7 @@ if ( ! defined( 'BASE_SRC_PATH' ) ) {
 
 use Brain\Monkey;
 use PHPUnit_Framework_TestCase;
+use Brain\Monkey\Functions;
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
 abstract class TFIAT extends PHPUnit_Framework_TestCase {
@@ -79,29 +80,73 @@ abstract class TFIAT extends PHPUnit_Framework_TestCase {
 	 * @param string $m - Text to describe the expected test outcome
 	 * @param mixed $p Unit test function definition
 	 */
-	function runner( string $m, $p ) {
-		$d                      = \debug_backtrace( 0 )[0];
+	private function runner( string $m, $p ) {
+		// phpcs:ignore
+		$d                             = \debug_backtrace( 0 )[0];
 		\is_callable( $p ) && $p = $p();
 		global $e;
 		$e = $e || ! $p;
-		$o = \esc_attr__( 'e[3' . ( $p ? '2m✔' : '1m✘' ) . " It ${m}e[0m" );
-		echo \esc_attr__( ( $p ? "${o}n" : "${o} FAIL in: {$d['file']} #{$d['line']}n" ) );
+		$o = sprintf( 'e[3%1$s It %2$se[0m', ( $p ? '2m✔' : '1m✘' ), $m );
+		printf(
+			'%1$s',
+			(
+				$p ?
+					sprintf( '%1$sn', $o ) :
+					sprintf( '%1$s FAIL in: %2$s #%3$sn', $o, $d['file'], $d['line'] )
+			)
+		);
+		// echo \esc_attr__( ( $p ? "${o}n" : "${o} FAIL in: {$d['file']} #{$d['line']}n" ) );
 	}
-	
+
 	/**
 	 * Define function stubs for the unit test
 	 */
-	public abstract function loadStubs() : void;
-	
+	public function loadStubs() : void {
+		Functions\stubs(
+			array(
+				'__'                         => null,
+				'_e'                         => null,
+				'_ex'                        => null,
+				'_x'                         => null,
+				'_n'                         => null,
+				'_nx'                        => null,
+				'translate'                  => null,
+				'esc_html__'                 => null,
+				'esc_html_x'                 => null,
+				'esc_attr__'                 => null,
+				'esc_attr_x'                 => null,
+				'esc_html_e'                 => null,
+				'esc_attr_e'                 => null,
+				'get_transient'              => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
+				'plugin_dir_path'            => function() {
+					return '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv';
+				},
+				'esc_url'                    => function() {
+					return 'https://localhost:7537';
+				},
+				'esc_url_raw'                => function() {
+					return 'https://localhost:7537';
+				},
+				'wp_upload_dir'              => function() {
+					return array(
+						'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+						'basedir' => '/var/www/html/wp-content/uploads',
+					);
+				},
+				'register_deactivation_hook' => '__return_true',
+			)
+		);
+	}
+
 	/**
 	 * Define mocked functions to be used by the called function of the unit test
 	 */
-	public abstract function loadMocks() : void;
-	
+	abstract public function loadMocks() : void;
+
 	/**
 	 * require_once()runner all needed source files for the unit test
 	 */
-	public abstract function loadTestSources() : void;
+	abstract public function loadTestSources() : void;
 }
 
 \register_shutdown_function(
