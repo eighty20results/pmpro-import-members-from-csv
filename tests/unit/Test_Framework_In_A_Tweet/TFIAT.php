@@ -26,7 +26,6 @@ if ( ! defined( 'BASE_SRC_PATH' ) ) {
 }
 
 use Brain\Monkey;
-use Brain\Monkey\Functions;
 use PHPUnit_Framework_TestCase;
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
@@ -50,6 +49,7 @@ abstract class TFIAT extends PHPUnit_Framework_TestCase {
 			$this->loadStubs();
 			Monkey\setUp();
 			$this->loadTestSources();
+			$this->loadFixtures();
 			ob_start();
 			$this->runner( $message, $function );
 			$output = \ob_get_clean();
@@ -67,6 +67,11 @@ abstract class TFIAT extends PHPUnit_Framework_TestCase {
 		}
 		// @codingStandardsIgnoreEnd
 	}
+
+	/**
+	 * Load fixtures for the unit test
+	 */
+	abstract public function loadFixtures() : void;
 
 	/**
 	 * The base Test Framework In a Tweet execution function
