@@ -26,12 +26,9 @@ if ( ! defined( 'BASE_SRC_PATH' ) ) {
 }
 
 use Brain\Monkey;
-use PHPUnit_Framework_TestCase;
 use Brain\Monkey\Functions;
-use Codeception\Test\Unit;
-use function Brain\Monkey\Functions\stubEscapeFunctions;
 
-abstract class TFIAT extends Unit {
+abstract class TFIAT extends \Codeception\Test\Unit {
 
 	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
