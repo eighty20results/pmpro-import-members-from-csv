@@ -20,78 +20,7 @@
 namespace E20R\Import_Members;
 
 class Error_Log {
-	
-	
-	/**
-	 * The instance of this class
-	 *
-	 * @var null|Error_Log
-	 */
-	private static $instance = null;
-	
-	/**
-	 * Error_Log constructor (singleton)
-	 *
-	 * @access private
-	 */
-	private function __construct() {
-	}
-	
-	/**
-	 * Get or instantiate and return this singleton class (Error_Log)
-	 *
-	 * @return Error_Log|null
-	 */
-	public static function get_instance() {
-		
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		
-		return self::$instance;
-	}
-	
-	/**
-	 * Identify the calling function (used in debug logger
-	 *
-	 * @return array|string
-	 *
-	 * @access public
-	 */
-	private function _who_called_me() {
-		
-		$trace  = debug_backtrace();
-		$caller = $trace[2];
-		
-		if ( isset( $caller['class'] ) ) {
-			$trace = "{$caller['class']}::{$caller['function']}()";
-		} else {
-			$trace = "Called by {$caller['function']}()";
-		}
-		
-		return $trace;
-	}
-	
-	/**
-	 * Save text message to web server error log (if WP_DEBUG is active)
-	 *
-	 * @param string $msg
-	 */
-	public function debug( $msg ) {
-  
-		if ( defined('WP_DEBUG' ) && true === WP_DEBUG ) {
-		    $from = $this->_who_called_me();
-			$tid  = sprintf( "%08x", abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
-			$time = date( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
-			
-			// Save to the HTTP server error log as a Notice (not a warning/error)
-			error_log(
-			        sprintf( '[%1$s](%2$s) %3$s - %4$s', $tid, $time, $from, $msg ),
-                    E_USER_NOTICE
-            );
-		}
-	}
-	
+ 
 	/**
 	 * Log errors to a file
 	 *
@@ -100,79 +29,124 @@ class Error_Log {
 	 * @since 1.0
 	 **/
 	public function log_errors( $errors ) {
-		
 		if ( empty( $errors ) ) {
 			global $e20r_import_err;
 			$errors = $e20r_import_err;
 		}
-		
+
 		// Is there truly nothing to do??
 		if ( empty( $errors ) ) {
-			$this->debug("No errors to log!");
+			$this->debug( 'No errors to log!' );
 			return;
 		}
-		
-		$variables = Variables::get_instance();
+
+		$variables     = new Variables();
 		$log_file_path = $variables->get( 'logfile_path' );
-		$log_file_url = $variables->get( 'logfile_url' );
-		
+		$log_file_url  = $variables->get( 'logfile_url' );
+
 		$this->add_error_msg(
 			sprintf(
-				__( 'Errors or Warnings found: Please inspect the import %1$serror log%2$s', Import_Members::PLUGIN_SLUG ),
+			// translators: %1$s - HTML for link to log file, %2$s closing HTML for link
+				__( 'Errors or Warnings found: Please inspect the import %1$serror log%2$s', 'pmpro-import-members-from-csv' ),
 				sprintf(
 					'<a href="%1$s" title="%2$s" target="_blank">',
 					esc_url_raw( $log_file_url ),
-						__( "Link to import error/warning log", Import_Members::PLUGIN_SLUG )
-					),
-					'</a>'
+					__( 'Link to import error/warning log', 'pmpro-import-members-from-csv' )
 				),
-				'warning'
-			);
-		
-		$log = fopen( $log_file_path, 'a' );
-		
+				'</a>'
+			),
+			'warning'
+		);
+
+		$log = fopen( $log_file_path, 'a' ); //phpcs:ignore
+
 		if ( false === $log ) {
 			$this->add_error_msg(
 				sprintf(
-					__( "Unable to write error log to: %s", Import_Members::PLUGIN_SLUG ),
+				// translators: %s Path to log file
+					__( 'Unable to write error log to: %s', 'pmpro-import-members-from-csv' ),
 					$log_file_path
 				),
 				'error'
 			);
-			fclose( $log );
+			fclose( $log ); //phpcs:ignore
 			return;
 		}
-		
-        foreach ( $errors as $key => $error ) {
-            
-            if ( is_numeric( $key ) ) {
-                $line = $key + 1;
-            } else {
-                $key_info = explode( '_', $key );
-                $line = (int)$key_info[ ( count( $key_info ) -1 ) ] + 1;
-            }
-            
-            
-            // Handle weird/unexpected formats for error message(s)
-            if ( is_wp_error( $error ) ) {
-                $message = $error->get_error_message();
-            } else if ( is_string( $error ) ) {
-                $message = $error;
-            }
-            
-            if (  !empty( $message ) ) {
-                @fwrite( $log, sprintf(
-                                   __( '[Line %1$s] %2$s', Import_Members::PLUGIN_SLUG ),
-                                   $line,
-                                   $message
-                               ) . "\n"
-                );
-            }
-        }
-        
-        fclose( $log );
+
+		foreach ( $errors as $key => $error ) {
+
+			if ( is_numeric( $key ) ) {
+				$line = $key + 1;
+			} else {
+				$key_info = explode( '_', $key );
+				$line     = (int) $key_info[ ( count( $key_info ) - 1 ) ] + 1;
+			}
+
+			// Handle weird/unexpected formats for error message(s)
+			if ( is_wp_error( $error ) ) {
+				$message = $error->get_error_message();
+			} elseif ( is_string( $error ) ) {
+				$message = $error;
+			}
+
+			if ( ! empty( $message ) ) {
+				// phpcs:ignore
+				@fwrite(
+				    $log,
+                    sprintf(
+                            // translators: %1$d - Line number, %2$s - Error message to log
+                            __( "[Line %1\$d] %2\$s\n", 'pmpro-import-members-from-csv' ),
+                            $line,
+                            $message
+                    )
+				);
+			}
+		}
+
+		fclose( $log ); // phpcs:ignore
 	}
-	
+
+	/**
+	 * Save text message to web server error log (if WP_DEBUG is active)
+	 *
+	 * @param string $msg
+	 */
+	public function debug( $msg ) {
+		if ( defined( 'WP_DEBUG' ) && true === WP_DEBUG ) {
+			$from = $this->who_called_me();
+			// phpcs:ignore
+			$tid  = sprintf( '%08x', abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
+			$time = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
+
+			// Save to the HTTP server error log as a Notice (not a warning/error)
+			// phpcs:ignore
+			error_log(
+				sprintf( '[%1$s](%2$s) %3$s - %4$s', $tid, $time, $from, $msg ),
+				E_USER_NOTICE
+			);
+		}
+	}
+
+	/**
+	 * Identify the calling function (used in debug logger
+	 *
+	 * @return array|string
+	 *
+	 * @access public
+	 */
+	private function who_called_me() {
+		$trace  = debug_backtrace(); // phpcs:ignore
+		$caller = $trace[2];
+
+		if ( isset( $caller['class'] ) ) {
+			$trace = "{$caller['class']}::{$caller['function']}()";
+		} else {
+			$trace = "Called by {$caller['function']}()";
+		}
+
+		return $trace;
+	}
+
 	/**
 	 * Add a error/warning/success/info message to /wp-admin/
 	 *
@@ -180,56 +154,61 @@ class Error_Log {
 	 * @param string $type
 	 */
 	public function add_error_msg( $msg, $type = 'info' ) {
-		
+
 		$error_msg = get_option( 'e20r_im_error_msg', array() );
 		$skip      = false;
-		
+
 		foreach ( $error_msg as $e_key => $msg_info ) {
-			if ( isset( $msg_info['message'] ) && $msg_info['message'] == $msg ) {
+			if ( isset( $msg_info['message'] ) && $msg_info['message'] === $msg ) {
 				$skip = true;
 				break;
 			}
 		}
-		
+
 		if ( false === $skip && ! empty( $error_msg ) ) {
-			$error_msg = array_merge( $error_msg, array( array( 'type' => $type, 'message' => $msg ) ) );
-		} else if ( false === $skip && empty( $error_msg ) ) {
-			$error_msg = array( array( 'type' => $type, 'message' => $msg ) );
+			$error_msg = array_merge(
+			    $error_msg,
+                array(
+                    array( 'type' => $type, 'message' => $msg ),
+                )
+			);
+		} elseif ( false === $skip && empty( $error_msg ) ) {
+			$error_msg = array(
+				array(
+					'type'    => $type,
+					'message' => $msg,
+				),
+			);
 		}
-		
+
 		update_option( 'e20r_im_error_msg', $error_msg, 'no' );
 	}
-	
+
 	/**
 	 * Add admin notice to WP Admin backedn
 	 */
 	public function display_admin_message() {
-		
-		
+
 		$error_msgs = get_option( 'pmp_im_error_msg', array() );
-		
-		if ( WP_DEBUG ) {
-			error_log("Error info: " . print_r( $error_msgs, true ) );
-		}
-		
-		if ( !empty( $error_msgs ) && is_admin() ) {
-			
-			foreach( $error_msgs as $msg_info ) {
+		$this->debug( 'Error info: ' . print_r( $error_msgs, true ) ); // phpcs:ignore
+
+		if ( ! empty( $error_msgs ) && is_admin() ) {
+			foreach ( $error_msgs as $msg_info ) {
 				?>
-				<div class="notice notice-<?php esc_attr_e( $msg_info['type'] ); ?> is-dismissible">
-					<p><strong><?php esc_html_e( $msg_info['message'] ); ?></strong></p>
-					<button type="button" class="notice-dismiss">
-						<span class="screen-reader-text"><?php __( 'Dismiss this message.', 'pmpro-import-members-from-csv' ); ?></span>
-					</button>
-				</div>
+                <div class="notice notice-<?php esc_attr_e( $msg_info['type'] ); ?> is-dismissible">
+                    <p><strong><?php esc_html_e( $msg_info['message'] ); ?></strong></p>
+                    <button type="button" class="notice-dismiss">
+                        <span class="screen-reader-text"><?php __( 'Dismiss this message.', 'pmpro-import-members-from-csv' ); ?></span>
+                    </button>
+                </div>
 				<?php
 			}
-			
+
 			// Clear error/warning/notice/success messages
 			delete_option( 'pmp_im_error_msg' );
 		}
 	}
-	
+
 	/**
 	 * Clone this class (Error_Log)
 	 *
