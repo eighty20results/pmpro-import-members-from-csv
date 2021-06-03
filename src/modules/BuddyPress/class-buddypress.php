@@ -89,12 +89,12 @@ class BuddyPress {
 	 *
 	 * @return BuddyPress|null
 	 */
-	public static function get_instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
+//	public static function get_instance() {
+//		if ( null === self::$instance ) {
+//			self::$instance = new self();
+//		}
+//		return self::$instance;
+//	}
 
 	/**
 	 * Load BuddyPress specific functionality
