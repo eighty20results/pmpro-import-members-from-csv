@@ -28,14 +28,14 @@ class PMPro {
 	 * @var null|PMPro
 	 */
 	private static $instance = null;
-	
+
 	/**
 	 * PMPro specific import fields
 	 *
 	 * @var array $fields
 	 */
 	private $fields = array();
-	
+
 	/**
 	 * PMPro constructor.
 	 *
@@ -43,21 +43,21 @@ class PMPro {
 	 */
 	private function __construct() {
 	}
-	
+
 	/**
 	 * Get or instantiate and return this class (PMPro)
 	 *
 	 * @return PMPro|null
 	 */
 	public static function get_instance() {
-		
+
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
-		
+
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Load all supported import field (column) names for the PMPro module
 	 *
@@ -66,44 +66,46 @@ class PMPro {
 	 * @return array
 	 */
 	public function load_fields( $fields ) {
-		
+
 		// Configure fields for PMPro import
-		$fields = array_merge_recursive( $fields, array(
-				"membership_id"                          => null,
-				"membership_code_id"                     => null,
-				"membership_discount_code"               => null,
-				"membership_initial_payment"             => null,
-				"membership_billing_amount"              => null,
-				"membership_cycle_number"                => null,
-				"membership_cycle_period"                => null,
-				"membership_billing_limit"               => null,
-				"membership_trial_amount"                => null,
-				"membership_trial_limit"                 => null,
-				"membership_status"                      => null,
-				"membership_startdate"                   => null,
-				"membership_enddate"                     => null,
-				"membership_subscription_transaction_id" => null,
-				"membership_payment_transaction_id"      => null,
-				"membership_gateway"                     => null,
-				"membership_affiliate_id"                => null,
-				"membership_timestamp"                   => null,
+		$fields = array_merge_recursive(
+			$fields,
+			array(
+				'membership_id'                          => null,
+				'membership_code_id'                     => null,
+				'membership_discount_code'               => null,
+				'membership_initial_payment'             => null,
+				'membership_billing_amount'              => null,
+				'membership_cycle_number'                => null,
+				'membership_cycle_period'                => null,
+				'membership_billing_limit'               => null,
+				'membership_trial_amount'                => null,
+				'membership_trial_limit'                 => null,
+				'membership_status'                      => null,
+				'membership_startdate'                   => null,
+				'membership_enddate'                     => null,
+				'membership_subscription_transaction_id' => null,
+				'membership_payment_transaction_id'      => null,
+				'membership_gateway'                     => null,
+				'membership_affiliate_id'                => null,
+				'membership_timestamp'                   => null,
 			)
 		);
-		
-		return apply_filters( 'e20r-import-modules-pmpro-headers', $fields );
+
+		return apply_filters( 'e20r_import_modules_pmpro_headers', $fields );
 	}
-	
+
 	/**
 	 * Load PMPro specific functionality
 	 */
 	public function load_hooks() {
-		
+
 		add_filter( 'e20r_import_supported_field_list', array( $this, 'load_fields' ), 1, 1 );
 		// TODO: Add apply_filters() for e20r_import_default_field_values
 		add_filter( 'e20r_import_default_field_values', array( $this, 'update_field_values' ), 2, 3 );
 	}
-	
-	
+
+
 	/**
 	 * Run data checks/validations (business rules, etc)
 	 *
@@ -117,39 +119,38 @@ class PMPro {
 	 * @since  2.30 - ENHANCEMENT: Multiple updates for payment gateway integrations, etc
 	 */
 	public function update_field_values( $fields ) {
-		
+
 		global $e20r_import_err;
 		global $active_line_number;
-		
+
 		if ( ! is_array( $e20r_import_err ) ) {
 			$e20r_import_err = array();
 		}
-		
+
 		$has_error = false;
 		$errors    = array();
-		$error     = Error_Log::get_instance();
-		
-		if ( isset( $e20r_import_err["no_gw_environment_{$active_line_number}"] ) ||
-		     isset( $e20r_import_err["correct_gw_env_variable_{$active_line_number}"] )
+		$error     = new Error_Log(); // phpcs:ignore
+
+		if (
+			isset( $e20r_import_err[ "no_gw_environment_{$active_line_number}" ] ) ||
+			isset( $e20r_import_err[ "correct_gw_env_variable_{$active_line_number}" ] )
 		) {
 			$fields['membership_gateway_environment'] = pmpro_getOption( 'gateway_environment' );
 		}
-		
+
 		// Doesn't have a supported gateway, so adding it!
-		if ( isset( $e20r_import_err["supported_gateway_{$active_line_number}"] ) ) {
+		if ( isset( $e20r_import_err[ "supported_gateway_{$active_line_number}" ] ) ) {
 			$fields['membership_gateway'] = pmpro_getOption( 'gateway' );
 		}
-		
+
 		// Save any error messages for the user
 		if ( ! empty( $e20r_import_err ) ) {
 			$error->log_errors( $e20r_import_err );
 		}
-		
+
 		return $fields;
-		
-		// return apply_filters( 'pmpro_import_members_from_csv_data_check_status', $has_error, $user_id, $fields );
 	}
-	
+
 	/**
 	 * Clone the class (Singleton)
 	 *
