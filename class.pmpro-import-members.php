@@ -149,7 +149,7 @@ try {
 	error_log(
 		__(
 			'Unable to load E20R autoloader for the PMPro Import Members from CSV plugin!',
-			Import_Members::PLUGIN_SLUG
+			'pmpro-import-members-from-csv'
 		),
 		E_USER_ERROR
 	);
