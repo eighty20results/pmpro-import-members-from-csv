@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,50 +18,91 @@
  */
 namespace E20R\Import_Members\Modules\BuddyPress;
 
-
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import_Members;
 
 class BuddyPress {
-	
+
 	/**
 	 * Singleton instance of this class (BuddyPress)
 	 *
 	 * @var null|BuddyPress
 	 */
 	private static $instance = null;
-	
+
+	/**
+	 * Instance of the Data class
+	 *
+	 * @var Data|null $data
+	 */
+	private $data = null;
+
+	/**
+	 * Instance of the Error_Log class
+	 *
+	 * @var Error_Log|null $error_log
+	 */
+	private $error_log = null;
+
+	/**
+	 * The names of BuddyPress tables we can import to
+	 *
+	 * @var string[] $required_tables
+	 */
+	private $required_tables = array();
+
+	/**
+	 * BuddyPress fields (XProfile, XGroup, etc)
+	 *
+	 * @var array $field_list
+	 */
+	private $field_list = array();
+
+	/**
+	 * Fields to ignore/exclude when importing
+	 *
+	 * @var array $excluded_fields
+	 */
+	private $excluded_fields = array();
+
 	/**
 	 * BuddyPress constructor.
 	 *
 	 * @access private
 	 */
 	private function __construct() {
+		$this->data      = new Data();
+		$this->error_log = new Error_Log(); // phpcs:ignore
+
+		$this->required_tables = apply_filters(
+			'e20r_import_buddypress_tables',
+			array(
+				'bp_xprofile_fields' => 'bp_profile',
+				'bp_xprofile_groups' => 'bp_group',
+			)
+		);
 	}
-	
+
 	/**
 	 * Get or instantiate and return this class (BuddyPress)
 	 *
 	 * @return BuddyPress|null
 	 */
 	public static function get_instance() {
-		
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
-		
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Load BuddyPress specific functionality
 	 */
 	public function load_hooks() {
-		
 		add_filter( 'e20r_import_supported_field_list', array( $this, 'load_fields' ), 2, 1 );
 	}
-	
+
 	/**
 	 * Load supported fields for BuddyPress
 	 *
@@ -70,72 +111,44 @@ class BuddyPress {
 	 * @return array
 	 */
 	public function load_fields( $field_list ) {
-		
-		$data = Data::get_instance();
-		$error_log = new Error_Log();
-		
-		if ( false === $data->does_table_exist( 'bp_xprofile_fields' ) ) {
-			
-			$error_log->add_error_msg(
-				sprintf(
-					__( 'Error: table %s does not exists in the database!', 'pmpro-import-members-from-csv' ),
-					'bp_xprofile_fields'
-				)
-			);
 
-			$error_log->debug("Could not find 'bp_xprofile_fields' table");
-
-			return $field_list;
-		}
-		
-		/*
-		 * Fetch xProfile fields for BuddyPress
-		 */
-		$profile_fields = $data->get_table_info( 'bp_xprofile_fields' );
-		
-		
-		if ( false === $data->does_table_exist( 'bp_xprofile_groups' ) ) {
-			$error_log->add_error_msg(
-				sprintf(
-					__( 'Error: table %s does not exists in the database!', 'pmpro-import-members-from-csv' ),
-					'bp_xprofile_groups'
-				)
-			);
-			
-			$error_log->debug("Could not find 'bp_xprofile_groups' table");
-			return $field_list;
-		}
-		/*
-		 * Fetch Group fields for BuddyPress
-		 */
-		$group_fields = $data->get_table_info( 'bp_xprofile_groups' );
-		
 		/**
 		 * Fetch list of fields to ignore/exclude for import
 		 */
-		$excluded_fields = apply_filters( 'e20r-import-members-excluded-buddypress-fields', array() );
-		
-		// Process BuddyPress Group fields names
-		foreach( $group_fields as $field_name => $default ) {
-			
-			if ( !in_array( $field_name, $excluded_fields ) ) {
-				
-				$field_list[ "bp_group_{$field_name}"] = $default;
+		$this->excluded_fields = apply_filters( 'e20r_import_buddypress_excluded_fields', array() );
+
+		foreach ( $this->required_tables as $table_name => $meta_key_prefix ) {
+			// Make sure the table exists
+			if ( false === $this->data->does_table_exist( $table_name ) ) {
+				$this->error_log->add_error_msg(
+					sprintf(
+					// translators: %1$s - The database table we're checking for (<prefix><name>)
+						__(
+							'Error: table %1$s does not exists in the database. Is BuddyPress correctly installed?',
+							'pmpro-import-members-from-csv'
+						),
+						$table_name
+					)
+				);
+				// It didn't so we'll skip to the next table.
+				$this->error_log->debug( "Could not find {$table_name} table" );
+				continue; // Skip
+			}
+
+			// Fetch field info for the BuddyPress table
+			$field_data = $this->data->get_table_info( $table_name );
+
+			// Process BuddyPress fields names and set default values as applicable
+			foreach ( $field_data as $field_name => $default ) {
+				if ( ! in_array( $field_name, $this->excluded_fields, true ) ) {
+					$this->field_list[ "${meta_key_prefix}_{$field_name}" ] = $default;
+				}
 			}
 		}
-		
-		// Process xProfile field names
-		foreach ($profile_fields as $field_name => $default ) {
-			
-			if ( !in_array( $field_name, $excluded_fields ) ) {
-				
-				$field_list[ "bp_profile_{$field_name}"] = $default;
-			}
-		}
-		
-		return $field_list;
+
+		return $field_list + $this->field_list;
 	}
-	
+
 	/**
 	 * Clone the class (Singleton)
 	 *
