@@ -26,6 +26,7 @@ use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
 use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
 use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Validate\Validate;
 use E20R\Utilities\Licensing\Licensing;
 
 /**
@@ -50,9 +51,49 @@ class Import_Members {
 	private static $instance = null;
 
 	/**
+	 * Instance of the CSV class
+	 *
+	 * @var null|CSV $csv
+	 */
+	private $csv = null;
+
+	/**
+	 * Instance of the Data class
+	 *
+	 * @var null|Data $data
+	 */
+	private $data = null;
+
+	/**
+	 * Instance of the Variables class
+	 *
+	 * @var Variables|null $variables
+	 */
+	private $variables = null;
+
+	/**
+	 * Instance of Error_Log class
+	 *
+	 * @var Error_Log|null $error_log
+	 */
+	private $error_log = null;
+
+	/**
+	 * Instance of the Validate class
+	 *
+	 * @var array|Validate
+	 */
+	private $validations = array();
+
+	/**
 	 * Import_Members constructor.
 	 */
 	private function __construct() {
+		$this->data      = new Data();
+		$this->csv       = new CSV();
+		$this->variables = new Variables();
+		$this->error_log = new Error_Log(); // phpcs:ignore
+
 		self::$plugin_path = plugin_dir_path( __FILE__ );
 	}
 
@@ -103,12 +144,12 @@ class Import_Members {
 		add_action( 'plugins_loaded', array( BuddyPress_Validation::get_instance(), 'load_actions' ), 32 );
 
 		add_action( 'init', array( $this, 'load_i18n' ), 5 );
-		add_action( 'init', array( Data::get_instance(), 'process_csv' ) );
+		add_action( 'init', array( $this->data, 'process_csv' ) );
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 
 		// PMPro specific import functionality
-		add_action( 'e20r_before_user_import', array( CSV::get_instance(), 'pre_import' ), 10, 2 );
+		add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 );
 		add_filter( 'e20r_import_usermeta', array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
 		add_action(
 			'e20r_after_user_import',
@@ -119,7 +160,7 @@ class Import_Members {
 			- 1,
 			3
 		);
-		add_action( 'e20r_after_user_import', array( Data::get_instance(), 'cleanup' ), 9999, 3 );
+		add_action( 'e20r_after_user_import', array( $this->data, 'cleanup' ), 9999, 3 );
 
 		// Set URIs in plugin listing to plugin support
 		add_filter( 'plugin_row_meta', array( self::get_instance(), 'plugin_row_meta' ), 10, 2 );
@@ -156,9 +197,7 @@ class Import_Members {
 	 * Save delayed sponsor link when users are imported...
 	 */
 	public function __destruct() {
-
-		$variables    = Variables::get_instance();
-		$sponsor_link = $variables->get( '_delayed_sponsor_link' );
+		$sponsor_link = $this->variables->get( 'delayed_sponsor_link' );
 		if ( ! empty( $sponsor_link ) ) {
 			update_option( 'e20r_link_for_sponsor', $sponsor_link, 'no' );
 		}
@@ -190,23 +229,20 @@ class Import_Members {
 			return;
 		}
 
-		$settings  = Variables::get_instance();
-		$error_log = \E20R\Import_Members\Error_Log::get_instance();
-
-		$settings->load_settings();
+		$this->variables->load_settings();
 
 		/**
 		 * Calculate the max timeout for the AJAX calls. Gets padded with a 20% bonus
 		 */
 		$max_run_time = (
 			apply_filters( 'pmp_im_import_time_per_record', 3 ) *
-			apply_filters( 'pmp_im_import_records_per_scan', $settings->get( 'per_partial' ) )
+			apply_filters( 'pmp_im_import_records_per_scan', $this->variables->get( 'per_partial' ) )
 		);
 
 		$timeout_value = ceil( $max_run_time * 1.2 );
-		$errors        = $settings->get( 'display_errors' );
+		$errors        = $this->variables->get( 'display_errors' );
 
-		$error_log->debug( "Setting JavaScript timeout for import operations to {$timeout_value} seconds" );
+		$this->error_log->debug( "Setting JavaScript timeout for import operations to {$timeout_value} seconds" );
 
 		wp_enqueue_style( 'pmpro-import-members-from-csv', plugins_url( 'css/pmpro-import-members-from-csv.css', __FILE__ ), null, E20R_IMPORT_VERSION );
 		wp_register_script( 'pmpro-import-members-from-csv', plugins_url( 'javascript/pmpro-import-members-from-csv.js', __FILE__ ), array( 'jquery' ), E20R_IMPORT_VERSION, true );
@@ -218,19 +254,19 @@ class Import_Members {
 				'pmp_im_import_js_settings',
 				array(
 					'timeout'                     => $timeout_value,
-					'background_import'           => intval( $settings->get( 'background_import' ) ),
-					'filename'                    => $settings->get( 'filename' ),
-					'update_users'                => intval( $settings->get( 'update_users' ) ),
-					'deactivate_old_memberships'  => intval( $settings->get( 'deactivate_old_memberships' ) ),
-					'new_user_notification'       => intval( $settings->get( 'new_user_notification' ) ),
-					'create_order'                => intval( $settings->get( 'create_order' ) ),
-					'admin_new_user_notification' => intval( $settings->get( 'admin_new_user_notification' ) ),
-					'send_welcome_email'          => intval( $settings->get( 'send_welcome_email' ) ),
-					'suppress_pwdmsg'             => intval( $settings->get( 'suppress_pwdmsg' ) ),
-					'password_hashing_disabled'   => intval( $settings->get( 'password_hashing_disabled' ) ),
-					'password_nag'                => intval( $settings->get( 'password_nag' ) ),
-					'per_partial'                 => intval( $settings->get( 'per_partial' ) ),
-					'site_id'                     => intval( $settings->get( 'site_id' ) ),
+					'background_import'           => intval( $this->variables->get( 'background_import' ) ),
+					'filename'                    => $this->variables->get( 'filename' ),
+					'update_users'                => intval( $this->variables->get( 'update_users' ) ),
+					'deactivate_old_memberships'  => intval( $this->variables->get( 'deactivate_old_memberships' ) ),
+					'new_user_notification'       => intval( $this->variables->get( 'new_user_notification' ) ),
+					'create_order'                => intval( $this->variables->get( 'create_order' ) ),
+					'admin_new_user_notification' => intval( $this->variables->get( 'admin_new_user_notification' ) ),
+					'send_welcome_email'          => intval( $this->variables->get( 'send_welcome_email' ) ),
+					'suppress_pwdmsg'             => intval( $this->variables->get( 'suppress_pwdmsg' ) ),
+					'password_hashing_disabled'   => intval( $this->variables->get( 'password_hashing_disabled' ) ),
+					'password_nag'                => intval( $this->variables->get( 'password_nag' ) ),
+					'per_partial'                 => intval( $this->variables->get( 'per_partial' ) ),
+					'site_id'                     => intval( $this->variables->get( 'site_id' ) ),
 					'admin_page'                  => add_query_arg(
 						'page',
 						'pmpro-import-members-from-csv',
@@ -260,7 +296,7 @@ class Import_Members {
 							sprintf(
 								// translators: %s URL to google docs, %s description
 								'<a href="%s" target="_blank" title="%s">',
-								'http://docs.google.com/spreadsheets',
+								'https://docs.google.com/spreadsheets',
 								__( 'To Google Sheets', 'pmpro-import-members-from-csv' )
 							),
 							'</a>'
@@ -311,13 +347,13 @@ class Import_Members {
 				),
 				'documentation' => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					\esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
+					\esc_url_raw( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
 					__( 'View the documentation', 'pmpro-import-members-from-csv' ),
 					__( 'Docs', 'pmpro-import-members-from-csv' )
 				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					\esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
+					\esc_url_raw( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
 					__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
 					__( 'Support', 'pmpro-import-members-from-csv' )
 				),
