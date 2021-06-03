@@ -40,30 +40,29 @@ class User_Validation extends Validate {
 		global $active_line_number;
 		
 		$should_exit = false;
-		
+
 		switch ( $status ) {
-			
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
-				
-				$msg = __( "The value specified in the 'ID' column is not numeric (integer)", Import_Members::PLUGIN_SLUG );
+				$msg = __(
+					"The value specified in the 'ID' column is not numeric (integer)",
+					'pmpro-import-members-from-csv'
+				);
 				break;
-			
+
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
-				
 				$msg = __(
 					'User ID specified and user record exists but the "Update User Record" option is not selected',
-					Import_Members::PLUGIN_SLUG
+					'pmpro-import-members-from-csv'
 				);
 				$should_exit = true;
 				break;
-			
+
 			case Status::E20R_ERROR_USER_EXISTS_NO_UPDATE:
-				
 				$msg = __(
 					'User exists, but the "Update User Record" option is not selected.',
-					Import_Members::PLUGIN_SLUG
+					'pmpro-import-members-from-csv'
 				);
-				
+
 				$should_exit = true;
 				break;
 			default:

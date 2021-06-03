@@ -52,7 +52,7 @@ abstract class Base_Validation {
 	 * @access private
 	 */
 	protected function __construct() {
-		$this->error_log = Error_Log::get_instance();
+		$this->error_log = new Error_Log(); // phpcs:ignore (name collision)
 	}
 	
 	/**
@@ -74,7 +74,7 @@ abstract class Base_Validation {
 	/**
 	 * Get or instantiate and get the current class
 	 *
-	 * @return Column_Validation|null
+	 * @return Column_Validation|Base_Validation|null
 	 */
 	abstract public static function get_instance();
 	
