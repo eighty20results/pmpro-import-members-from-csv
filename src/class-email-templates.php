@@ -25,16 +25,33 @@ namespace E20R\Import_Members;
  */
 class Email_Templates {
 
-
 	/**
+	 * Instance of Email_Templates class
+	 *
 	 * @var null|Email_Templates
 	 */
 	private static $instance = null;
 
 	/**
+	 * Instance of Error_Log class
+	 *
+	 * @var Error_Log|null $error_log
+	 */
+	private $error_log = null;
+
+	/**
+	 * Instance of Variables class
+	 *
+	 * @var null|Variables $variables
+	 */
+	private $variables = null;
+
+	/**
 	 * Email_Templates constructor.
 	 */
 	private function __construct() {
+		$this->error_log = new Error_Log(); //phpcs:ignore
+		$this->variables = new Variables();
 	}
 
 	/**
@@ -52,14 +69,10 @@ class Email_Templates {
 	 * @param \WP_User $user
 	 */
 	public function maybe_send_email( $user ) {
-
 		global $pmproiufcsv_email;
 
-		$variables = Variables::get_instance();
-		$error_log = Error_Log::get_instance();
-		
-		$send_email = $variables->get( 'send_welcome_email' );
-		$fields     = $variables->get( 'fields' );
+		$send_email = $this->variables->get( 'send_welcome_email' );
+		$fields     = $this->variables->get( 'fields' );
 
 		// Email 'your membership account is active' to member if they were imported with an active member status
 		if ( true === (bool) $send_email &&
@@ -83,11 +96,11 @@ class Email_Templates {
 				$subject = pmpro_getOption( "email_{$template_name}_subject" );
 
 				if ( empty( $subject ) ) {
-					$subject = isset( $pmproet_email_defaults[ $template_name ]['subject'] ) ? $pmproet_email_defaults[ $template_name ]['subject'] : __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
+					$subject = $pmproet_email_defaults[ $template_name ]['subject'] ?? __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
 				}
 			}
 
-			$error_log->debug( "Using {$template_name} template for '{$subject}' message" );
+			$this->error_log->debug( "Using {$template_name} template for '{$subject}' message" );
 
 			$email           = new \PMProEmail();
 			$email->email    = $user->user_email;
@@ -119,9 +132,7 @@ class Email_Templates {
 	 * @since v2.50 - ENHANCEMENT: Include imported_member template in the  Email Template Admin add-on
 	 */
 	public function load_email_body( $body = null, $template_name ) {
-
-		$error_log = Error_Log::get_instance();
-		$error_log->debug( "Loading template text for {$template_name}" );
+		$this->error_log->debug( "Loading template text for {$template_name}" );
 
 		if ( ! empty( $body ) ) {
 			return $body;
@@ -145,7 +156,7 @@ class Email_Templates {
 			return null;
 		}
 
-		$error_log->debug( "Setting the message subject for {$template_name} template" );
+		$this->error_log->debug( "Setting the message subject for {$template_name} template" );
 
 		$template_body   = pmpro_getOption( "email_{$template_name}_body" );
 		$template_header = pmpro_getOption( 'email_header_body' );
@@ -247,9 +258,8 @@ class Email_Templates {
 	public function add_email_templates() {
 
 		global $pmproet_email_defaults;
-		$error_log = Error_Log::get_instance();
 
-		$error_log->debug( 'Attempting to load template for the Welcome Imported Member message' );
+		$this->error_log->debug( 'Attempting to load template for the Welcome Imported Member message' );
 
 		$pmproet_email_defaults['imported_member'] = array(
 			'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
@@ -265,9 +275,10 @@ class Email_Templates {
 	 */
 	public function mail_failure_handler( $error ) {
 
-		Error_Log::get_instance()->add_error_msg(
+		$this->error_log->add_error_msg(
 			sprintf(
-				__( 'Unable to send email message from Import operation: %s', Import_Members::PLUGIN_SLUG ),
+				// translators: %s - Error message supplied
+				__( 'Unable to send email message from Import operation: %s', 'pmpro-import-members-from-csv' ),
 				$error->get_error_message( 'wp_mail_failed' )
 			),
 			'warning'
