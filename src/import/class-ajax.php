@@ -41,9 +41,33 @@ class Ajax {
 	private $filename = null;
 
 	/**
+	 * Instance of the Error_Log class
+	 *
+	 * @var Error_Log|null $error_log
+	 */
+	private $error_log = null;
+
+	/**
+	 * Instance of the CSV class
+	 *
+	 * @var null|CSV $csv
+	 */
+	private $csv = null;
+
+	/**
+	 * Instance of the Variables class (settings)
+	 *
+	 * @var Variables|null $variables
+	 */
+	private $variables = null;
+
+	/**
 	 * Ajax_Import constructor.
 	 */
 	private function __construct() {
+		$this->error_log = new Error_Log(); // phpcs:ignore
+		$this->csv       = new CSV();
+		$this->variables = new Variables();
 	}
 
 	/**
@@ -75,14 +99,12 @@ class Ajax {
 	 * Save IP address of client computer if the user clicks the "donate" button
 	 */
 	public function save_donation_ip() {
-
-		$error_log = Error_Log::get_instance();
-
-		$error_log->debug( "Visitor clicked the 'Donate' button: " . print_r( $_REQUEST, true ) );
+		// phpcs:ignore
+		$this->error_log->debug( "Visitor clicked the 'Donate' button: " . print_r( $_REQUEST, true ) );
 
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 
-		$error_log->debug( 'Nonce is good' );
+		$this->error_log->debug( 'Nonce is good' );
 
 		$client_ip    = $this->get_client_ip();
 		$do_not_track = apply_filters( 'e20r_import_donation_tracking_disabled', false );
@@ -94,7 +116,7 @@ class Ajax {
 
 			if ( true === update_option( 'e20r_import_has_donated', $donated ) ) {
 
-				$error_log->debug( "Visitor ({$client_ip}) clicked the 'Donate' button" );
+				$this->error_log->debug( "Visitor ({$client_ip}) clicked the 'Donate' button" );
 				wp_send_json_success();
 				exit();
 			}
@@ -131,14 +153,11 @@ class Ajax {
 	 * Clear (remove) the error log
 	 */
 	public function wp_ajax_clear_log() {
-
-		$variables    = Variables::get_instance();
-		$error_log    = Error_Log::get_instance();
-		$logfile_path = $variables->get( 'logfile_path' );
+		$logfile_path = $this->variables->get( 'logfile_path' );
 
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 
-		$error_log->debug( "Nonce is good. Deleting -> {$logfile_path}" );
+		$this->error_log->debug( "Nonce is good. Deleting -> {$logfile_path}" );
 
 		if ( false === $this->delete_file( $logfile_path ) ) {
 			wp_send_json_error();
@@ -155,25 +174,24 @@ class Ajax {
 	 */
 	public function wp_ajax_cleanup_csv() {
 
-		$error_log = Error_Log::get_instance();
-		$sponsors  = Import_Sponsors::get_instance();
+		$sponsors  = new Import_Sponsors();
 
-		$error_log->debug( 'Import is complete... ' );
+		$this->error_log->debug( 'Import is complete... ' );
 
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 
-		$file_name = CSV::get_import_file_path( null );
+		$file_name = $this->csv->get_import_file_path( null );
 
 		if ( empty( $file_name ) ) {
-			$error_log->debug( 'File not found/not available. Nothing to clean!' );
+			$this->error_log->debug( 'File not found/not available. Nothing to clean!' );
 			wp_send_json_success();
 			exit();
 		}
 
 		$file = basename( $file_name );
 
-		$error_log->debug( "Nonce is good. Cleaning up: {$file_name}" );
-		$error_log->debug( 'Does the file exist??? ' . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
+		$this->error_log->debug( "Nonce is good. Cleaning up: {$file_name}" );
+		$this->error_log->debug( 'Does the file exist??? ' . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
 
 		if ( false === $this->delete_file( $file_name ) ) {
 
@@ -184,7 +202,7 @@ class Ajax {
 		delete_option( "e20rcsv_{$file}" );
 		delete_transient( 'e20r_import_filename' );
 
-		$error_log->debug( 'Do we have sponsors to link..?' );
+		$this->error_log->debug( 'Do we have sponsors to link..?' );
 
 		$sponsors->trigger_sponsor_updates();
 
@@ -201,11 +219,9 @@ class Ajax {
 	 */
 	private function delete_file( $file_name = null ) {
 
-		$error_log = Error_Log::get_instance();
-
 		if ( ! empty( $file_name ) && file_exists( $file_name ) ) {
 
-			$error_log->debug( "Removing {$file_name}" );
+			$this->error_log->debug( "Removing {$file_name}" );
 
 			return unlink( $file_name );
 		}
@@ -221,20 +237,16 @@ class Ajax {
 	 */
 	public function wp_ajax_import_from_csv() {
 
-		$error_log = Error_Log::get_instance();
-
-		$error_log->debug( 'Processing AJAX request to import data?' );
+		$this->error_log->debug( 'Processing AJAX request to import data?' );
 
 		check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 
-		$error_log->debug( 'Nonce verified in import_members_from_csv()' );
+		$this->error_log->debug( 'Nonce verified in import_members_from_csv()' );
 
-		$csv       = CSV::get_instance();
-		$variables = Variables::get_instance();
 		/*
 		if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 
-			$msg = __( 'Insecure connection attempted!', Import_Members::PLUGIN_SLUG );
+			$msg = __( 'Insecure connection attempted!', 'pmpro-import-members-from-csv' );
 
 			wp_send_json_error( array( 'status'  => - 1,
 									   'message' => $msg,
@@ -244,15 +256,15 @@ class Ajax {
 		*/
 
 		// Get our settings
-		$variables->load_settings();
-		$filename = basename( $variables->get( 'filename' ) );
+		$this->variables->load_settings();
+		$filename = basename( $this->variables->get( 'filename' ) );
 
 		// Error message to return
 		if ( empty( $filename ) ) {
 			wp_send_json_error(
 				array(
 					'status'  => - 1,
-					'message' => __( 'No import file provided!', Import_Members::PLUGIN_SLUG ),
+					'message' => __( 'No import file provided!', 'pmpro-import-members-from-csv' ),
 				)
 			);
 			exit();
@@ -268,7 +280,7 @@ class Ajax {
 				array(
 					'status'  => - 1,
 					'message' => sprintf(
-						__( "File (%1\$s) not found in %2\$s\nIs the directory writable by the web server software?", Import_Members::PLUGIN_SLUG ),
+						__( "File (%1\$s) not found in %2\$s\nIs the directory writable by the web server software?", 'pmpro-import-members-from-csv' ),
 						$filename,
 						$import_dir
 					),
@@ -280,34 +292,41 @@ class Ajax {
 		//import next few lines of file
 		$args = array(
 			'partial'                     => true,
-			'filename'                    => $variables->get( 'filename' ),
-			'password_nag'                => $variables->get( 'password_nag' ),
-			'password_hashing_disabled'   => $variables->get( 'password_hashing_disabled' ),
-			'update_users'                => $variables->get( 'update_users' ),
-			'new_user_notification'       => $variables->get( 'new_user_notification' ),
-			'new_member_notification'     => $variables->get( 'new_member_notification' ),
-			'admin_new_user_notification' => $variables->get( 'admin_new_user_notification' ),
-			'suppress_pwdmsg'             => $variables->get( 'suppress_pwdmsg' ),
-			'send_welcome_email'          => $variables->get( 'send_welcome_email' ),
-			'deactivate_old_memberships'  => $variables->get( 'deactivate_old_memberships' ),
-			'background_import'           => $variables->get( 'background_import' ),
-			'per_partial'                 => $variables->get( 'per_partial' ),
-			'site_id'                     => $variables->get( 'site_id' ),
-			'create_order'                => $variables->get( 'create_order' ),
+			'filename'                    => $this->variables->get( 'filename' ),
+			'password_nag'                => $this->variables->get( 'password_nag' ),
+			'password_hashing_disabled'   => $this->variables->get( 'password_hashing_disabled' ),
+			'update_users'                => $this->variables->get( 'update_users' ),
+			'new_user_notification'       => $this->variables->get( 'new_user_notification' ),
+			'new_member_notification'     => $this->variables->get( 'new_member_notification' ),
+			'admin_new_user_notification' => $this->variables->get( 'admin_new_user_notification' ),
+			'suppress_pwdmsg'             => $this->variables->get( 'suppress_pwdmsg' ),
+			'send_welcome_email'          => $this->variables->get( 'send_welcome_email' ),
+			'deactivate_old_memberships'  => $this->variables->get( 'deactivate_old_memberships' ),
+			'background_import'           => $this->variables->get( 'background_import' ),
+			'per_partial'                 => $this->variables->get( 'per_partial' ),
+			'site_id'                     => $this->variables->get( 'site_id' ),
+			'create_order'                => $this->variables->get( 'create_order' ),
 		);
 
 		$args = apply_filters( 'e20r_import_arguments', $args );
 
-		$error_log->debug( "Path to import file: {$import_dir}/{$filename}" );
+		$this->error_log->debug( "Path to import file: {$import_dir}/{$filename}" );
 
-		$results       = $csv->process( "{$import_dir}/{$filename}", $args );
+		try {
+			$results = $this->csv->process( "{$import_dir}/{$filename}", $args );
+		} catch ( \Exception $e ) {
+			$this->error_log->debug( 'Import Error: ' . $e->getMessage() );
+			$this->error_log->add_error_msg( sprintf( 'Error: %s', $e->getMessage() ) );
+		}
+
 		$status        = null;
 		$error_log_msg = null;
 
-		if ( file_exists( $variables->get( 'logfile_path' ) ) ) {
+		if ( file_exists( $this->variables->get( 'logfile_path' ) ) ) {
 			$error_log_msg = sprintf(
-				__( ', please %1$scheck the error log%2$s', Import_Members::PLUGIN_SLUG ),
-				sprintf( '<a href="%s">', esc_url_raw( $variables->get( 'logfile_url' ) ) ),
+				// translators: %1$s - HTML, %2$s - HTML
+				__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
+				sprintf( '<a href="%s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
 				'</a>'
 			);
 		}
@@ -315,10 +334,11 @@ class Ajax {
 		if ( isset( $_REQUEST['import'] ) ) {
 			$error_log_msg = '';
 
-			if ( file_exists( $variables->get( 'logfile_path' ) ) ) {
+			if ( file_exists( $this->variables->get( 'logfile_path' ) ) ) {
 				$error_log_msg = sprintf(
-					__( ', please %1$scheck the error log%2$s', Import_Members::PLUGIN_SLUG ),
-					sprintf( '<a href="%s">', esc_url_raw( $variables->get( 'logfile_url' ) ) ),
+					// translators: %1$s - HTML, %2$s - HTML
+					__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
+					sprintf( '<a href="%s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
 					'</a>'
 				);
 			}
@@ -327,7 +347,7 @@ class Ajax {
 				case 'file':
 					$status = sprintf(
 						'<div class="error"><p><strong>%s</strong></p></div>',
-						__( 'Error during file upload.', Import_Members::PLUGIN_SLUG )
+						__( 'Error during file upload.', 'pmpro-import-members-from-csv' )
 					);
 					break;
 				case 'data':
@@ -335,14 +355,14 @@ class Ajax {
 						'<div class="error"><p><strong>%s</strong></p></div>',
 						__(
 							'Cannot extract data from uploaded file or no file was uploaded.',
-							Import_Members::PLUGIN_SLUG
+							'pmpro-import-members-from-csv'
 						)
 					);
 					break;
 				case 'success':
 					$status = sprintf(
 						'<div class="updated"><p><strong>%s</strong></p></div>',
-						__( 'Member import was successful.', Import_Members::PLUGIN_SLUG )
+						__( 'Member import was successful.', 'pmpro-import-members-from-csv' )
 					);
 					break;
 				default:
@@ -362,12 +382,13 @@ class Ajax {
 
 			//Clear position
 			delete_option( "e20rcsv_{$file}" );
-			$display_errors = $variables->get( 'display_errors' );
+			$display_errors = $this->variables->get( 'display_errors' );
 
 			// Delete the transient storing the file name
 			delete_transient( 'e20r_import_filename' );
-			$error_log->debug("Display Errors = " . print_r( $display_errors, true ) );
-			
+			// phpcs:ignore
+			$this->error_log->debug('Display Errors = ' . print_r( $display_errors, true ) );
+
 			wp_send_json_success(
 				array(
 					'status'         => true,
@@ -390,7 +411,8 @@ class Ajax {
 			foreach ( $results['errors'] as $error ) {
 
 				if ( ! empty( $error ) ) {
-					$error_log->debug( 'Type of error info: ' . print_r( $error, true ) );
+					// phpcs:ignore
+					$this->error_log->debug( 'Type of error info: ' . print_r( $error, true ) );
 					$msgs[] = $error->get_error_message();
 				}
 			}
@@ -398,7 +420,7 @@ class Ajax {
 			wp_send_json_error(
 				array(
 					'status'         => false,
-					'message'        => sprintf( __( "Error during import (# of errors: %1\$d):\n%2\$s", Import_Members::PLUGIN_SLUG ), count( $msgs ), implode( "\n", $msgs ) ),
+					'message'        => sprintf( __( "Error during import (# of errors: %1\$d):\n%2\$s", 'pmpro-import-members-from-csv' ), count( $msgs ), implode( "\n", $msgs ) ),
 					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
 				)
 			);
@@ -418,11 +440,15 @@ class Ajax {
 				foreach ( $results['warnings'] as $error ) {
 					$msgs[] = $error->get_error_message();
 				}
-
-				$error_log->debug( 'Warnings: ' . print_r( $msgs, true ) );
+				// phpcs:ignore
+				$this->error_log->debug( 'Warnings: ' . print_r( $msgs, true ) );
 			}
 
-			$status_msg = sprintf( __( 'Imported %s', Import_Members::PLUGIN_SLUG ), str_pad( '', count( $results['user_ids'] ), '.' ) ) . "\n";
+			$status_msg = sprintf(
+				// translators: %s - generated string of '.'s
+				__( "Imported %s\n", 'pmpro-import-members-from-csv' ),
+				str_pad( '', count( $results['user_ids'] ), '.' )
+			);
 
 			if ( ! empty( $msgs ) ) {
 				$status_msg .= implode( "\n", $msgs ) . "\n";
