@@ -78,6 +78,8 @@ class Import_Members {
 	 */
 	private $error_log = null;
 
+	private $import_user = null;
+
 	/**
 	 * Instance of the Validate class
 	 *
@@ -89,11 +91,11 @@ class Import_Members {
 	 * Import_Members constructor.
 	 */
 	private function __construct() {
-		$this->data      = new Data();
-		$this->csv       = new CSV();
-		$this->variables = new Variables();
-		$this->error_log = new Error_Log(); // phpcs:ignore
-
+		$this->data        = new Data();
+		$this->import_user = new Import_User();
+		$this->csv         = new CSV();
+		$this->variables   = new Variables();
+		$this->error_log   = new Error_Log(); // phpcs:ignore
 		self::$plugin_path = plugin_dir_path( __FILE__ );
 	}
 
@@ -150,7 +152,7 @@ class Import_Members {
 
 		// PMPro specific import functionality
 		add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 );
-		add_filter( 'e20r_import_usermeta', array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
+		add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 2 );
 		add_action(
 			'e20r_after_user_import',
 			array(
@@ -295,7 +297,7 @@ class Import_Members {
 							),
 							sprintf(
 								// translators: %s URL to google docs, %s description
-								'<a href="%s" target="_blank" title="%s">',
+								'<a href="%1$s" target="_blank" title="%2$s">',
 								'https://docs.google.com/spreadsheets',
 								__( 'To Google Sheets', 'pmpro-import-members-from-csv' )
 							),
@@ -338,7 +340,7 @@ class Import_Members {
 			$new_links = array(
 				'donate'        => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					\esc_url_raw( 'https://www.paypal.me/eighty20results' ),
+					esc_url_raw( 'https://www.paypal.me/eighty20results' ),
 					__(
 						'Donate to support updates, maintenance and tech support for this plugin',
 						'pmpro-import-members-from-csv'
@@ -347,13 +349,13 @@ class Import_Members {
 				),
 				'documentation' => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					\esc_url_raw( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
+					esc_url_raw( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
 					__( 'View the documentation', 'pmpro-import-members-from-csv' ),
 					__( 'Docs', 'pmpro-import-members-from-csv' )
 				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
-					\esc_url_raw( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
+					esc_url_raw( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
 					__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
 					__( 'Support', 'pmpro-import-members-from-csv' )
 				),
