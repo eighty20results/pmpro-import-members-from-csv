@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ use E20R\Import_Members\Import_Members;
 
 class User_ID extends Validate {
 
-
 	/**
 	 * Set the status/error message for the User_ID validation logic
 	 *
@@ -40,12 +39,15 @@ class User_ID extends Validate {
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
 				$msg = __(
 					'Error: User ID exists but cannot be updated per the plugin settings',
-					Import_Members::PLUGIN_SLUG
+					'pmpro-import-members-from-csv'
 				);
 				break;
 
 			case Status::E20R_ERROR_ID_NOT_NUMBER:
-				$msg = __( 'Supplied information in ID column is not a number', Import_Members::PLUGIN_SLUG );
+				$msg = __(
+					'Supplied information in ID column is not a number',
+					'pmpro-import-members-from-csv'
+				);
 				break;
 
 			default:
@@ -65,7 +67,7 @@ class User_ID extends Validate {
 	 */
 	public static function validate( $record, $allow_update ) {
 
-		$error_log = Error_Log::get_instance();
+		$error_log = new Error_Log(); // phpcs:ignore
 
 		$has_id = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
 
