@@ -32,6 +32,13 @@ use function Brain\Monkey\Functions\stubEscapeFunctions;
 class ImportMembers_UnitTest extends TFIAT {
 
 	/**
+	 * Load the fixtures for this unit test
+	 */
+	public function loadFixtures(): void {
+		require_once __DIR__ . '/fixtures/plugin-row-meta-data.php';
+	}
+
+	/**
 	 * Load all function mocks we need (with namespaces)
 	 */
 	public function loadMocks() : void {
@@ -45,9 +52,6 @@ class ImportMembers_UnitTest extends TFIAT {
 		Functions\when( 'esc_attr__' )
 			->returnArg( 1 );
 
-		Functions\when( 'get_transient' )
-			->justReturn( '/var/www/html/wp-content/uploads/e20r_import/example_file.csv' );
-
 		Functions\when( 'wp_upload_dir' )
 			->justReturn(
 				array(
@@ -55,22 +59,18 @@ class ImportMembers_UnitTest extends TFIAT {
 					'basedir' => '/var/www/html/wp-content/uploads',
 				)
 			);
-		Functions\expect( 'get_option' )
-			->with( 'e20r_link_for_sponsor' )
-			->once()
-			->andReturn( 'https://www.paypal.com/cgi-bin/webscr' );
+		Functions\when( 'get_option' )
+			->justReturn( 'https://www.paypal.com/cgi-bin/webscr' );
 
-		Functions\expect( 'update_option' )
-			->andReturn( true )
-			->with( 'e20r_link_for_sponsor' )
-			->once();
+		Functions\when( 'update_option' )
+			->justReturn( true );
 	}
 
 	/**
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . '/fixtures/plugin_row_meta_data.php';
+		require_once __DIR__ . BASE_SRC_PATH . '/inc/autoload.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-import-members.php';
 
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
@@ -79,7 +79,6 @@ class ImportMembers_UnitTest extends TFIAT {
 		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-page.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-ajax.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/class.pmpro-import-members.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/inc/autoload.php';
 	}
 
 	/**
@@ -88,6 +87,20 @@ class ImportMembers_UnitTest extends TFIAT {
 	public function loadStubs() : void {
 		Functions\stubs(
 			array(
+				'__'                         => null,
+				'_e'                         => null,
+				'_ex'                        => null,
+				'_x'                         => null,
+				'_n'                         => null,
+				'_nx'                        => null,
+				'translate'                  => null,
+				'esc_html__'                 => null,
+				'esc_html_x'                 => null,
+				'esc_attr__'                 => null,
+				'esc_attr_x'                 => null,
+				'esc_html_e'                 => null,
+				'esc_attr_e'                 => null,
+				'get_transient'              => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
 				'plugin_dir_path'            => function() {
 					return '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv';
 				},
@@ -97,12 +110,10 @@ class ImportMembers_UnitTest extends TFIAT {
 				'esc_url_raw'                => function() {
 					return 'https://localhost:7537';
 				},
-				'get_transient'              => function() {
-					return '/var/www/html/wp-content/uploads/e20r_import/example_file.csv';
-				},
 				'wp_upload_dir'              => function() {
 					return array(
 						'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+						'basedir' => '/var/www/html/wp-content/uploads',
 					);
 				},
 				'register_deactivation_hook' => '__return_true',
