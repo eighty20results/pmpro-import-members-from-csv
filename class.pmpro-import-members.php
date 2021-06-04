@@ -62,7 +62,7 @@ if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
  * @package E20R
  */
 class Loader {
-	
+
 	/**
 	 * Class auto-loader
 	 *
@@ -74,7 +74,7 @@ class Loader {
 	 * @since  v2.2 - BUG FIX: Include blocks/ directory to auto_loader() method
 	 * @since v3.0 - BUG FIX: Refactored to only contain the autoloader method
 	 */
-	public static function autoLoader( $class_name ) {
+	public static function auto_loader( $class_name ) {
 
 		if ( false === stripos( $class_name, 'e20r' ) ) {
 			return;
@@ -110,7 +110,7 @@ class Loader {
 				function ( $current, $key, $iterator ) use ( $filename ) {
 
 					// Skip hidden files and directories.
-					if ( $current->getFilename()[0] == '.' || $current->getFilename() == '..' ) {
+					if ( $current->getFilename()[0] === '.' || $current->getFilename() === '..' ) {
 						return false;
 					}
 
@@ -144,8 +144,9 @@ if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
 
 // Register the auto-loader for this plugin
 try {
-	spl_autoload_register( '\E20R\Import\Loader::autoLoader' );
+	spl_autoload_register( '\E20R\Import\Loader::auto_loader' );
 } catch ( \Exception $exception ) {
+	// phpcs:ignore
 	error_log(
 		__(
 			'Unable to load E20R autoloader for the PMPro Import Members from CSV plugin!',
