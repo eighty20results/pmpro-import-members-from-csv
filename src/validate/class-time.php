@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,8 @@
 
 namespace E20R\Import_Members\Validate;
 
-
 class Time {
-	
+
 	/**
 	 * Validate whether the time string supplied is a valid time string
 	 * @param string $time_string
@@ -29,13 +28,13 @@ class Time {
 	 * @return bool
 	 */
 	public static function validate( $time_string ) {
-		
+
 		$time = strtotime( $time_string );
-		
+
 		if ( false === $time ) {
 			return false;
 		}
-		
+
 		return true;
 	}
 	/**
@@ -46,16 +45,16 @@ class Time {
 	 * @return false|int
 	 */
 	public static function convert( $time_string ) {
-		
-		$timestamp = strtotime( $time_string, current_time( 'timestamp' ) );
-		
+
+		$timestamp = strtotime( $time_string, time() );
+
 		if ( false === $timestamp ) {
 			$timestamp = strtotime(
 				preg_replace( '/\//', '-', $time_string ),
-				current_time( 'timestamp' )
+				time()
 			);
 		}
-		
+
 		return $timestamp;
 	}
 }
