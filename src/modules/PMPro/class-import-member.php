@@ -96,17 +96,19 @@ class Import_Member {
 	 * Add action & filter handlers (run early)
 	 */
 	public function load_actions() {
-		add_action( 'e20r_before_user_import', array( $this, 'pre_member_import' ), - 1 );
+		add_action( 'e20r_before_user_import', array( $this, 'clean_up_old_import_data' ), - 1 );
 		add_action( 'e20r_after_user_import', array( $this, 'import_membership_info' ), - 1, 3 );
 	}
 
 	/**
 	 * Delete all import_ meta fields before an import in case the user has been imported in the past.
 	 *
+	 * @since v3.0 - Renamed function and removed duplicate code in CSV()
+	 *
 	 * @param array $user_data
 	 * @param array $user_meta
 	 */
-	public function pre_member_import( $user_data, $user_meta ) {
+	public function clean_up_old_import_data( $user_data, $user_meta ) {
 
 		// Init variables
 		$user   = false;
@@ -736,7 +738,7 @@ class Import_Member {
 				);
 			}
 		}
-		
+
 		return true;
 	}
 
