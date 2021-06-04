@@ -20,25 +20,29 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Import_Members;
-use E20R\Import_Members\Status;
 use E20R\Import_Members\Validate\Create_Password;
 use E20R\Import_Members\Validate\User_ID;
 use E20R\Import_Members\Validate\User_Update;
-use E20R\Import_Members\Validate\Validate;
 use E20R\Import_Members\Variables;
-use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Validate\Time;
 use WP_Error;
+use WP_User;
 
 class Import_User {
 
 	/**
-	 * The instance of the Import_User class (singleton pattern)
+	 * Instance of the Variables class
 	 *
-	 * @var null|Import_User $instance
+	 * @var Variables|null $variables
 	 */
-	private static $instance = null;
+	private $variables = null;
+
+	/**
+	 * Instance of the Error_Log class
+	 *
+	 * @var Error_Log|null $error_log
+	 */
+	private $error_log = null;
 
 	/**
 	 * Import_User constructor.
@@ -47,20 +51,9 @@ class Import_User {
 	 *
 	 * @access private
 	 */
-	private function __construct() {
-	}
-
-	/**
-	 *
-	 * @return Import_User|null
-	 */
-	public static function get_instance() {
-
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
+	public function __construct() {
+		$this->variables = new Variables();
+		$this->error_log = new Error_Log(); // phpcs:ignore
 	}
 
 	/**
@@ -90,17 +83,15 @@ class Import_User {
 			$e20r_import_err = array();
 		}
 
-		$variables      = Variables::get_instance();
-		$error_log      = Error_Log::get_instance();
-		$display_errors = $variables->get( 'display_errors' );
+		$display_errors = $this->variables->get( 'display_errors' );
 		$user_ids       = array();
 		$msg_target     = 'admin';
-		$site_id        = $variables->get( 'site_id' );
-		
+		$site_id        = $this->variables->get( 'site_id' );
+
 		if ( empty( $display_errors ) ) {
 			$display_errors = array();
 		}
-		
+
 		// Something to be done before importing one user?
 		do_action( 'is_iu_pre_user_import', $user_data, $user_meta );
 		do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
@@ -108,7 +99,7 @@ class Import_User {
 
 		$user_id      = false;
 		$user         = $user_id;
-		$allow_update = (bool) $variables->get( 'update_users' );
+		$allow_update = (bool) $this->variables->get( 'update_users' );
 
 		/**
 		 * BUG FIX: Didn't ensure the ID column contained an integer
@@ -119,12 +110,12 @@ class Import_User {
 			$user = get_user_by( 'ID', $user_data['ID'] );
 		} else {
 			$status_msg = User_ID::status_msg( $user_id_exists, $allow_update );
-			$error_log->debug( 'User ID exists? -> ' . ( empty( $status_msg ) ? 'No' : 'Yes' ) );
-			if ( !empty( $status_msg ) ) {
+			$this->error_log->debug( 'User ID exists? -> ' . ( empty( $status_msg ) ? 'No' : 'Yes' ) );
+			if ( ! empty( $status_msg ) ) {
 				$e20r_import_err[] = $status_msg;
 			}
 		}
-		
+
 		if ( empty( $user ) && true === $allow_update ) {
 
 			if ( empty( $user ) && isset( $user_data['user_email'] ) ) {
@@ -143,23 +134,24 @@ class Import_User {
 			$needs_update    = true;
 		}
 
-		if ( ! in_array( 'user_login', $headers, true ) &&
-			 empty( $user ) &&
-			 ! empty( $user_data['user_email'] ) &&
-			 is_email( $user_data['user_email'] )
+		if (
+			! in_array( 'user_login', $headers, true ) &&
+			empty( $user ) &&
+			! empty( $user_data['user_email'] ) &&
+			is_email( $user_data['user_email'] )
 		) {
 
 			$msg = sprintf(
 				// translators: %d row number
 				__(
 					'Created user login field for record at row %d',
-					Import_Members::PLUGIN_SLUG
+					'pmpro-import-members-from-csv'
 				),
 				$active_line_number
 			);
 
 			$login                   = preg_replace( '/@.*/', '', $user_data['user_email'] );
-			$user_data['user_login'] = preg_replace( '/-|\.|\_|\+/', '', $login );
+			$user_data['user_login'] = preg_replace( '/-|\.|_|\+/', '', $login );
 
 			$e20r_import_err[ "warn_login_created_{$active_line_number}" ] = new WP_Error( 'e20r_im_login', $msg );
 		}
@@ -168,7 +160,7 @@ class Import_User {
 
 			$msg = sprintf(
 				// translators: %d row number
-				__( 'Invalid email in row %d (Not imported).', Import_Members::PLUGIN_SLUG ),
+				__( 'Invalid email in row %d (Not imported).', 'pmpro-import-members-from-csv' ),
 				( $active_line_number )
 			);
 
@@ -189,7 +181,7 @@ class Import_User {
 				// translators: %1$s column name, %2$s: row number
 				__(
 					'No "%1$s" column found, or the "%1$s" was/were included, the user exists but the "Update user record" option was not selected (row: %2$d). Not imported!',
-					Import_Members::PLUGIN_SLUG
+					'pmpro-import-members-from-csv'
 				),
 				$error_column,
 				$active_line_number ++
@@ -205,7 +197,7 @@ class Import_User {
 			$user_data['user_pass'] = wp_generate_password( 12, false );
 		}
 
-		$password_hashing_disabled = (bool) $variables->get( 'password_hashing_disabled' );
+		$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
 
 		// Insert, Update or insert without (re) hashing the password
 		if ( true === $needs_update && false === $password_hashing_disabled ) {
@@ -222,7 +214,7 @@ class Import_User {
 					'e20r_im_account',
 					sprintf(
 						// translators: %s email address
-						__( 'No update/insert action taken for %s', Import_Members::PLUGIN_SLUG ),
+						__( 'No update/insert action taken for %s', 'pmpro-import-members-from-csv' ),
 						$user_data['user_email']
 					)
 				);
@@ -247,12 +239,12 @@ class Import_User {
 			}
 
 			// Set the password nag as needed
-			if ( true === (bool) $variables->get( 'password_nag' ) ) {
+			if ( true === (bool) $this->variables->get( 'password_nag' ) ) {
 				update_user_option( $user_id, 'default_password_nag', true, true );
 			}
 
 			// Adds the user to the specified blog ID if we're in a multi-site configuration
-			$site_id = (int) $variables->get( 'site_id' );
+			$site_id = (int) $this->variables->get( 'site_id' );
 
 			if ( is_multisite() && ! empty( $site_id ) ) {
 				add_user_to_blog( $site_id, $user_id, $default_role );
@@ -261,8 +253,8 @@ class Import_User {
 			// If we created a new user, send new user notification?
 			if ( false === $needs_update ) {
 
-				$new_user_notification       = (bool) $variables->get( 'new_user_notification' );
-				$admin_new_user_notification = (bool) $variables->get( 'admin_new_user_notification' );
+				$new_user_notification       = (bool) $this->variables->get( 'new_user_notification' );
+				$admin_new_user_notification = (bool) $this->variables->get( 'admin_new_user_notification' );
 
 				// Only to the user?
 				if ( true === $new_user_notification && false === $admin_new_user_notification ) {
@@ -298,13 +290,13 @@ class Import_User {
 					$e20r_import_err[] = $status;
 
 					$should_be = Time::convert( $user_data['user_registered'] );
-					$should_be = ( false === $should_be ? current_time( 'timestamp' ) : $should_be );
+					$should_be = ( false === $should_be ? time() : $should_be );
 
 					$display_errors['user_registered'] = sprintf(
 						// translators: %1$s column format, %2$s html, %3$s closing html, %4$s expected format
 						__(
 							'The %2$suser_registered column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected: \'%4$s\')',
-							Import_Members::PLUGIN_SLUG
+							'pmpro-import-members-from-csv'
 						),
 						$user_data['user_registered'],
 						'<strong>',
@@ -314,7 +306,7 @@ class Import_User {
 				}
 			}
 
-			$settings = $variables->get();
+			$settings = $this->variables->get();
 
 			// Some plugins may need to do things after one user has been imported. Who knows?
 			do_action( 'is_iu_post_user_import', $user_id, $settings );
@@ -324,7 +316,7 @@ class Import_User {
 			$user_ids[] = $user_id;
 		}
 
-		$variables->set( 'display_errors', $display_errors );
+		$this->variables->set( 'display_errors', $display_errors );
 
 		return $user_ids;
 	}
@@ -333,7 +325,7 @@ class Import_User {
 	 * Insert an user into the database.
 	 * Copied from wp-include/user.php and commented wp_hash_password part
 	 *
-	 * @param mixed[]|\WP_User $userdata
+	 * @param mixed[]|WP_User $userdata
 	 *
 	 * @return int|WP_Error
 	 *
@@ -356,14 +348,14 @@ class Import_User {
 
 			$id            = (int) $userdata['ID'];
 			$update        = true;
-			$old_user_data = \WP_User::get_data_by( 'id', $id );
+			$old_user_data = WP_User::get_data_by( 'id', $id );
 
-			// hashed in wp_update_user(), plaintext if called directly
+			// hashed in the wp_update_user function, plaintext if called directly
 			// $user_pass = $userdata['user_pass'];
 
 		} else {
 			$update = false;
-			// Hash the password
+			// Here we're supposed to hash the password
 			// $user_pass = wp_hash_password( $userdata['user_pass'] );
 		}
 		$user_pass            = $userdata['user_pass'];
@@ -386,7 +378,7 @@ class Import_User {
 		if ( empty( $user_login ) ) {
 			return new WP_Error(
 				'empty_user_login',
-				__( 'Cannot create a user with an empty login name.', Import_Members::PLUGIN_SLUG )
+				__( 'Cannot create a user with an empty login name.', 'pmpro-import-members-from-csv' )
 			);
 		}
 
@@ -395,7 +387,7 @@ class Import_User {
 				'existing_user_login',
 				sprintf(
 					// translators: %s username (login name)
-					__( 'Sorry, that username (%s) already exists!', Import_Members::PLUGIN_SLUG ),
+					__( 'Sorry, that username (%s) already exists!', 'pmpro-import-members-from-csv' ),
 					$user_login
 				)
 			);
@@ -443,7 +435,7 @@ class Import_User {
 				'existing_user_email',
 				sprintf(
 					// translators: %s email address
-					__( 'Sorry, that email address (%s) is already used!', Import_Members::PLUGIN_SLUG ),
+					__( 'Sorry, that email address (%s) is already used!', 'pmpro-import-members-from-csv' ),
 					$user_email
 				)
 			);
@@ -489,7 +481,7 @@ class Import_User {
 					_x(
 						'%1$s %2$s',
 						'Display name based on first name and last name',
-						Import_Members::PLUGIN_SLUG
+						'pmpro-import-members-from-csv'
 					),
 					$meta['first_name'],
 					$meta['last_name']
@@ -571,7 +563,7 @@ class Import_User {
 			$wpdb->insert( $wpdb->users, $data + compact( 'user_login' ) );
 			$user_id = (int) $wpdb->insert_id;
 		}
-		$user = new \WP_User( $user_id );
+		$user = new WP_User( $user_id );
 		// Update user meta.
 		foreach ( $meta as $key => $value ) {
 			update_user_meta( $user_id, $key, $value );
@@ -622,11 +614,9 @@ class Import_User {
 	 */
 	public function import_usermeta( $user_meta, $user_data ) {
 
-		$variables = Variables::get_instance();
-
 		foreach ( $user_meta as $key => $value ) {
 
-			if ( in_array( $key, array_keys( $variables->get( 'fields' ) ), true ) ) {
+			if ( in_array( $key, array_keys( $this->variables->get( 'fields' ) ), true ) ) {
 				$key = "imported_{$key}";
 			}
 
