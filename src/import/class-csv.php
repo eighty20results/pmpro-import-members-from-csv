@@ -28,6 +28,8 @@ use E20R\Import_Members\Validate\User_ID;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import_Members;
+use SplFileObject;
+use WP_Error;
 
 class CSV {
 	/**
@@ -40,7 +42,7 @@ class CSV {
 	/**
 	 * The CSV file (as a SplFileObject() class )
 	 *
-	 * @var \SplFileObject $file_object
+	 * @var SplFileObject $file_object
 	 */
 	private $file_object;
 
@@ -79,20 +81,6 @@ class CSV {
 		$this->data      = new Data();
 	}
 
-//	/**
-//	 * Fetch or instantiate the CSV class
-//	 *
-//	 * @return CSV|null
-//	 */
-//	public static function get_instance() {
-//
-//		if ( null === self::$instance ) {
-//			self::$instance            = new self();
-//			self::$instance->error_log = new Error_Log(); // phpcs:ignore
-//		}
-//		return self::$instance;
-//	}
-
 	/**
 	 * @param null|string $file_name
 	 *
@@ -110,7 +98,9 @@ class CSV {
 			$file_name = get_transient( 'e20r_import_file' );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( empty( $file_name ) && isset( $_REQUEST['filename'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$file_name = sanitize_file_name( $_REQUEST['filename'] );
 		}
 
@@ -305,7 +295,7 @@ class CSV {
 		$warnings = array();
 		$headers  = array();
 
-		$import_user = Import_User::get_instance();
+		$import_user = new Import_User();
 
 		$user_ids = array();
 		$defaults = apply_filters( 'pmp_im_import_default_settings', $this->variables->get_defaults() );
@@ -314,12 +304,8 @@ class CSV {
 		// Securely extract variables
 		$settings = wp_parse_args( $args, $defaults );
 
-		// Default new user notification target
-		$msg_target = 'admin';
-
 		// Cast variables to expected type
 		$suppress_pwdmsg = (bool) $settings['suppress_pwdmsg'];
-		$allow_update    = (bool) $this->variables->get( 'update_users' );
 		$partial         = (bool) $settings['partial'];
 		$site_id         = $settings['site_id'];
 		$per_partial     = apply_filters( 'pmp_im_import_records_per_scan', intval( $settings['per_partial'] ) );
@@ -329,11 +315,11 @@ class CSV {
 		ini_set( 'auto_detect_line_endings', true );
 
 		$file        = basename( $file_name );
-		$file_object = new \SplFileObject( $file_name, 'r' );
+		$file_object = new SplFileObject( $file_name, 'r' );
 
 		// Use the expected delimiters, enclosures and escape characters
 		$file_object->setCsvControl( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE );
-		$file_object->setFlags( \SplFileObject::READ_AHEAD | \SplFileObject::DROP_NEW_LINE | \SplFileObject::SKIP_EMPTY );
+		$file_object->setFlags( SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY );
 
 		// Loop through the file lines
 		$first               = true;
@@ -344,7 +330,7 @@ class CSV {
 			switch_to_blog( $site_id );
 		}
 
-		while ( ( ! $file_object->eof() ) && ( true == $partial ? ( $current_line_number <= $per_partial ) : true ) ) {
+		while ( ( ! $file_object->eof() ) && ( ! ( true === $partial ) || $current_line_number <= $per_partial ) ) {
 
 			$active_line_number ++;
 
@@ -358,7 +344,7 @@ class CSV {
 				if ( true === $first ) {
 					$msg = __( 'The expected header line in the import file is missing?!?', 'pmpro-import-members-from-csv' );
 					$this->error_log->add_error_msg( $msg, 'error' );
-					$e20r_import_err[ "header_missing_{$active_line_number}" ] = new \WP_Error( 'e20r_im_header', $msg );
+					$e20r_import_err[ "header_missing_$active_line_number" ] = new WP_Error( 'e20r_im_header', $msg );
 					break;
 				} else {
 					continue;
@@ -409,7 +395,7 @@ class CSV {
 			);
 
 			$this->error_log->debug( "Processed line #{$active_line_number}..." );
-			$user_id_status  = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
+			$user_id_status = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
 
 			if ( Status::E20R_ERROR_NO_USER_ID === $user_id_status ) {
 				$msg = sprintf(
@@ -426,7 +412,7 @@ class CSV {
 
 			if ( Status::E20R_ERROR_USER_NOT_FOUND === $user_id_status ) {
 
-				$msg       = sprintf(
+				$msg = sprintf(
 				// translators: %1$d - User ID, %2$d - Current line number in the CSV file being imported
 					__(
 						'WP User ID %1$d not found in database (from CSV file line: %2$d)',
@@ -440,7 +426,7 @@ class CSV {
 
 			if ( true !== $user_id_status && ! empty( $msg ) ) {
 				if ( ! empty( $error_key ) && ! empty( $msg ) ) {
-					$e20r_import_err[ $error_key ] = new \WP_Error( 'e20r_im_missing_data', $msg );
+					$e20r_import_err[ $error_key ] = new WP_Error( 'e20r_im_missing_data', $msg );
 				}
 
 				$this->error_log->debug( $msg );
@@ -468,7 +454,7 @@ class CSV {
 					( $active_line_number + 1 )
 				);
 
-				$warnings[ "warning_userdata_{$active_line_number}" ] = new \WP_Error( 'e20r_im_nodata', $msg );
+				$warnings[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
 
 				$this->error_log->debug( $msg );
 				continue;
@@ -488,7 +474,7 @@ class CSV {
 
 				$this->error_log->add_error_msg( $msg, 'error' );
 				$this->error_log->debug( $msg );
-				$e20r_import_err[ "user_data_missing_{$active_line_number}" ] = new \WP_Error( 'e20r_im_missing_data', $msg );
+				$e20r_import_err[ "user_data_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_missing_data', $msg );
 			}
 
 			/** BUG FIX: Didn't save the created user's ID */
@@ -526,6 +512,7 @@ class CSV {
 			delete_option( 'e20r_import_errors' );
 		}
 
+		// phpcs:ignore
 		// delete_option( "e20rcsv_{$file}" );
 
 		return array(
@@ -595,7 +582,7 @@ class CSV {
 					$ckey
 				);
 				$this->error_log->add_error_msg( $msg, 'error' );
-				$e20r_import_err[ "column_{$ckey}_missing" ] = new \WP_Error( 'e20r_im_header', $msg );
+				$e20r_import_err[ "column_{$ckey}_missing" ] = new WP_Error( 'e20r_im_header', $msg );
 
 				$this->error_log->debug( $msg );
 				$active_line_number ++;
@@ -613,51 +600,6 @@ class CSV {
 		}
 
 		$active_line_number ++;
-	}
-
-	/**
-	 * Delete all import_ meta fields before an import in case the user has been imported in the past.
-	 *
-	 * @param array $user_data
-	 * @param array $user_meta
-	 */
-	public function pre_import( $user_data, $user_meta ) {
-
-		// Init variables
-		$user   = false;
-		$target = null;
-
-		//Get user by ID
-		if ( isset( $user_data['ID'] ) ) {
-			$user = get_user_by( 'ID', $user_data['ID'] );
-		}
-
-		// That didn't work, now try by login value or email
-		if ( empty( $user->ID ) ) {
-
-			if ( isset( $user_data['user_login'] ) ) {
-				$target = 'login';
-
-			} elseif ( isset( $user_data['user_email'] ) ) {
-				$target = 'email';
-			}
-
-			if ( ! empty( $target ) ) {
-				$user = get_user_by( $target, $user_data[ "user_{$target}" ] );
-			} else {
-				return; // Exit quietly
-			}
-		}
-
-		// Clean up if we found a user (delete the imported_ usermeta)
-		if ( ! empty( $user->ID ) ) {
-
-			$fields = $this->variables->get( 'fields' );
-
-			foreach ( $fields as $field_name => $value ) {
-				delete_user_meta( $user->ID, "imported_{$field_name}" );
-			}
-		}
 	}
 
 	/**
