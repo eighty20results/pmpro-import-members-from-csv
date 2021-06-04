@@ -35,7 +35,6 @@ use E20R\Utilities\Licensing\Licensing;
  */
 class Import_Members {
 
-	const PLUGIN_SLUG = 'pmpro-import-members-from-csv';
 	/**
 	 * Path to this plugin (directory path)
 	 *
@@ -151,7 +150,8 @@ class Import_Members {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 
 		// PMPro specific import functionality
-		add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 );
+		// phpcs:ignore - We do this in the CSV() class as it's a clean-up operation
+		// add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 );
 		add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 2 );
 		add_action(
 			'e20r_after_user_import',
