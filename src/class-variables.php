@@ -200,37 +200,23 @@ class Variables {
 	 *
 	 * @access private
 	 */
-	private function __construct() {
-	}
+	public function __construct() {
 
-	/**
-	 * Get or instantiate and return this class (Variables)
-	 *
-	 * @return Variables|null
-	 */
-	public static function get_instance() {
+		$this->load_settings();
 
+		// Set the error log info
+		$upload_dir         = wp_upload_dir();
+		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
+		$this->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
+		$this->fields       = apply_filters( 'e20r_import_supported_field_list', array() );
 
-		if ( is_null( self::$instance ) ) {
+		$this->error_log = new Error_Log(); // phpcs:ignore
+		$this->error_log->debug( 'Instantiating the Variables class' );
 
-			self::$instance->error_log->debug( 'Instantiating the Variables class' );
-
-			self::$instance            = new self();
-			self::$instance->error_log = new Error_Log(); // phpcs:ignore
-			self::$instance->load_settings();
-
-			// Set the error log info
-			$upload_dir                   = wp_upload_dir();
-			self::$instance->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
-			self::$instance->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
-			self::$instance->fields       = apply_filters( 'e20r_import_supported_field_list', array() );
-
-			/**
-			 * @since v2.60 - ENHANCEMENT: Trigger attempted link of sponsor info after everything is done
-			 */
-			self::$instance->delayed_sponsor_link = get_option( 'e20r_link_for_sponsor', array() );
-		}
-		return self::$instance;
+		/**
+		 * @since v2.60 - ENHANCEMENT: Trigger attempted link of sponsor info after everything is done
+		 */
+		$this->delayed_sponsor_link = get_option( 'e20r_link_for_sponsor', array() );
 	}
 
 	/**
@@ -297,8 +283,7 @@ class Variables {
 	 */
 	private function maybe_load_from_request() {
 
-		$csv_file  = CSV::get_instance();
-
+		$csv_file       = new CSV();
 		$tmp_name       = $_FILES['members_csv']['tmp_name'] ?? $this->filename;
 		$this->filename = $_FILES['members_csv']['name'] ?? $this->filename;
 
@@ -348,7 +333,7 @@ class Variables {
 		 * Calculate the # of records to import per operation when running in background mode
 		 */
 		$max_exec_time   = intval( floor( intval( get_cfg_var( 'max_execution_time' ) ) * 0.80 ) );
-		$per_record_time = self::calculate_per_record_time();
+		$per_record_time = $this->calculate_per_record_time();
 
 		if ( ! empty( $max_exec_time ) && ( is_numeric( $per_record_time ) ) ) {
 			$this->per_partial = round( ceil( $max_exec_time / (float) $per_record_time ), 0 );
@@ -366,21 +351,21 @@ class Variables {
 	 *
 	 * @return int
 	 */
-	public static function calculate_per_record_time() {
+	public function calculate_per_record_time() {
 		$per_record_time = apply_filters( 'e20r_import_time_per_record', 1.5 );
 
 		// Add time for creating order(s) (reduces # of records per iteration)
-		if ( true === (bool) self::$instance->create_order ) {
+		if ( true === (bool) $this->create_order ) {
 			$per_record_time += apply_filters( 'e20r_import_order_link_timeout', 1 );
 		}
 
 		// Add time for sending the welcome message (reduces # of records per iteration)
-		if ( true === (bool) self::$instance->send_welcome_email ) {
+		if ( true === (bool) $this->send_welcome_email ) {
 			$per_record_time += apply_filters( 'e20r_import_welcome_email_time', 4 );
 		}
 
 		// Add time for sending admin notification email
-		if ( true === (bool) self::$instance->admin_new_user_notification ) {
+		if ( true === (bool) $this->admin_new_user_notification ) {
 			$per_record_time += apply_filters( 'e20r_new_user_notification_time', 1 );
 		}
 
