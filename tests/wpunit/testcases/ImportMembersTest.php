@@ -101,8 +101,8 @@ class ImportMembersTest extends Unit {
 					'settings' => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						\esc_url( '/wp-admin/?page=pmpro-import-members' ),
-						__( 'Settings Page', Import_Members::PLUGIN_SLUG ),
-						__( 'Settings Page', Import_Members::PLUGIN_SLUG )
+						__( 'Settings Page', 'pmpro-import-members-from-csv' ),
+						__( 'Settings Page', 'pmpro-import-members-from-csv' )
 					),
 				),
 				'class.pmpro-import-members.php',
@@ -116,21 +116,21 @@ class ImportMembersTest extends Unit {
 						\esc_url_raw( 'https://www.paypal.me/eighty20results' ),
 						__(
 							'Donate to support updates, maintenance and tech support for this plugin',
-							Import_Members::PLUGIN_SLUG
+							'pmpro-import-members-from-csv'
 						),
-						__( 'Donate', Import_Members::PLUGIN_SLUG )
+						__( 'Donate', 'pmpro-import-members-from-csv' )
 					),
 					'documentation' => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						\esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
-						__( 'View the documentation', Import_Members::PLUGIN_SLUG ),
-						__( 'Docs', Import_Members::PLUGIN_SLUG )
+						__( 'View the documentation', 'pmpro-import-members-from-csv' ),
+						__( 'Docs', 'pmpro-import-members-from-csv' )
 					),
 					'help'          => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						\esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
-						__( 'Visit the support forum', Import_Members::PLUGIN_SLUG ),
-						__( 'Support', Import_Members::PLUGIN_SLUG )
+						__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
+						__( 'Support', 'pmpro-import-members-from-csv' )
 					),
 				),
 				'class.pmpro-import-members.php',
@@ -143,21 +143,21 @@ class ImportMembersTest extends Unit {
 						\esc_url_raw( 'https://www.paypal.me/eighty20results' ),
 						__(
 							'Donate to support updates, maintenance and tech support for this plugin',
-							Import_Members::PLUGIN_SLUG
+							'pmpro-import-members-from-csv'
 						),
-						__( 'Donate', Import_Members::PLUGIN_SLUG )
+						__( 'Donate', 'pmpro-import-members-from-csv' )
 					),
 					'documentation' => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						\esc_url( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
-						__( 'View the documentation', Import_Members::PLUGIN_SLUG ),
-						__( 'Docs', Import_Members::PLUGIN_SLUG )
+						__( 'View the documentation', 'pmpro-import-members-from-csv' ),
+						__( 'Docs', 'pmpro-import-members-from-csv' )
 					),
 					'help'          => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						\esc_url( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
-						__( 'Visit the support forum', Import_Members::PLUGIN_SLUG ),
-						__( 'Support', Import_Members::PLUGIN_SLUG )
+						__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
+						__( 'Support', 'pmpro-import-members-from-csv' )
 					),
 				),
 				'class-pmpro-import-members.php', // Note, not the correct plugin file string
@@ -173,7 +173,7 @@ class ImportMembersTest extends Unit {
 	 * @test
 	 */
 	public function test_load_hooks() {
-		
+
 		Actions\expectAdded( 'plugins_loaded' )
 			->once()
 			->with( array( Ajax::get_instance(), 'load_hooks' ), 99 );
@@ -204,7 +204,7 @@ class ImportMembersTest extends Unit {
 
 		Actions\expectAdded( 'init' )
 			->once()
-			->with( array( Data::get_instance(), 'process_csv' ) );
+			->with( array( new Data(), 'process_csv' ) );
 
 		Actions\expectAdded( 'admin_enqueue_scripts' )
 			->once()
@@ -212,11 +212,7 @@ class ImportMembersTest extends Unit {
 
 		Filters\expectAdded( 'e20r_import_usermeta' )
 			->once()
-			->with( array( Import_User::get_instance(), 'import_usermeta' ), 10, 2 );
-
-		Actions\expectAdded( 'e20r_before_user_import' )
-			->once()
-			->with( array( CSV::get_instance(), 'pre_import' ), 10, 2 );
+			->with( array( new Import_User(), 'import_usermeta' ), 10, 2 );
 
 		Actions\expectAdded( 'e20r_after_user_import' )
 			->once()
@@ -224,7 +220,7 @@ class ImportMembersTest extends Unit {
 
 		Actions\expectAdded( 'e20r_after_user_import' )
 			->once()
-			->with( array( Data::get_instance(), 'cleanup' ), 9999, 2 );
+			->with( array( new Data(), 'cleanup' ), 9999, 2 );
 
 		Filters\expectAdded( 'plugin_row_meta' )
 			->once()
@@ -269,7 +265,7 @@ class ImportMembersTest extends Unit {
 			Functions\expect( 'get_site_option' )
 				->andReturn( $plugin_list );
 		} else {
-			echo "Unexpected outcome: The get_site_option() function is defined!?!";
+			echo 'Unexpected outcome: The get_site_option() function is defined!?!';
 		}
 
 		$result = Import_Members::is_pmpro_active();
@@ -334,7 +330,7 @@ class ImportMembersTest extends Unit {
 				->once()
 				->with( 'e20r_link_for_sponsor' );
 		} else {
-			echo "Unexpected outcome: The delete_option() function is defined!?!";
+			echo 'Unexpected outcome: The delete_option() function is defined!?!';
 		}
 
 		Import_Members::deactivation();
