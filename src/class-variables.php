@@ -202,16 +202,26 @@ class Variables {
 	 */
 	public function __construct() {
 
-		$this->load_settings();
+		$this->error_log = new Error_Log(); // phpcs:ignore
+		$this->error_log->debug( 'Instantiating the Variables class' );
+		$this->configure();
+	}
+
+	/**
+	 * Load settings from the $_REQUEST variable
+	 */
+	public function configure() {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ( isset( $_REQUEST['create_order'] ) && isset( $_REQUEST['update_users'] ) ) ) {
+			$this->load_settings();
+		}
 
 		// Set the error log info
 		$upload_dir         = wp_upload_dir();
 		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
 		$this->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
 		$this->fields       = apply_filters( 'e20r_import_supported_field_list', array() );
-
-		$this->error_log = new Error_Log(); // phpcs:ignore
-		$this->error_log->debug( 'Instantiating the Variables class' );
 
 		/**
 		 * @since v2.60 - ENHANCEMENT: Trigger attempted link of sponsor info after everything is done
@@ -223,15 +233,14 @@ class Variables {
 	 * Load/configure settings from $_REQUEST array (if available)
 	 */
 	public function load_settings() {
+
 		if ( true === $this->is_configured() ) {
-			$this->error_log->debug( 'The plugin is configured already' );
+			$this->error_log->debug( 'The settings have been instantiated already' );
 			return;
 		}
 
-		$this->error_log->debug( "Current file name: {$this->filename}" );
 		$this->maybe_load_from_request();
-
-		$this->error_log->debug( "Configured the file name: {$this->filename}" );
+		$this->error_log->debug( "Current file name: {$this->filename}" );
 		$this->error_log->debug( 'Settings users update to: ' . ( $this->update_users ? 'True' : 'False' ) );
 		$this->error_log->debug( 'Do we suppress the changed password email? ' . ( $this->suppress_pwdmsg ? 'Yes' : 'No' ) );
 
@@ -273,8 +282,7 @@ class Variables {
 	 *
 	 * @return bool
 	 */
-	private function is_configured() {
-
+	public function is_configured() {
 		return ! empty( $this->filename );
 	}
 
@@ -283,7 +291,7 @@ class Variables {
 	 */
 	private function maybe_load_from_request() {
 
-		$csv_file       = new CSV();
+		$csv_file       = new CSV( $this );
 		$tmp_name       = $_FILES['members_csv']['tmp_name'] ?? $this->filename;
 		$this->filename = $_FILES['members_csv']['name'] ?? $this->filename;
 
@@ -404,7 +412,7 @@ class Variables {
 			'deactivate_old_memberships'  => false,
 			'create_order'                => false,
 			'partial'                     => false,
-			'per_partial'                 => $this->get( 'per_partial' ),
+			'per_partial'                 => true,
 			'site_id'                     => null,
 		);
 	}
@@ -481,13 +489,5 @@ class Variables {
 			$request_settings[ $parameter_name ] = $value;
 		}
 		return $request_settings;
-	}
-
-	/**
-	 * Disallow cloning this class
-	 *
-	 * @access private
-	 */
-	private function __clone() {
 	}
 }

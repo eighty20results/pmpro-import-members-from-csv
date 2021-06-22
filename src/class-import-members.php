@@ -35,6 +35,7 @@ use E20R\Utilities\Licensing\Licensing;
  */
 class Import_Members {
 
+	const E20R_LICENSE_SKU = 'E20R_IMPORT_MEMBERS';
 	/**
 	 * Path to this plugin (directory path)
 	 *
@@ -77,6 +78,11 @@ class Import_Members {
 	 */
 	private $error_log = null;
 
+	/**
+	 * Instance of the Import_User class
+	 *
+	 * @var Import_User $import_user
+	 */
 	private $import_user = null;
 
 	/**
@@ -92,10 +98,10 @@ class Import_Members {
 	private function __construct() {
 		$this->data        = new Data();
 		$this->import_user = new Import_User();
-		$this->csv         = new CSV();
 		$this->variables   = new Variables();
+		$this->csv         = new CSV( $this->variables );
 		$this->error_log   = new Error_Log(); // phpcs:ignore
-		self::$plugin_path = plugin_dir_path( __FILE__ );
+		self::$plugin_path = sprintf( '%1$s/..', plugin_dir_path( __FILE__ ) );
 	}
 
 	/**
@@ -173,9 +179,10 @@ class Import_Members {
 		// Remove Import action for Sponsored Members add-on (handled directly by this plugin)
 		remove_action( 'is_iu_post_user_import', 'pmprosm_is_iu_post_user_import', 20 );
 
+		$licensing = new Licensing( self::E20R_LICENSE_SKU );
 		if (
 			class_exists( 'E20R\Utilities\Licensing\Licensing' ) &&
-			Licensing::is_licensed( 'E20R_IMPORT_MEMBERS', false )
+			$licensing->is_licensed( self::E20R_LICENSE_SKU, false )
 		) {
 			do_action( 'e20r_import_load_licensed_modules' );
 		}
@@ -226,8 +233,8 @@ class Import_Members {
 	 **/
 	public function admin_enqueue_scripts( $hook ) {
 
-		// phpcs:ignore
-		if ( ! isset( $_REQUEST['page'] ) || $_REQUEST['page'] !== 'pmpro-import-members-from-csv' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $_REQUEST['page'] ) || 'pmpro-import-members-from-csv' !== $_REQUEST['page'] ) {
 			return;
 		}
 
@@ -246,8 +253,19 @@ class Import_Members {
 
 		$this->error_log->debug( "Setting JavaScript timeout for import operations to {$timeout_value} seconds" );
 
-		wp_enqueue_style( 'pmpro-import-members-from-csv', plugins_url( 'css/pmpro-import-members-from-csv.css', __FILE__ ), null, E20R_IMPORT_VERSION );
-		wp_register_script( 'pmpro-import-members-from-csv', plugins_url( 'javascript/pmpro-import-members-from-csv.js', __FILE__ ), array( 'jquery' ), E20R_IMPORT_VERSION, true );
+		wp_enqueue_style(
+			'pmpro-import-members-from-csv',
+			plugins_url( 'css/pmpro-import-members-from-csv.css', E20R_IMPORT_PLUGIN_FILE ),
+			null,
+			E20R_IMPORT_VERSION
+		);
+		// phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NotInFooter
+		wp_register_script(
+			'pmpro-import-members-from-csv',
+			plugins_url( 'javascript/pmpro-import-members-from-csv.js', E20R_IMPORT_PLUGIN_FILE ),
+			array( 'jquery' ),
+			E20R_IMPORT_VERSION
+		);
 
 		wp_localize_script(
 			'pmpro-import-members-from-csv',
