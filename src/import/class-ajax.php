@@ -66,8 +66,8 @@ class Ajax {
 	 */
 	private function __construct() {
 		$this->error_log = new Error_Log(); // phpcs:ignore
-		$this->csv       = new CSV();
 		$this->variables = new Variables();
+		$this->csv       = new CSV( $this->variables );
 	}
 
 	/**
@@ -112,7 +112,7 @@ class Ajax {
 		if ( ! empty( $client_ip ) && false === $do_not_track ) {
 
 			$donated               = get_option( 'e20r_import_has_donated', array() );
-			$donated[ $client_ip ] = current_time( 'timestamp' );
+			$donated[ $client_ip ] = time();
 
 			if ( true === update_option( 'e20r_import_has_donated', $donated ) ) {
 
@@ -174,7 +174,7 @@ class Ajax {
 	 */
 	public function wp_ajax_cleanup_csv() {
 
-		$sponsors  = new Import_Sponsors();
+		$sponsors = new Import_Sponsors();
 
 		$this->error_log->debug( 'Import is complete... ' );
 
