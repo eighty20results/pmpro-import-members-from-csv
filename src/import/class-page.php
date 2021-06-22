@@ -340,9 +340,7 @@ class Page {
 
 				<textarea id="importstatus" rows="10" cols="60"><?php esc_attr_e( 'Loading...', 'pmpro-import-members-from-csv' ); ?></textarea>
 				<p class="complete_btn">
-					<?php
-					esc_attr_e( $nonce ); // phpcs:ignore
-					?>
+					<?php echo $nonce; // phpcs:ignore ?>
 					<input type="button" class="button-primary" id="completed_import" value="<?php esc_attr_e( 'Finished', 'pmpro-import-members-from-csv' ); ?>" style="display:none;"/>
 				</p>
 					<?php
@@ -440,9 +438,7 @@ class Page {
 			</div>
 			<hr/>
 			<form method="post" action="" id="e20r-import-form" enctype="multipart/form-data">
-				<?php
-				esc_attr_e( $nonce ); // phpcs:ignore
-				?>
+				<?php echo $nonce; // phpcs:ignore ?>
 				<table class="form-table">
 					<tr valign="top">
 						<th scope="row">
