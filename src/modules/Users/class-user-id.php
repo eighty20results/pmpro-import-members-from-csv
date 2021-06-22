@@ -17,13 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members\Validate;
+namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
-use E20R\Import_Members\Import_Members;
 
-class User_ID extends Validate {
+class User_ID {
 
 	/**
 	 * Set the status/error message for the User_ID validation logic

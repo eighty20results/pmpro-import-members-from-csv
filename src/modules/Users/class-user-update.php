@@ -17,15 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members\Validate;
-
+namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Variables;
-use E20R\Import_Members;
 
-class User_Update extends Validate {
-	
-	
+class User_Update {
+
 	/**
 	 * User_Update::status_msg() is a stub function
 	 *
@@ -35,7 +32,7 @@ class User_Update extends Validate {
 	public static function status_msg( $status, $allow_updates ) {
 		// Not doing anything - stub for compatibility
 	}
-	
+
 	/**
 	 * @param array $record
 	 * @param bool $allow_update
@@ -43,34 +40,36 @@ class User_Update extends Validate {
 	 * @return bool|string
 	 */
 	public static function validate( $record, $allow_update ) {
-		
+
 		global $active_line_number;
-		
-		$variables = Variables::get_instance();
+
+		$variables = new Variables();
 		$update    = (bool) $variables->get( 'update_users' );
-		
-		if ( isset( $record['user_login']) &&
-		     !empty( 'user_login' ) &&
-		     false === $update &&
-		     false !== get_user_by( 'login', $record['user_login'] )
+
+		if (
+			isset( $record['user_login'] ) &&
+			! empty( 'user_login' ) &&
+			false === $update &&
+			false !== get_user_by( 'login', $record['user_login'] )
 		) {
 			return 'user_login';
 		}
-		
-		if ( isset( $record['user_email']) &&
-		     !empty( 'user_email' ) &&
-		     false === $update &&
-		     false !== get_user_by( 'login', $record['user_login'] )
+
+		if (
+			isset( $record['user_email'] ) &&
+			! empty( 'user_email' ) &&
+			false === $update &&
+			false !== get_user_by( 'login', $record['user_login'] )
 		) {
 			return 'user_email';
 		}
-		
+
 		// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the email address
 		if ( ( empty( $user_data['user_login'] ) && empty( $user_data['user_email'] ) ) ) {
-			
+
 			return 'user_login and user_email';
 		}
-		
+
 		return true;
 	}
 }

@@ -17,19 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members\Validate;
-
+namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Variables;
 
-class Create_Password extends Validate {
-	
+class Create_Password {
+
 	public static function status_msg( $status, $allow_updates ) {
-		
+
 		// TODO: Create status_msg for Create password validation!
 		return $status;
 	}
-	
+
 	/**
 	 * Should we create a new password? (Based on the import data & settings)
 	 *
@@ -39,10 +38,10 @@ class Create_Password extends Validate {
 	 * @return bool
 	 */
 	public static function validate( $record, $allow_update = false ) {
-		
-		$variables = Variables::get_instance();
+
+		$variables = new Variables();
 		$update    = (bool) $variables->get( 'update_user' );
-		
+
 		return ( false === $update && (
 				! isset( $record['user_pass'] ) || ( isset( $record['user_pass'] ) && empty( $record['user_pass'] ) )
 			)
