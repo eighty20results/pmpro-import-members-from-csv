@@ -3,26 +3,26 @@
 		xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/6.3/phpunit.xsd"
 		backupGlobals="true"
 		backupStaticAttributes="false"
-		bootstrap="tests/wpunit/bootstrap.php"
-		colors="false"
+		bootstrap="tests/bootstrap.php"
+		colors="true"
 		convertErrorsToExceptions="true"
 		convertNoticesToExceptions="true"
 		convertWarningsToExceptions="true"
 		forceCoversAnnotation="false"
-		processIsolation="false"
+		processIsolation="true"
 		stopOnError="false"
 		stopOnFailure="false"
 		stopOnIncomplete="false"
 		stopOnSkipped="false"
 		stopOnRisky="false"
-		timeoutForSmallTests="1"
+		timeoutForSmallTests="5"
 		timeoutForMediumTests="10"
 		timeoutForLargeTests="60"
-		verbose="false">
+		verbose="true">
 		<!-- ... -->
 	<testsuites>
 		<testsuite name="Plugin Unittests">
-			<directory>tests/phpunit/testcases/*Test.php files</directory>
+			<directory>tests/unit/*Test.php files</directory>
 		</testsuite>
 	</testsuites>
 </phpunit>

@@ -21,6 +21,7 @@ namespace E20R\Test\Unit;
 require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
 
 use Brain\Monkey\Functions;
+use Codeception\Stub\Expected;
 use E20R\Import_Members\Import\CSV;
 use E20R\Import_Members\Error_Log;
 use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
@@ -92,18 +93,22 @@ $bm->it(
 	function() use ( $bm ) {
 		// phpcs:ignore
 		$bm->make('E20R\\Import_Members\\Error_Log', array( 'debug' => null ) );
-		$bm->make(
-			'E20R\\Import_Members\\Variables',
-			array(
-				'get' => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
-			)
-		);
 
 		$fixture_list = import_file_names();
 
 		foreach ( $fixture_list as $fixture ) {
 			list( $file_path, $expected_result ) = $fixture;
-			$result                              = CSV::get_import_file_path( $file_path );
+
+			$mocked_variables = $bm->makeEmpty(
+				'E20R\\Import_Members\\Variables',
+				array(
+					'get' => $file_path,
+				)
+			);
+
+			$csv    = new CSV();
+			$result = $csv->get_import_file_path( $file_path );
+
 			assertEquals( $expected_result, $result );
 		}
 	}

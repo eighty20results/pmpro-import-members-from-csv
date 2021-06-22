@@ -131,12 +131,20 @@ $bm = new ImportMembers_UnitTest();
  */
 $bm->it(
 	'should test that we generate the expected plugin metadata',
-	function () {
+	function () use ( $bm ) {
 
 		$fixture_list = plugin_row_meta_data();
 
 		foreach ( $fixture_list as $fixture ) {
 			list( $row_meta_list, $file_name, $expected_result ) = $fixture;
+
+			$mocked_data = $bm->makeEmpty(
+				'\\E20R\\Import_Members\\Data',
+				array(
+					'' => '',
+				)
+			);
+
 			$class    = Import_Members::get_instance();
 			$row_list = $class->plugin_row_meta( $row_meta_list, $file_name );
 			$result   = \count( $row_list );

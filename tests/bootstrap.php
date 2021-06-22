@@ -53,17 +53,24 @@ use AspectMock\Kernel;
 
 $loader = require __DIR__ . '/../inc/autoload.php';
 $loader->add( 'AspectMock', __DIR__ . '/../src' );
-$loader->add( 'demo', __DIR__ . '/_data' );
+$loader->add( 'Import_Members', __DIR__ . '/../class.pmpro-import-members.php' );
 $loader->register();
 
-$kernel = Kernel::getInstance();
+$kernel = AspectMock\Kernel::getInstance();
 $kernel->init(
 	array(
+		'debug'              => true,
 		'cacheDir'           => __DIR__ . '/_data/cache',
-		'includePaths'       => array( __DIR__ . '/_data/demo' ),
+		'includePaths'       => array(
+			__DIR__ . '/../inc/autoload.php',
+			__DIR__ . '/../class.pmpro-import-members.php',
+			__DIR__ . '/../src',
+		),
 		'interceptFunctions' => true,
 	)
 );
+
+return $loader;
 
 # Load the plugin class file
 // require_once __DIR__ . '/../class.pmpro-import-members.php';

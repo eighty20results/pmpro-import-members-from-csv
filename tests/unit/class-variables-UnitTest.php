@@ -18,24 +18,40 @@
  */
 namespace E20R\Test\Unit;
 
+require_once __DIR__ . '/../../inc/autoload.php';
 require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
 
+require_once __DIR__ . '/fixtures/request-settings.php';
+require_once __DIR__ . '/fixtures/import-file-names.php';
+
 use Brain\Monkey\Functions;
-use Codeception\Stub;
-use E20R\Import_Members\Import_Members;
+use Codeception\TestCase;
+use AspectMock\Test as test;
+use E20R\Import_Members\Data;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import\CSV;
 use E20R\Import_Members\Error_Log;
 use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
-use Mockery;
 
-// Functions to import from other namespaces
+use Exception;
 use function E20R\Test\Unit\Fixtures\import_file_names;
 use function E20R\Test\Unit\Fixtures\request_settings;
-use function PHPUnit\Framework\assertEquals;
-use function Brain\Monkey\Functions\stubEscapeFunctions;
 
 class Variables_UnitTest extends TFIAT {
+
+	/**
+	 * Mock for the Error_Log class
+	 *
+	 * @var null|Error_Log $this->error_log_mock_mock
+	 */
+	private $error_log_mock = null;
+
+	/**
+	 * Mock for the CSV class
+	 *
+	 * @var null|CSV
+	 */
+	private $csv_mock = null;
 
 	/**
 	 * Load all function mocks we need (with namespaces)
@@ -64,73 +80,113 @@ class Variables_UnitTest extends TFIAT {
 		Functions\when( 'update_option' )
 			->justReturn( true );
 
-//		Functions\when( 'gmdate' )
-//			->justReturn( function( $format, $time ) {
-//				return date( $format, time() );
-//			});
 	}
 
-	/**
-	 * Load all needed source files for the unit test
-	 */
-	public function loadTestSources(): void {
-		require_once __DIR__ . BASE_SRC_PATH . '/inc/autoload.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-csv.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/class-variables.php';
-	}
-
-	/**
-	 * Load fixtures for the unit test
-	 */
 	public function loadFixtures(): void {
-		require_once __DIR__ . '/fixtures/import-file-names.php';
-		require_once __DIR__ . '/fixtures/request-settings.php';
+		// TODO: Implement loadFixtures() method.
+	}
+
+	public function loadTestSources(): void {
+		// TODO: Implement loadTestSources() method.
+	}
+
+	/**
+	 * Test the happy pathf for the is_configured method
+	 * @dataProvider fixture_is_configured
+	 */
+	public function test_is_configured( $request_variables, $file_info ) {
+
+		$tmp_file_name = $file_info[0]['members_csv']['tmp_name'];
+		$file_name     = $file_info[0]['members_csv']['name'];
+
+		$this->error_log_mock = \Mockery::mock( \E20R\Import_Members\Error_Log::class )
+										->makePartial();
+		$this->error_log_mock
+			->shouldReceive( 'debug' )
+			->with( 'Instantiating the Variables class' );
+//			->once();
+//
+//		$this->error_log_mock
+//			->shouldReceive( 'debug' )
+//			->with( "Will redirect since we're processing in the background" )
+//			->once();
+//
+//		$this->error_log_mock
+//			->shouldReceive( 'debug' )
+//			->with( "Will redirect since we're processing in the background" )
+//			->once();
+//
+//		$this->error_log_mock
+//			->shouldReceive( 'debug' )
+//			->with( "Before processing FILES array:  vs {$tmp_file_name}" )
+//			->once();
+
+		$this->error_log_mock
+			->shouldReceive( 'add_error_msg' )
+//			->once()
+			->with( 'CSV file not selected. Nothing to import!', 'error' );
+
+		$this->data_mock = \Mockery::mock( \E20R\Import_Members\Data::class )
+			->makePartial();
+		//
+		//      $this->error_log_mock->debug( 'Instantiating the Variables class' );
+		//      $this->error_log_mock->debug( 'The settings have been instantiated already' );
+		//      $this->error_log_mock->debug( "Will redirect since we're processing in the background" );
+		//      $this->error_log_mock->debug( 'Nothing to do without an import file!' );
+		//      $this->error_log_mock->debug( "Before processing FILES array:  vs {$tmp_file_name}" );
+		//      $this->error_log_mock->debug( "Will redirect since we're processing in the background" );
+		//      $this->error_log_mock->add_error_msg(
+		//          __( 'CSV file not selected. Nothing to import!', 'pmpro-import-members-from-csv' ),
+		//          'error'
+		//      );
+		//
+		//      if ( 1 === $request_variables['update_users'] ) {
+		//          $this->error_log_mock->debug( 'Settings users update to: True' )->willReturn( false );
+		//      } else {
+		//          $this->error_log_mock->debug( 'Settings users update to: False' )->willReturn( false );
+		//      }
+		//      if ( 1 === $request_variables['suppress_pwdmsg'] ) {
+		//          $this->error_log_mock->debug( 'Do we suppress the changed password email? Yes' )->willReturn( false );
+		//      } else {
+		//          $this->error_log_mock->debug( 'Do we suppress the changed password email? No' )->willReturn( false );
+		//      }
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$_REQUEST = $_REQUEST + $request_variables;
+		$_FILES   = $_FILES + $file_info[0];
+		$expected = ! empty( $file_info[1] );
+
+		$this->it(
+			'should verify that a file name is configured',
+			function() use ( $expected, $file_name ) {
+				$variables = new Variables();
+
+				$this->csv_mock = \Mockery::mock( \E20R\Import_Members\Import\CSV::class )->makePartial();
+
+				$this->csv_mock
+					->shouldReceive( '__construct' )
+					->with( $variables )
+					->once();
+
+				$result = $variables->is_configured();
+				$this->assertEquals( $expected, $result );
+			}
+		);
+	}
+
+	/**
+	 * Fixture for the Variables::is_configured method
+	 * @return array
+	 */
+	public function fixture_is_configured() : array {
+
+		$fixture   = array();
+		$file_info = import_file_names();
+
+		foreach ( request_settings() as $key_id => $request ) {
+			$fixture[] = array( $request, $file_info[ $key_id ] );
+		}
+
+		return $fixture;
 	}
 }
-
-// Instantiate the Unit test class we defined
-$bm = new Variables_UnitTest();
-
-/**
- * Tests the plugin_row_meta() method in Import_Members()
- * @dataProvider \E20R\Test\Unit\Fixtures\import_file_names
- */
-$bm->it(
-	'should verify that the settings defined are from the $_REQUEST variable',
-	function () use ( $bm ) {
-
-		$error_log = Stub::construct( new Error_Log() ); // phpcs:ignore
-		$error_log->method( 'debug' )
-			->willReturn( null );
-
-		$file_fixture     = import_file_names();
-		$request_fixtures = request_settings();
-
-		foreach ( $file_fixture as $fixture_id => $file_name_info ) {
-			$csv = Stub::construct(
-				new CSV(),
-				array(
-					'pre_process_file' => $file_name_info[1],
-				)
-			);
-
-			list( $file_array, $expected_file_name) = $file_name_info;
-
-			$csv->expects( $this->any )
-			    ->method( 'pre_process_file' )
-			    ->with( $file_array['member_csv']['name'] )
-			    ->willReturn( $expected_file_name );
-
-			$_FILES = $_FILES + $file_array; // phpcs:ignore
-			echo 'File data: ' . print_r( $_FILES, true ); // phpcs:ignore
-			$_REQUEST        = $_REQUEST + $request_fixtures[ $fixture_id ]; // phpcs:ignore
-			$expected_result = $request_fixtures[ $fixture_id ];
-			echo "Request data (including for index ${fixture_id}): " . print_r( $_REQUEST, true ); // phpcs:ignore
-			$variables = new Variables();
-			$result    = $variables->get_request_settings();
-
-			assertEquals( $expected_result, $result );
-		}
-	}
-);
