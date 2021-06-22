@@ -24,37 +24,37 @@ namespace E20R\Import_Members\Validate;
 use E20R\Import_Members\Error_Log;
 
 abstract class Base_Validation {
-	
+
 	/**
 	 * Instance of the column validation logic for PMPro
 	 *
 	 * @var null|Base_Validation
 	 */
 	protected static $instance = null;
-	
+
 	/**
 	 * Error log class
 	 *
 	 * @var null|Error_Log
 	 */
 	protected $error_log = null;
-	
+
 	/**
 	 * List of error types we should ignore
 	 *
 	 * @var array
 	 */
 	protected $errors_to_ignore = array();
-	
+
 	/**
 	 * Base_Validation constructor.
 	 *
 	 * @access private
 	 */
 	protected function __construct() {
-		$this->error_log = new Error_Log(); // phpcs:ignore (name collision)
+		$this->error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	}
-	
+
 	/**
 	 * Should we ignore the column validation error type specified?
 	 *
@@ -63,28 +63,28 @@ abstract class Base_Validation {
 	 * @return bool
 	 */
 	protected function ignore_validation_error( $error_key ) {
-		
+
 		if ( in_array( $error_key, $this->errors_to_ignore, true ) ) {
-			return $this->errors_to_ignore[$error_key];
+			return $this->errors_to_ignore[ $error_key ];
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Get or instantiate and get the current class
 	 *
 	 * @return Column_Validation|Base_Validation|null
 	 */
 	abstract public static function get_instance();
-	
+
 	/**
 	 * Load all validation actions for the specific module
 	 *
 	 * @return null
 	 */
 	abstract public function load_actions();
-	
+
 	/**
 	 * Load error keys that represents non-fatal validation errors for a given module
 	 *
@@ -92,5 +92,5 @@ abstract class Base_Validation {
 	 * @param string $module_name - Name of the module we're processing
 	 * @return array
 	 */
-	abstract public function load_ignored_module_errors( $ignored_error_list, $module_name = 'base');
+	abstract public function load_ignored_module_errors( $ignored_error_list, $module_name = 'base' );
 }
