@@ -19,15 +19,11 @@
 
 namespace E20R\Import_Members\Import;
 
-use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Status;
-use E20R\Import_Members\Validate\User_ID;
-use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
-use E20R\Import_Members\Import_Members;
 use SplFileObject;
 use WP_Error;
 
@@ -66,19 +62,18 @@ class CSV {
 	private $csv = null;
 
 	/**
-	 * Instance of the Data class
-	 *
-	 * @var null|Data $data
-	 */
-	private $data = null;
-
-	/**
 	 * CSV constructor.
+	 * @param Variables|null $variables
 	 */
-	public function __construct() {
+	public function __construct( $variables = null ) {
+		self::$instance  = $this;
 		$this->error_log = new Error_Log(); // phpcs:ignore
-		$this->variables = new Variables();
-		$this->data      = new Data();
+
+		if ( null === $variables ) {
+			$this->variables = new Variables();
+		} else {
+			$this->variables = $variables;
+		}
 	}
 
 	/**
@@ -240,9 +235,9 @@ class CSV {
 		while ( file_exists( $file_name ) ) {
 
 			if ( ! empty( $count ) ) {
-				$file_name = $this->data->str_lreplace( "-{$count}.{$file_type}", '-' . strval( $count + 1 ) . ".{$file_type}", $file_name );
+				$file_name = $this->str_lreplace( "-{$count}.{$file_type}", '-' . strval( $count + 1 ) . ".{$file_type}", $file_name );
 			} else {
-				$file_name = $this->data->str_lreplace( ".{$file_type}", "-1.{$file_type}", $file_name );
+				$file_name = $this->str_lreplace( ".{$file_type}", "-1.{$file_type}", $file_name );
 			}
 
 			$this->variables->set( 'filename', $file_name );
@@ -267,6 +262,27 @@ class CSV {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Replace leftmost instance of string
+	 *
+	 * @param string $search
+	 * @param string $replace
+	 * @param string $subject
+	 *
+	 * @return string
+	 *
+	 * @access private
+	 */
+	private function str_lreplace( $search, $replace, $subject ) {
+
+		$pos = strrpos( $subject, $search );
+
+		if ( false !== $pos ) {
+			$subject = substr_replace( $subject, $replace, $pos, strlen( $search ) );
+		}
+		return $subject;
 	}
 
 	/**
@@ -600,13 +616,5 @@ class CSV {
 		}
 
 		$active_line_number ++;
-	}
-
-	/**
-	 * Singleton instance of Clone
-	 *
-	 * @access private
-	 */
-	private function __clone() {
 	}
 }
