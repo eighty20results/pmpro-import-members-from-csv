@@ -29,11 +29,18 @@ use WP_Error;
 class Column_Validation extends Base_Validation {
 
 	/**
+	 * Instance of the PMPro Column_Validation class
+	 *
+	 * @var null|Column_Validation $instance
+	 */
+	protected static $instance = null;
+
+	/**
 	 * Get or instantiate and get the current class
 	 *
 	 * @return Column_Validation|null
 	 */
-	public static function get_instance() : Column_Validation {
+	public static function get_instance() : \E20R\Import_Members\Modules\PMPro\Column_Validation {
 
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
