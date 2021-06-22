@@ -137,6 +137,9 @@ class Loader {
 	}
 }
 
+if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
+	define( 'E20R_IMPORT_PLUGIN_FILE', __FILE__ );
+}
 # Load the composer autoloader for the 10quality utilities
 if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
 	require_once __DIR__ . '/inc/autoload.php';
