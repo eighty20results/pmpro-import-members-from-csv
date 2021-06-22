@@ -26,13 +26,6 @@ use Exception;
 class Data {
 
 	/**
-	 * Singleton instance of this class (Data)
-	 *
-	 * @var null|Data
-	 */
-	private static $instance = null;
-
-	/**
 	 * Instance of the Error_Log class
 	 *
 	 * @var null|Error_Log $this->error_log
@@ -61,22 +54,8 @@ class Data {
 	public function __construct() {
 		$this->error_log = new Error_Log(); // phpcs:ignore
 		$this->variables = new Variables();
-		$this->csv       = new CSV();
+		$this->csv       = new CSV( $this->variables );
 	}
-
-	/**
-	 * Get or instantiate and return the Data class instance
-	 *
-	 * @return Data|null
-	 */
-//	public static function get_instance() {
-//
-//		if ( null === self::$instance ) {
-//			self::$instance = new self();
-//		}
-//
-//		return self::$instance;
-//	}
 
 	/**
 	 * Get the WP_User() object if available
@@ -140,215 +119,104 @@ class Data {
 	 * @since 1.0
 	 **/
 	public function process_csv() {
-		if (
-			isset( $_REQUEST['e20r-im-import-members-wpnonce'] ) &&
-			( ! isset( $_REQUEST['action'] ) ||
-			( isset( $_REQUEST['action'] ) && 'import_members_from_csv' === $_REQUEST['action'] )
-			) && ! ( defined( 'DOING_AJAX' ) && DOING_AJAX !== true )
-		) {
 
-			if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
+		if ( ! ! ( defined( 'DOING_AJAX' ) && DOING_AJAX !== true ) ) {
+			return false;
+		}
 
-				$msg = __( 'Insecure connection attempted!', 'pmpro-import-members-from-csv' );
+		if ( ! isset( $_REQUEST['e20r-im-import-members-wpnonce'] ) ) {
+			return false;
+		}
 
-				$this->error_log->debug( $msg );
-				$this->error_log->add_error_msg( $msg, 'error' );
+		if ( isset( $_REQUEST['action'] ) && 'import_members_from_csv' !== $_REQUEST['ction'] ) {
+			return false;
+		}
 
+		if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
+
+			$msg = __( 'Insecure connection attempted!', 'pmpro-import-members-from-csv' );
+
+			$this->error_log->debug( $msg );
+			$this->error_log->add_error_msg( $msg, 'error' );
+
+			wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
+			exit();
+		}
+
+		$this->error_log->debug( 'Processing import request' );
+
+		$settings = $this->variables->get_request_settings();
+
+		$this->error_log->debug( 'Settings from class: ' . print_r( $settings, true ) ); // phpcs:ignore
+
+		if ( ! isset( $_FILES['members_csv']['tmp_name'] ) ) {
+			wp_safe_redirect( add_query_arg( 'import', 'file', wp_get_referer() ) );
+			exit();
+		}
+
+		// Use AJAX to import?
+		if ( true === (bool) $this->variables->get( 'background_import' ) ) {
+			$this->error_log->debug( 'Background processing for import' );
+
+			$processed_file_name = $this->csv->pre_process_file();
+
+			if ( false === $processed_file_name ) {
+				$this->error_log->debug( 'Error processing CSV file...' );
+			}
+
+			$this->variables->set( 'filename', $processed_file_name );
+
+			if ( empty( $processed_file_name ) ) {
+				$this->error_log->add_error_msg( __( 'CSV file not selected. Nothing to import!', 'import-members-from-csv' ), 'error' );
 				wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
 				exit();
 			}
 
-			$this->error_log->debug( 'Processing import request' );
-
-			$settings = $this->variables->get_request_settings();
-
-			$this->error_log->debug( 'Settings from class: ' . print_r( $settings, true ) ); // phpcs:ignore
-			/* phpcs:ignore
-			$settings = array(
-				'filename'                    => $this->variables->get( 'filename' ),
-				'update_users'                => $this->variables->get( 'update_users' ),
-				'password_nag'                => $this->variables->get( 'password_nag' ),
-				'password_hashing_disabled'   => $this->variables->get( 'password_hashing_disabled' ),
-				'new_user_notification'       => $this->variables->get( 'new_user_notification' ),
-				'admin_new_user_notification' => $this->variables->get( 'admin_new_user_notification' ),
-				'suppress_pwdmsg'             => $this->variables->get( 'suppress_pwdmsg' ),
-				'send_welcome_email'          => $this->variables->get( 'send_welcome_email' ),
-				'deactivate_old_memberships'  => $this->variables->get( 'deactivate_old_memberships' ),
-				'create_order'                => $this->variables->get( 'create_order' ),
-				'per_partial'                 => apply_filters(
-					'e20r_im_import_records_per_scan',
-					apply_filters( 'pmp_im_import_records_per_scan', 30 )
+			// Redirect to the page to run AJAX
+			$url = add_query_arg(
+				$settings + array(
+					'page'              => 'pmpro-import-members-from-csv',
+					'import'            => 'resume',
+					'background_import' => true,
+					'partial'           => true,
 				),
-				'site_id'                     => $this->variables->get( 'site_id' ),
-
+				admin_url( 'admin.php' )
 			);
-			*/
 
-			if ( isset( $_FILES['members_csv']['tmp_name'] ) ) {
+			$this->error_log->debug( "Redirecting to: {$url}" );
+			wp_safe_redirect( $url );
 
-				// Use AJAX to import?
-				if ( true === (bool) $this->variables->get( 'background_import' ) ) {
-					$this->error_log->debug( 'Background processing for import' );
-
-					$processed_file_name = $this->csv->pre_process_file();
-
-					if ( false === $processed_file_name ) {
-						$this->error_log->debug( 'Error processing CSV file...' );
-					}
-
-					$this->variables->set( 'filename', $processed_file_name );
-
-					/* phpcs:ignore
-					//Check for a imports directory in wp-content
-					$upload_dir = wp_upload_dir();
-					$import_dir = $upload_dir['basedir'] . "/e20r_imports/";
-
-					//create the dir and subdir if needed
-					if ( ! is_dir( $import_dir ) ) {
-						if ( false === wp_mkdir_p( $import_dir ) ) {
-
-							$this->error_log->add_error_msg(
-								sprintf(
-									__(
-										"Unable to create directory on your server: %s",
-										Import_Members::$plugin_path
-									),
-									$import_dir
-								),
-								'error'
-							);
-
-							wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
-							exit();
-						}
-					}
-
-					// Figure out the file name
-					$this->variables->set( 'filename', $_FILES['members_csv']['name'] );
-					$file_arr = explode( '.', $this->variables->get( 'filename' ) );
-					$filetype = $file_arr[ ( count( $file_arr ) - 1 ) ];
-
-					$filename = $this->variables->get( 'filename' );
-					$count    = 0;
-
-					while ( file_exists( "{$import_dir}{$filename}" ) ) {
-
-						if ( ! empty( $count ) ) {
-							$filename = $this->str_lreplace( "-{$count}.{$filetype}", "-" . strval( $count + 1 ) . ".{$filetype}", $filename );
-						} else {
-							$filename = $this->str_lreplace( ".{$filetype}", "-1.{$filetype}", $filename );
-						}
-
-						$this->variables->set( 'filename', $filename );
-						$count ++;
-
-						//let's not expect more than 50 files with the same name
-						if ( $count > 50 ) {
-
-							$this->error_log->add_error_msg(
-								sprintf(
-									__(
-										"Error uploading file! Too many files with the same name. Please clean out the %s directory on your server.",
-										"pmpro-import-members-from-csv"
-									),
-									$import_dir
-								),
-								'error'
-							);
-
-							wp_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
-							exit();
-						}
-					}
-
-					//save file
-					if ( false !== strpos( $_FILES['members_csv']['tmp_name'], $upload_dir['basedir'] ) ) {
-
-						//was uploaded and saved to $_SESSION
-						rename( $_FILES['members_csv']['tmp_name'], "{$import_dir}{$filename}" );
-					} else {
-						//it was just uploaded
-						move_uploaded_file( $_FILES['members_csv']['tmp_name'], "{$import_dir}{$filename}" );
-					}
-					*/
-
-					if ( empty( $processed_file_name ) ) {
-						$this->error_log->add_error_msg( __( 'CSV file not selected. Nothing to import!', 'import-members-from-csv' ), 'error' );
-						wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
-						exit();
-					}
-
-					// Redirect to the page to run AJAX
-					$url = add_query_arg(
-						$settings + array(
-							'page'              => 'pmpro-import-members-from-csv',
-							'import'            => 'resume',
-							'background_import' => true,
-							'partial'           => true,
-						),
-						admin_url( 'admin.php' )
-					);
-
-					$this->error_log->debug( "Redirecting to: {$url}" );
-					wp_safe_redirect( $url );
-					exit();
-
-				} else {
-					try {
-						$results = $this->csv->process(
-							$this->variables->get( 'filename' ),
-							$settings + array(
-								'partial'           => false,
-								'background_import' => false,
-							)
-						);
-					} catch ( Exception $exception ) {
-						// phpcs:ignore
-						$this->error_log->debug( 'Caught exception: ' . $exception->getMessage() );
-						return false;
-					}
-
-					// No users imported?
-					if ( ! $results['user_ids'] ) {
-						wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
-						exit();
-
-						// Some users imported?
-					} elseif ( $results['errors'] ) {
-						wp_safe_redirect( add_query_arg( 'import', 'errors', wp_get_referer() ) );
-						exit();
-						// All users imported? :D
-					} else {
-						wp_safe_redirect( add_query_arg( 'import', 'success', wp_get_referer() ) );
-						exit();
-					}
-				}
+		} else {
+			try {
+				$results = $this->csv->process(
+					$this->variables->get( 'filename' ),
+					$settings + array(
+						'partial'           => false,
+						'background_import' => false,
+					)
+				);
+			} catch ( Exception $exception ) {
+				// phpcs:ignore
+				$this->error_log->debug( 'Caught exception: ' . $exception->getMessage() );
+				return false;
 			}
 
-			wp_safe_redirect( add_query_arg( 'import', 'file', wp_get_referer() ) );
-			exit();
+			// No users imported?
+			if ( ! isset( $results['user_ids'] ) || empty( $results['user_ids'] ) ) {
+				wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
+				exit();
+			}
+
+			// Some users imported?
+			if ( isset( $results['errors'] ) || ! empty( $results['errors'] ) ) {
+				wp_safe_redirect( add_query_arg( 'import', 'errors', wp_get_referer() ) );
+				exit();
+			}
+
+			// All users imported? :D
+			wp_safe_redirect( add_query_arg( 'import', 'success', wp_get_referer() ) );
 		}
-	}
-
-	/**
-	 * Replace leftmost instance of string
-	 *
-	 * @param string $search
-	 * @param string $replace
-	 * @param string $subject
-	 *
-	 * @return string
-	 *
-	 * @access private
-	 */
-	public function str_lreplace( $search, $replace, $subject ) {
-
-		$pos = strrpos( $subject, $search );
-
-		if ( false !== $pos ) {
-			$subject = substr_replace( $subject, $replace, $pos, strlen( $search ) );
-		}
-		return $subject;
+		exit();
 	}
 
 	/**
@@ -467,13 +335,5 @@ class Data {
 		}
 
 		return $billing_fields[ $billing_field_name ];
-	}
-
-	/**
-	 * Clone function for Data() class - Singleton
-	 *
-	 * @access private
-	 */
-	private function __clone() {
 	}
 }
