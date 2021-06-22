@@ -20,7 +20,7 @@
 namespace E20R\Import_Members;
 
 class Error_Log {
- 
+
 	/**
 	 * Log errors to a file
 	 *
@@ -69,7 +69,6 @@ class Error_Log {
 				),
 				'error'
 			);
-			fclose( $log ); //phpcs:ignore
 			return;
 		}
 
@@ -92,13 +91,13 @@ class Error_Log {
 			if ( ! empty( $message ) ) {
 				// phpcs:ignore
 				@fwrite(
-				    $log,
-                    sprintf(
-                            // translators: %1$d - Line number, %2$s - Error message to log
-                            __( "[Line %1\$d] %2\$s\n", 'pmpro-import-members-from-csv' ),
-                            $line,
-                            $message
-                    )
+					$log,
+					sprintf(
+							// translators: %1$d - Line number, %2$s - Error message to log
+						__( "[Line %1\$d] %2\$s\n", 'pmpro-import-members-from-csv' ),
+						$line,
+						$message
+					)
 				);
 			}
 		}
@@ -167,10 +166,13 @@ class Error_Log {
 
 		if ( false === $skip && ! empty( $error_msg ) ) {
 			$error_msg = array_merge(
-			    $error_msg,
-                array(
-                    array( 'type' => $type, 'message' => $msg ),
-                )
+				$error_msg,
+				array(
+					array(
+						'type'    => $type,
+						'message' => $msg,
+					),
+				)
 			);
 		} elseif ( false === $skip && empty( $error_msg ) ) {
 			$error_msg = array(
@@ -195,12 +197,12 @@ class Error_Log {
 		if ( ! empty( $error_msgs ) && is_admin() ) {
 			foreach ( $error_msgs as $msg_info ) {
 				?>
-                <div class="notice notice-<?php esc_attr_e( $msg_info['type'] ); ?> is-dismissible">
-                    <p><strong><?php esc_html_e( $msg_info['message'] ); ?></strong></p>
-                    <button type="button" class="notice-dismiss">
-                        <span class="screen-reader-text"><?php __( 'Dismiss this message.', 'pmpro-import-members-from-csv' ); ?></span>
-                    </button>
-                </div>
+				<div class="notice notice-<?php esc_attr_e( $msg_info['type'] ); ?> is-dismissible">
+					<p><strong><?php esc_html_e( $msg_info['message'] ); ?></strong></p>
+					<button type="button" class="notice-dismiss">
+						<span class="screen-reader-text"><?php __( 'Dismiss this message.', 'pmpro-import-members-from-csv' ); ?></span>
+					</button>
+				</div>
 				<?php
 			}
 
