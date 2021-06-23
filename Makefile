@@ -35,6 +35,7 @@ DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 CONTAINER_ACCESS_TOKEN := $(shell [[ -f ./docker.hub.key ]] && cat ./docker.hub.key)
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
+DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
@@ -61,6 +62,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	clean \
 	real-clean \
 	deps \
+	is_docker_running \
 	docker-compose-deps \
 	start-stack \
 	stop-stack \
@@ -179,7 +181,13 @@ docker-compose:
 		fi ; \
   	done
 
-deps: clean docker-compose composer-dev 00-e20r-utilities
+is_docker_running:
+	@if [[ "0" -eq $(DOCKER_IS_RUNNING) ]]; then \
+		echo "Error: Docker is not running on this system!" && \
+		exit 1; \
+	fi
+
+deps: clean docker-compose composer-dev 00-e20r-utilities is_docker_running
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "inc/wp_plugins/$${dep_plugin}" ]]; then \
