@@ -62,7 +62,8 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	clean \
 	real-clean \
 	deps \
-	is_docker_running \
+	is-docker-running \
+	docker-deps \
 	docker-compose-deps \
 	start-stack \
 	stop-stack \
@@ -103,7 +104,7 @@ repo-login:
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN)
 
-image-build: deps
+image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
@@ -181,13 +182,15 @@ docker-compose:
 		fi ; \
   	done
 
-is_docker_running:
+is-docker-running:
 	@if [[ "0" -eq $(DOCKER_IS_RUNNING) ]]; then \
 		echo "Error: Docker is not running on this system!" && \
 		exit 1; \
 	fi
 
-deps: clean docker-compose composer-dev 00-e20r-utilities is_docker_running
+docker-deps: is-docker-running docker-compose deps
+
+deps: clean composer-dev 00-e20r-utilities
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "inc/wp_plugins/$${dep_plugin}" ]]; then \
@@ -199,7 +202,7 @@ deps: clean docker-compose composer-dev 00-e20r-utilities is_docker_running
   		fi ; \
   	done
 
-start-stack: image-pull
+start-stack: docker-deps image-pull
 	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
 	@echo "Current directory: $(shell pwd)"
 	@if [[ 2 -ne "$(STACK_RUNNING)" ]]; then \
@@ -267,18 +270,18 @@ code-standard-test:
 unit-test: deps
 	@inc/bin/codecept run --debug unit
 
-wp-unit-test: deps start-stack db-import
+wp-unit-test: docker-deps start-stack db-import
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
 		wordpress inc/bin/codecept run -v wpunit
 		# --coverage --coverage-html
 
-acceptance-test: deps start-stack db-import
+acceptance-test: docker-deps start-stack db-import
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress inc/bin/codecept run -v acceptance
 
-build-test: deps start-stack db-import
+build-test: docker-deps start-stack db-import
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/inc/bin/codecept build -v
