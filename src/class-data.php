@@ -128,7 +128,7 @@ class Data {
 			return false;
 		}
 
-		if ( isset( $_REQUEST['action'] ) && 'import_members_from_csv' !== $_REQUEST['ction'] ) {
+		if ( isset( $_REQUEST['action'] ) && 'import_members_from_csv' !== $_REQUEST['action'] ) {
 			return false;
 		}
 
