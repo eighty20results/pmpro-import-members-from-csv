@@ -169,7 +169,7 @@ try {
 	return;
 }
 
-\register_deactivation_hook( __FILE__, 'E20R\Import_Members::deactivation' );
+\register_deactivation_hook( __FILE__, 'E20R\\Import_Members\\Import_Members::deactivation' );
 
 /**
  * Load the required E20R Utilities Module functionality
