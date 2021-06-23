@@ -179,12 +179,16 @@ class Import_Members {
 		// Remove Import action for Sponsored Members add-on (handled directly by this plugin)
 		remove_action( 'is_iu_post_user_import', 'pmprosm_is_iu_post_user_import', 20 );
 
-		$licensing = new Licensing( self::E20R_LICENSE_SKU );
-		if (
-			class_exists( 'E20R\Utilities\Licensing\Licensing' ) &&
-			$licensing->is_licensed( self::E20R_LICENSE_SKU, false )
-		) {
-			do_action( 'e20r_import_load_licensed_modules' );
+		if ( class_exists( 'E20R\Utilities\Licensing\Licensing' ) ) {
+
+			$licensing = new Licensing( self::E20R_LICENSE_SKU );
+
+			if (
+				class_exists( 'E20R\Utilities\Licensing\Licensing' ) &&
+				$licensing->is_licensed( self::E20R_LICENSE_SKU, false )
+			) {
+				do_action( 'e20r_import_load_licensed_modules' );
+			}
 		}
 	}
 
