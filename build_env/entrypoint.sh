@@ -67,6 +67,7 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/metadata.json \
 	trunk/package.json tags/${VERSION} \
 	trunk/build_env \
+	trunk/bin \
 	trunk/inc \
 	tags/${VERSION}/.git \
 	trunk/class/utilities/.git \
@@ -190,4 +191,3 @@ if [[ -n "${BRANCH}" && "${BRANCH}" =~ ^v[0-9]+\..*[0-9]$ ]]; then
 else
 	echo "✓ Not in main branch. Nothing to do"
 fi
-
