@@ -20,9 +20,6 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Modules\Users\Create_Password;
-use E20R\Import_Members\Modules\Users\User_ID;
-use E20R\Import_Members\Modules\Users\User_Update;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Validate\Time;
 use WP_Error;
