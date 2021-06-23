@@ -73,13 +73,15 @@ abstract class TFIAT extends \Codeception\Test\Unit {
 			$output = ob_get_clean();
 			printf( '%s', $output );
 		} catch ( Throwable $t ) {
+			$output = ob_get_clean();
 			$GLOBALS['e'] = true;
 			printf( "\e[31m✘ It %s \e[0m", $message );
 			printf(
-				"FAIL in: %1\$s #%2\$d. %3\$s\n",
+				"FAIL in: %1\$s #%2\$d. %3\$s. Output: %4\$s\n",
 				$d['file'],
 				$d['line'],
-				$t->getMessage()
+				$t->getMessage(),
+				( empty( $output ) ? 'N/A' : $output )
 			);
 		}
 		// @codingStandardsIgnoreEnd
@@ -98,8 +100,7 @@ abstract class TFIAT extends \Codeception\Test\Unit {
 	 */
 	private function runner( string $m, $p ) {
 		// phpcs:ignore
-		$d                            = debug_backtrace( 0 )[0];
-
+		$d = debug_backtrace( 0 )[0];
 		is_callable( $p ) && $p = $p();
 
 		global $e;
