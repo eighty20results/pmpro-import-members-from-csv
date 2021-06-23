@@ -56,6 +56,8 @@ if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
 	define( 'E20R_IMPORT_VERSION', '3.0' );
 }
 
+require_once plugin_dir_path( __FILE__ ) . 'ActivateUtilitiesPlugin.php';
+
 /**
  * Class Loader - AutoLoad classes/sources for the plugin
  *
@@ -103,7 +105,13 @@ class Loader {
 
 		foreach ( $base_paths as $base_path ) {
 
-			$iterator = new RecursiveDirectoryIterator( $base_path, RecursiveDirectoryIterator::SKIP_DOTS | RecursiveIteratorIterator::SELF_FIRST | RecursiveIteratorIterator::CATCH_GET_CHILD | RecursiveDirectoryIterator::FOLLOW_SYMLINKS );
+			$iterator = new RecursiveDirectoryIterator(
+				$base_path,
+				RecursiveDirectoryIterator::SKIP_DOTS |
+				RecursiveIteratorIterator::SELF_FIRST |
+				RecursiveIteratorIterator::CATCH_GET_CHILD |
+				RecursiveDirectoryIterator::FOLLOW_SYMLINKS
+			);
 
 			$filter = new RecursiveCallbackFilterIterator(
 				$iterator,
@@ -162,6 +170,24 @@ try {
 }
 
 \register_deactivation_hook( __FILE__, 'E20R\Import_Members::deactivation' );
+
+/**
+ * Load the required E20R Utilities Module functionality
+ */
+if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
+
+	$for_plugin = 'Import Paid Memberships Pro Members from CSV';
+
+	if ( false === \E20R\Utilities\ActivateUtilitiesPlugin::attempt_activation() ) {
+		add_action(
+			'admin_notices',
+			function () use ( $for_plugin ) {
+				\E20R\Utilities\ActivateUtilitiesPlugin::plugin_not_installed( $for_plugin );
+			}
+		);
+		return false;
+	}
+}
 
 // Load the plugin.
 add_action( 'plugins_loaded', array( Import_Members::get_instance(), 'load_hooks' ), 10 );
