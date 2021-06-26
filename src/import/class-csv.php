@@ -514,7 +514,11 @@ class CSV {
 		do_action( 'e20r_import_post_members', $user_ids, $e20r_import_err );
 
 		// Let's log the errors
-		$this->error_log->log_errors( array_merge( $e20r_import_err, $warnings ) );
+		$this->error_log->log_errors(
+			array_merge( $e20r_import_err, $warnings ),
+			$this->variables->get( 'log_file_path' ),
+			$this->variables->get( 'log_file_url' )
+		);
 
 		// Return to the active (pre import) site
 		if ( is_multisite() ) {
@@ -524,7 +528,13 @@ class CSV {
 		$member_error = (bool) get_option( 'e20r_import_errors', false );
 
 		if ( true === $member_error ) {
-			$this->error_log->add_error_msg( __( 'Data format error(s) detected during the import. Some records may not have been imported!', 'pmpro-import-members-from-csv' ), 'error' );
+			$this->error_log->add_error_msg(
+				__(
+					'Data format error(s) detected during the import. Some records may not have been imported!',
+					'pmpro-import-members-from-csv'
+				),
+				'error'
+			);
 			delete_option( 'e20r_import_errors' );
 		}
 
