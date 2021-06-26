@@ -25,10 +25,12 @@ class Error_Log {
 	 * Log errors to a file
 	 *
 	 * @param \WP_Error[] $errors
+	 * @param string $log_file_path
+	 * @param string $log_file_url
 	 *
 	 * @since 1.0
 	 **/
-	public function log_errors( $errors ) {
+	public function log_errors( $errors, $log_file_path, $log_file_url ) {
 		if ( empty( $errors ) ) {
 			global $e20r_import_err;
 			$errors = $e20r_import_err;
@@ -39,10 +41,6 @@ class Error_Log {
 			$this->debug( 'No errors to log!' );
 			return;
 		}
-
-		$variables     = new Variables();
-		$log_file_path = $variables->get( 'logfile_path' );
-		$log_file_url  = $variables->get( 'logfile_url' );
 
 		$this->add_error_msg(
 			sprintf(
@@ -58,7 +56,18 @@ class Error_Log {
 			'warning'
 		);
 
-		$log = fopen( $log_file_path, 'a' ); //phpcs:ignore
+		try {
+			$log = fopen( $log_file_path, 'a' ); // phpcs:ignore
+		} catch ( \Exception $e ) {
+			$this->add_error_msg(
+				__(
+					'Import errors/warnings will not be logged. Unable to write to the server file system',
+					'pmpro-import-members-from-csv'
+				),
+				'error'
+			);
+
+		}
 
 		if ( false === $log ) {
 			$this->add_error_msg(
@@ -73,7 +82,6 @@ class Error_Log {
 		}
 
 		foreach ( $errors as $key => $error ) {
-
 			if ( is_numeric( $key ) ) {
 				$line = $key + 1;
 			} else {
@@ -106,24 +114,32 @@ class Error_Log {
 	}
 
 	/**
-	 * Save text message to web server error log (if WP_DEBUG is active)
+	 * Save text message to web server error log (when WP_DEBUG is true)
 	 *
 	 * @param string $msg
+	 * @returns bool
 	 */
 	public function debug( $msg ) {
-		if ( defined( 'WP_DEBUG' ) && true === WP_DEBUG ) {
-			$from = $this->who_called_me();
-			// phpcs:ignore
-			$tid  = sprintf( '%08x', abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
-			$time = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
-
-			// Save to the HTTP server error log as a Notice (not a warning/error)
-			// phpcs:ignore
-			error_log(
-				sprintf( '[%1$s](%2$s) %3$s - %4$s', $tid, $time, $from, $msg ),
-				E_USER_NOTICE
-			);
+		if ( ! defined( 'WP_DEBUG' ) ) {
+			return false;
 		}
+
+		if ( false === WP_DEBUG ) {
+			return false;
+		}
+
+		$from = $this->who_called_me();
+		// phpcs:ignore
+		$tid  = sprintf( '%08x', abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
+		$time = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
+
+		// Save to the HTTP server error log as a Notice (not a warning/error)
+		// phpcs:ignore
+		error_log(
+			sprintf( '[%1$s](%2$s) %3$s - %4$s', $tid, $time, $from, $msg ),
+			E_USER_NOTICE
+		);
+		return true;
 	}
 
 	/**
@@ -209,13 +225,5 @@ class Error_Log {
 			// Clear error/warning/notice/success messages
 			delete_option( 'pmp_im_error_msg' );
 		}
-	}
-
-	/**
-	 * Clone this class (Error_Log)
-	 *
-	 * @access private
-	 */
-	private function __clone() {
 	}
 }
