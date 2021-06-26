@@ -35,6 +35,7 @@ namespace E20R\Import;
 
 use E20R\Import_Members\Import_Members;
 
+use E20R\Utilities\Utilities;
 use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -56,7 +57,7 @@ if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
 	define( 'E20R_IMPORT_VERSION', '3.0' );
 }
 
-require_once plugin_dir_path( __FILE__ ) . 'ActivateUtilitiesPlugin.php';
+require_once plugin_dir_path( __FILE__ ) . '/ActivateUtilitiesPlugin.php';
 
 /**
  * Class Loader - AutoLoad classes/sources for the plugin
@@ -143,6 +144,22 @@ class Loader {
 			}
 		}
 	}
+
+	/**
+	 * Validates that the E20R utilities module is available and active (and attempts to activate it if not)
+	 */
+	public static function is_utilities_module_active() {
+		$for_plugin = 'Import Paid Memberships Pro Members from CSV';
+
+		if ( false === \E20R\Utilities\ActivateUtilitiesPlugin::attempt_activation() ) {
+			add_action(
+				'admin_notices',
+				function () use ( $for_plugin ) {
+					\E20R\Utilities\ActivateUtilitiesPlugin::plugin_not_installed( $for_plugin );
+				}
+			);
+		}
+	}
 }
 
 if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
@@ -171,23 +188,9 @@ try {
 
 \register_deactivation_hook( __FILE__, 'E20R\\Import_Members\\Import_Members::deactivation' );
 
-/**
- * Load the required E20R Utilities Module functionality
- */
-if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
-
-	$for_plugin = 'Import Paid Memberships Pro Members from CSV';
-
-	if ( false === \E20R\Utilities\ActivateUtilitiesPlugin::attempt_activation() ) {
-		add_action(
-			'admin_notices',
-			function () use ( $for_plugin ) {
-				\E20R\Utilities\ActivateUtilitiesPlugin::plugin_not_installed( $for_plugin );
-			}
-		);
-		return false;
-	}
-}
-
-// Load the plugin.
+// Load this plugin
 add_action( 'plugins_loaded', array( Import_Members::get_instance(), 'load_hooks' ), 10 );
+
+if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
+	add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10 );
+}
