@@ -35,9 +35,15 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		 *
 		 * @return bool
 		 */
-		private static function is_active() {
+		private static function is_active( $plugin ) {
+
+			if ( empty( $plugin ) ) {
+				$plugin = self::$plugin_slug;
+			}
+
+			$plugin      = trim( $plugin );
 			$plugin_list = get_option( 'active_plugins' );
-			return in_array( trim( self::$plugin_slug ), $plugin_list, true );
+			return in_array( $plugin, $plugin_list, true );
 		}
 
 		/**
@@ -51,15 +57,11 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		 */
 		private static function activate_plugin( $plugin = null, $redirect = '', $network_wide = false ) {
 
-			if ( self::is_active() ) {
+			$plugin = plugin_basename( trim( $plugin ) );
+
+			if ( self::is_active( $plugin ) ) {
 				return null;
 			}
-
-			if ( empty( $plugin ) ) {
-				$plugin = trim( self::$plugin_slug );
-			}
-
-			$plugin = plugin_basename( trim( $plugin ) );
 
 			if ( is_multisite() && ( $network_wide || is_network_only_plugin( $plugin ) ) ) {
 					$network_wide = true;
@@ -143,6 +145,8 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				$path = trailingslashit( WP_PLUGIN_DIR ) . self::$plugin_slug;
 			}
 
+			$path = trim( $path );
+
 			if ( ! file_exists( $path ) ) {
 				error_log( "Didn't find the plugin file for the Utilities plugin" );
 				add_action(
@@ -162,9 +166,9 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				return false;
 			}
 
-			if ( ! self::is_active() ) {
+			if ( ! self::is_active( $path ) ) {
 
-				$result = self::activate_plugin();
+				$result = self::activate_plugin( $path );
 
 				if ( ! is_wp_error( $result ) ) {
 					add_action(
@@ -198,7 +202,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				}
 			}
 
-			if ( self::is_active() ) {
+			if ( self::is_active( $path ) ) {
 				return true;
 			}
 
