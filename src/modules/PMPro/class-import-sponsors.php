@@ -352,7 +352,11 @@ class Import_Sponsors {
 			delete_user_meta( $sponsored_user_id, 'pmprosm_sponsor' );
 
 		} else {
-			$error->log_errors( array( $error ) );
+			$error->log_errors(
+				array( $error ),
+				$this->variables->get( 'log_file_path' ),
+				$this->variables->get( 'log_file_url' )
+			);
 			$status = false;
 		}
 
