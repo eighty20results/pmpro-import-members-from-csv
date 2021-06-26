@@ -1,11 +1,25 @@
 <?php
-
+/**
+ * Copyright 2021 - Thomas Sjolshagen (https://eighty20results.com/thomas-sjolshagen)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 namespace E20R\Utilities;
 
-use function activate_plugin;
+use WP_Error;
 use function add_action;
-use function is_plugin_active;
 use function is_wp_error;
 
 if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
@@ -13,6 +27,87 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 	class ActivateUtilitiesPlugin {
 
 		private static $plugin_name = 'E20R Utilities Module';
+
+		private static $plugin_slug = '00-e20r-utilities/class-loader.php';
+
+		/**
+		 * Is the utilities plugin active?
+		 *
+		 * @return bool
+		 */
+		private static function is_active() {
+			$plugin_list = get_option( 'active_plugins' );
+			return in_array( trim( self::$plugin_slug ), $plugin_list, true );
+		}
+
+		/**
+		 * Activate the plugin (manually)
+		 *
+		 * @param string $plugin
+		 * @param string $redirect
+		 * @param bool $network_wide
+		 *
+		 * @returns null|WP_Error
+		 */
+		private static function activate_plugin( $plugin = null, $redirect = '', $network_wide = false ) {
+
+			if ( self::is_active() ) {
+				return null;
+			}
+
+			if ( empty( $plugin ) ) {
+				$plugin = trim( self::$plugin_slug );
+			}
+
+			$plugin = plugin_basename( trim( $plugin ) );
+
+			if ( is_multisite() && ( $network_wide || is_network_only_plugin( $plugin ) ) ) {
+					$network_wide = true;
+					$current      = get_site_option( 'active_sitewide_plugins', array() );
+			} else {
+					$current = get_option( 'active_plugins', array() );
+			}
+
+			if ( ! in_array( $plugin, $current, true ) ) {
+				if ( ! empty( $redirect ) ) {
+					wp_safe_redirect(
+						add_query_arg(
+							'_error_nonce',
+							wp_create_nonce( 'plugin-activation-error_' . $plugin ),
+							$redirect
+						)
+					); // we'll override this later if the plugin can be included without fatal error
+				}
+
+				ob_start();
+				include WP_PLUGIN_DIR . '/' . $plugin;
+				do_action( 'activate_plugin', trim( $plugin ) );
+
+				if ( $network_wide ) {
+					$current[ $plugin ] = time();
+					update_site_option( 'active_sitewide_plugins', $current );
+				} else {
+					$current[] = $plugin;
+					sort( $current );
+					update_option( 'active_plugins', $current );
+				}
+
+				do_action( 'activate_' . trim( $plugin ) );
+				do_action( 'activated_plugin', trim( $plugin ) );
+
+				if ( ob_get_length() > 0 ) {
+						$output = ob_get_clean();
+						return new WP_Error(
+							'unexpected_output',
+							__( 'The plugin generated unexpected output.' ),
+							$output
+						);
+				}
+					ob_end_clean();
+			}
+
+			return null;
+		}
 
 		/**
 		 * Error message to show when the E20R Utilities Module plugin is not installed and active
@@ -22,7 +117,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		public static function plugin_not_installed( $dependent_plugin_name ) {
 
 			printf(
-				'<div src="notice notice-error"><p>%1$s</p></div>',
+				'<div class="notice notice-error"><p>%1$s</p></div>',
 				sprintf(
 					'Please download and install the <strong>%1$s</strong> plugin. It is required for the %2$s plugin to function.',
 					sprintf(
@@ -45,22 +140,21 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		public static function attempt_activation( $path = null ) {
 
 			if ( empty( $path ) ) {
-				$path = sprintf(
-					'%1$s/00-e20r-utilities/class-loader.php',
-					ABSPATH . 'wp-content/plugins'
-				);
+				$path = trailingslashit( WP_PLUGIN_DIR ) . self::$plugin_slug;
 			}
 
 			if ( ! file_exists( $path ) ) {
+				error_log( "Didn't find the plugin file for the Utilities plugin" );
 				add_action(
 					'admin_notices',
 					function() use ( $path ) {
 						printf(
-							'<div src="notice notice-error"><p>%1$s</p></div>',
+							'<div class="notice notice-error"><p>%1$s</p></div>',
 							sprintf(
-								'The <strong>%1$s</strong> plugin was not found at %2$s. Please install it!',
+								'The <strong>%1$s</strong> plugin was not found at %2$s. Please <a href="%3$s" target="_blank">download and install it</a>!',
 								self::$plugin_name, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-								$path // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								$path, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped,
+								'https://eighty20results.com/product/e20r-utilities-module-for-other-plugins/'
 							)
 						);
 					}
@@ -68,49 +162,47 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				return false;
 			}
 
-			if (
-				! function_exists( 'is_plugin_active' ) ||
-				! is_plugin_active( '00-e20r-utilities/class-loader.php' )
-			) {
-				add_action(
-					'update_option_active_plugins',
-					function() {
-						$result = activate_plugin( '00-e20r-utilities/class-utility-loader.php' );
+			if ( ! self::is_active() ) {
 
-						if ( ! is_wp_error( $result ) ) {
-							add_action(
-								'admin_notices',
-								function () {
-									printf(
-										'<div src="notice notice-success"><p>%s</p></div>',
-										sprintf(
-											'The <strong>%s</strong> plugin is required & was auto-activated.',
-											self::$plugin_name // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-										)
-									);
-								}
-							);
+				$result = self::activate_plugin();
 
-							return true;
-						} else {
-							add_action(
-								'admin_notices',
-								function () {
-									printf(
-										'<div src="notice notice-error"><p>%s</p></div>',
-										sprintf(
-											'The <strong>%s</strong> plugin can\'t be auto-activated. Please install it!',
-											self::$plugin_name // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-										)
-									);
-								}
+				if ( ! is_wp_error( $result ) ) {
+					add_action(
+						'admin_notices',
+						function () {
+							printf(
+								'<div class="notice notice-success"><p>%s</p></div>',
+								sprintf(
+									'The <strong>%s</strong> plugin is required & was auto-activated.',
+									self::$plugin_name // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								)
 							);
-							return false;
 						}
-					}
-				);
+					);
+
+					return true;
+				} else {
+					add_action(
+						'admin_notices',
+						function () {
+							printf(
+								'<div class="notice notice-error"><p>%s</p></div>',
+								sprintf(
+									'The <strong>%s</strong> plugin can\'t be auto-activated. Please install it!',
+									self::$plugin_name // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								)
+							);
+						}
+					);
+					return false;
+				}
 			}
-			return true;
+
+			if ( self::is_active() ) {
+				return true;
+			}
+
+			return false;
 		}
 	}
 }
