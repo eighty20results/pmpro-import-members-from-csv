@@ -127,6 +127,10 @@ class PMPro {
 			$e20r_import_err = array();
 		}
 
+		if ( ! function_exists( 'pmpro_getOption' ) ) {
+			return $fields;
+		}
+
 		$has_error = false;
 		$errors    = array();
 		$error     = new Error_Log(); // phpcs:ignore
@@ -141,11 +145,6 @@ class PMPro {
 		// Doesn't have a supported gateway, so adding it!
 		if ( isset( $e20r_import_err[ "supported_gateway_{$active_line_number}" ] ) ) {
 			$fields['membership_gateway'] = pmpro_getOption( 'gateway' );
-		}
-
-		// Save any error messages for the user
-		if ( ! empty( $e20r_import_err ) ) {
-			$error->log_errors( $e20r_import_err );
 		}
 
 		return $fields;
