@@ -338,6 +338,9 @@ class Import_Member {
 				$custom_level['status'] = $user_meta['membership_status'];
 			}
 
+			// Apply any/all default values we need after validation is completed
+			$user_meta = apply_filters( 'e20r_import_default_field_values', $user_meta );
+
 			/**
 			 * @since v2.50 - BUG FIX: Don't deactivate old levels (here)
 			 */
@@ -503,7 +506,11 @@ class Import_Member {
 
 		// Log errors to log file
 		if ( ! empty( $e20r_import_err ) ) {
-			$this->error_log->log_errors( $e20r_import_err );
+			$this->error_log->log_errors(
+				$e20r_import_err,
+				$this->variables->get( 'log_file_path' ),
+				$this->variables->get( 'log_file_url' )
+			);
 		}
 
 		// Update the error status
