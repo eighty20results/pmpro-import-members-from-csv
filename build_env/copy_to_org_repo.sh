@@ -66,6 +66,14 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/remove_update.sh \
 	trunk/metadata.json \
 	trunk/package.json \
+	trunk/codeception.dist.yml \
+	trunk/composer.json \
+	trunk/composer.phar \
+	trunk/composer.lock \
+	trunk/docker-composer.yml \
+	trunk/phpcs.xml.dist \
+	trunk/phpstan.dist.neon \
+	trunk/phpunit.xml \
 	tags/${VERSION} \
 	trunk/build_env \
 	trunk/bin \
@@ -78,7 +86,8 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/class/utilities/.editorconfig \
 	trunk/class/utilities/metadata.json \
 	trunk/class/utilities/composer.json \
-	trunk/tests" \
+	trunk/tests"
+
 
 # Checkout just trunk and assets for efficiency
 # Tagging will be handled on the SVN level

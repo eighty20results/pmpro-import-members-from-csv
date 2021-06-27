@@ -7,27 +7,29 @@ on:
     types: [edited, published]
 
 jobs:
-  # Execute the unit tests
-  unit-test:
-    name: Execute all available unit tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - name: Test Unit tests
-        uses: eight20results/pmpro-import-members-from-csv@main
-
   # To push the release (sources) to the WordPress.org SVN instance for this plugin
   wordpress:
     name: Push plugin to wordpress.org
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - name: WordPress Plugin Deploy
-        #with:
-        #  repository: git@github.com:eighty20results/Utilities.git
-        #  token: ${{ secrets.UTILITIES_ACCESS }}
-        #  path: class/utilities
-        uses: eighty20results/pmpro-import-members-from-csv@main
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/pmpro-import-members-from-csv
+          ref: test_workflow_updates
+      - name: Run the unit tests
+        run: |
+          ln -s $(which composer) ./composer.phar
+          make unit-test
+      - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
+        uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
         env:
           SLUG: pmpro-import-members-from-csv
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
