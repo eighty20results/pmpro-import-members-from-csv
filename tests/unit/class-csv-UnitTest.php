@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 namespace E20R\Test\Unit;
-
-require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
 
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
@@ -86,7 +84,6 @@ class CSV_UnitTest extends Unit {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../inc/autoload.php';
 		require_once __DIR__ . '/../../src/class-error-log.php';
 		require_once __DIR__ . '/../../src/class-variables.php';
 		require_once __DIR__ . '/../../src/import/class-csv.php';
@@ -97,9 +94,9 @@ class CSV_UnitTest extends Unit {
 	 *
 	 * @dataProvider fixture_import_file_names
 	 */
-	public function test_GetImportFilePath( $file_path, $function_arg, $transient_result, $file_exists, $expected_result ) {
+	public function test_GetImportFilePath( $files_array, $function_arg, $transient_result, $file_exists, $expected_result ) {
 
-		$_FILES                   = $file_path;
+		$_FILES                   = $files_array;
 		$_REQUEST['filename']     = $_FILES['members_csv']['name'];
 		$_REQUEST['create_order'] = 1;
 
@@ -165,6 +162,7 @@ class CSV_UnitTest extends Unit {
 	 */
 	public function fixture_import_file_names() : array {
 		return array(
+			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -177,6 +175,7 @@ class CSV_UnitTest extends Unit {
 				true,
 				'/var/www/html/wp-content/uploads/e20r_imports/test-error-imports.csv',
 			),
+			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -189,6 +188,7 @@ class CSV_UnitTest extends Unit {
 				true,
 				'/var/www/html/wp-content/uploads/e20r_imports/example_file.csv',
 			),
+			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -202,6 +202,7 @@ class CSV_UnitTest extends Unit {
 				'',
 			),
 			// Assigned a function variable value
+			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -214,6 +215,35 @@ class CSV_UnitTest extends Unit {
 				true,
 				'/var/www/html/wp-content/uploads/e20r_imports/from_function_argument.csv',
 			),
+			// Test sanitize_filename option (i.e. $_REQUEST['filename'] contains information)
+			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			array(
+				array(
+					'members_csv' => array(
+						'tmp_name' => 'jklflkkk.csv',
+						'name'     => '/home/user1/csv_files/test-error-imports.csv',
+					),
+				),
+				null,
+				null,
+				true,
+				'/var/www/html/wp-content/uploads/e20r_imports/test-error-imports.csv',
+			),
+			// File doesn't exist so return
+			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			array(
+				array(
+					'members_csv' => array(
+						'tmp_name' => 'jklflkkk.csv',
+						'name'     => '/home/user1/csv_files/test-error-imports.csv',
+					),
+				),
+				null,
+				null,
+				false,
+				false,
+			),
 		);
 	}
+
 }
