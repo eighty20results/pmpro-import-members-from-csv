@@ -5,7 +5,7 @@ ENV BASE_DIR /
 
 RUN mkdir -p ${BUILD_DIR}
 
-COPY ./build_env/entrypoint.sh ${BUILD_DIR}/entrypoint.sh
+COPY ./build_env/copy_to_org_repo.sh ${BUILD_DIR}/copy_to_org_repo.sh
 COPY ./build_env/remove_update.sh ${BUILD_DIR}/remove_update.sh
 
 RUN apt-get update \
@@ -17,4 +17,4 @@ RUN apt-get update \
 #	&& php ./composer-setup.php --install-dir=./ --filename=composer.phar \
 #	&& rm -f ./composer-setup.php
 
-ENTRYPOINT ["/build_env/entrypoint.sh"]
+ENTRYPOINT ["/build_env/copy_to_org_repo.sh"]

@@ -65,7 +65,8 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/Dockerfile \
 	trunk/remove_update.sh \
 	trunk/metadata.json \
-	trunk/package.json tags/${VERSION} \
+	trunk/package.json \
+	tags/${VERSION} \
 	trunk/build_env \
 	trunk/bin \
 	trunk/inc \
@@ -77,7 +78,7 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/class/utilities/.editorconfig \
 	trunk/class/utilities/metadata.json \
 	trunk/class/utilities/composer.json \
-	trunk/test"
+	trunk/tests" \
 
 # Checkout just trunk and assets for efficiency
 # Tagging will be handled on the SVN level
