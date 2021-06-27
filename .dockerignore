@@ -74,7 +74,6 @@ fabric.properties
 
 # No need to include the Dockerfile we're building the WordPress container from, etc
 tests/docker/
-build_env/
 build_readmes/
 docker-env/
 .circleci
