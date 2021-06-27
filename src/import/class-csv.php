@@ -82,6 +82,8 @@ class CSV {
 	 * @param null|string $file_name
 	 *
 	 * @return bool|string
+	 *
+	 * @test CSV_UnitTest::test_GetImportFilePath
 	 */
 	public function get_import_file_path( $file_name = null ) {
 		$upload_dir = wp_upload_dir();
@@ -336,8 +338,16 @@ class CSV {
 		$file_object = new SplFileObject( $file_name, 'r' );
 
 		// Use the expected delimiters, enclosures and escape characters
-		$file_object->setCsvControl( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE );
-		$file_object->setFlags( SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY );
+		$file_object->setCsvControl(
+			E20R_IM_CSV_DELIMITER,
+			E20R_IM_CSV_ENCLOSURE,
+			E20R_IM_CSV_ESCAPE
+		);
+		$file_object->setFlags(
+			SplFileObject::READ_AHEAD |
+			SplFileObject::DROP_NEW_LINE |
+			SplFileObject::SKIP_EMPTY
+		);
 
 		// Loop through the file lines
 		$first               = true;
