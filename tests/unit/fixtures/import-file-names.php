@@ -21,9 +21,6 @@
 
 namespace E20R\Test\Unit\Fixtures;
 
-use E20R\Import_Members\Import_Members;
-use Brain\Monkey\Functions;
-
 /**
  * Fixture for the CSV::get_import_file_path() unit test
  *
