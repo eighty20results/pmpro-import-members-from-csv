@@ -23,6 +23,7 @@ settings:
   colors: true
 coverage:
     enabled: true
+    show_only_summary: true
     include:
         - src/*
         - "*.php"
