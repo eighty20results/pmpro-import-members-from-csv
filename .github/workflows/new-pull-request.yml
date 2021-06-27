@@ -1,14 +1,15 @@
-name: Test of "Release to wordpress.org" workflows
+name: Run Unit Tests when creating a PR
 
+# Run Unit Test when new PR is created
 on:
-  push:
-    tags:
-      - test_workflow*
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  # To push the release (sources) to the WordPress.org SVN instance for this plugin
+  # Execute tests when creating a PR
   wordpress:
-    name: Test of "Push to wordpress.org" workflow
+    name: Run Unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Setup PHP with Composer V2+
@@ -27,10 +28,3 @@ jobs:
         run: |
           ln -s $(which composer) ./composer.phar
           make unit-test
-      - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
-        uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
-        env:
-          SLUG: pmpro-import-members-from-csv
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB }}

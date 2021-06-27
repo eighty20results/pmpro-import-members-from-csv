@@ -1,0 +1,38 @@
+/**
+ * Copyright 2018 - 2021 - Thomas Sjolshagen (https://eighty20results.com/thomas-sjolshagen)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+div.e20r-donation-button {
+	border: 2px solid darkorange;
+	padding: 20px;
+	text-align: center;
+	width: 50%;
+	max-width: 500px;
+	min-width: 200px;
+	margin: 0 auto 30px;
+}
+div.e20r-center-button {
+	max-width: 200px;
+	width: 50%;
+	min-width: 200px;
+	margin: 0 auto;
+}
+div#e20r-status div.notice {
+	padding: 10px;
+}
+input#e20r-import-clear-log {
+	float: right;
+}
