@@ -94,7 +94,7 @@ class CSV {
 		}
 
 		if ( empty( $file_name ) ) {
-			$file_name = get_transient( 'e20r_import_file' );
+			$file_name = get_transient( 'e20r_import_filename' );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended

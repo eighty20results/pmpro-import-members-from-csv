@@ -109,7 +109,7 @@ class CSV_UnitTest extends Unit {
 
 		try {
 			Functions\expect( 'get_transient' )
-				->with( Mockery::contains( 'e20r_import_file' ) )
+				->with( Mockery::contains( 'e20r_import_filename' ) )
 				->once()
 				->andReturn( $transient_result );
 		} catch ( Exception $e ) {
