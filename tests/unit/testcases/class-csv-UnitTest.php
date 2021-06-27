@@ -84,9 +84,9 @@ class CSV_UnitTest extends Unit {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../src/class-error-log.php';
-		require_once __DIR__ . '/../../src/class-variables.php';
-		require_once __DIR__ . '/../../src/import/class-csv.php';
+		require_once __DIR__ . '/../../../src/class-error-log.php';
+		require_once __DIR__ . '/../../../src/class-variables.php';
+		require_once __DIR__ . '/../../../src/import/class-csv.php';
 	}
 
 	/**

@@ -86,8 +86,8 @@ class ImportMembers_UnitTest extends Unit {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../inc/autoload.php';
-		require_once __DIR__ . '/../../src/class-import-members.php';
+		require_once __DIR__ . '/../../../inc/autoload.php';
+		require_once __DIR__ . '/../../../src/class-import-members.php';
 	}
 
 	/**
