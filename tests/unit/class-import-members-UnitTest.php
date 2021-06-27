@@ -21,24 +21,37 @@ namespace E20R\Test\Unit;
 if ( ! defined( 'E20R_UNITTEST_ROW_COUNT' ) ) {
 	define( 'E20R_UNITTEST_ROW_COUNT', 0 );
 }
+use Brain\Monkey;
 use Brain\Monkey\Functions;
+use Codeception\Test\Unit;
 use Mockery;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Import_Members;
 use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
 
 // Functions to import from other namespaces
-use function E20R\Test\Unit\Fixtures\plugin_row_meta_data;
 use function PHPUnit\Framework\assertEquals;
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
-class ImportMembers_UnitTest extends TFIAT {
+class ImportMembers_UnitTest extends Unit {
+
 
 	/**
-	 * Load the fixtures for this unit test
+	 * Codeception _before() method
 	 */
-	public function loadFixtures(): void {
-		require_once __DIR__ . '/fixtures/plugin-row-meta-data.php';
+	public function setUp() : void {  //phpcs:ignore
+		parent::setUp();
+		Monkey\setUp();
+		$this->loadMocks();
+		$this->loadTestSources();
+	}
+
+	/**
+	 * Codeception _after() method
+	 */
+	public function tearDown() : void { //phpcs:ignore
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
 	/**
@@ -73,15 +86,8 @@ class ImportMembers_UnitTest extends TFIAT {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . BASE_SRC_PATH . '/inc/autoload.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/class-import-members.php';
-
-		//      require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
-		//      require_once __DIR__ . BASE_SRC_PATH . '/src/class-variables.php';
-		//      require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-csv.php';
-		//      require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-page.php';
-		//      require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-ajax.php';
-		//      require_once __DIR__ . BASE_SRC_PATH . '/class.pmpro-import-members.php';
+		require_once __DIR__ . '/../../inc/autoload.php';
+		require_once __DIR__ . '/../../src/class-import-members.php';
 	}
 
 	/**
@@ -142,7 +148,7 @@ class ImportMembers_UnitTest extends TFIAT {
 					->once()
 					->andReturn( $active_plugin_list );
 			} catch ( \Exception $e ) {
-				echo 'Error: ' . $e->getMessage();
+				echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 			}
 		}
 
@@ -158,7 +164,7 @@ class ImportMembers_UnitTest extends TFIAT {
 	public function fixture_active_plugin_list() {
 		return array(
 			array(
-				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				// active_plugin_list, mocked_plugin_list, expected_result
 				array(
 					'00-e20r-utilities/class-loader.php',
 					'paid-memberships-pro/paid-memberships-pro.php',
@@ -168,7 +174,7 @@ class ImportMembers_UnitTest extends TFIAT {
 				true,
 			),
 			array(
-				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				// active_plugin_list, mocked_plugin_list, expected_result
 				array(
 					'00-e20r-utilities/class-loader.php',
 					'Paid-Memberships-Pro/paid-memberships-pro.php',
@@ -178,7 +184,7 @@ class ImportMembers_UnitTest extends TFIAT {
 				false,
 			),
 			array(
-				// active_plugin_list, $mocked_plugin_list, $expected_result
+				// active_plugin_list, mocked_plugin_list, expected_result
 				array(
 					'00-e20r-utilities/class-loader.php',
 					'e20r-members-list/class.e20r-members-list.php',
@@ -187,7 +193,7 @@ class ImportMembers_UnitTest extends TFIAT {
 				false,
 			),
 			array(
-				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				// active_plugin_list, mocked_plugin_list, expected_result
 				array(
 					'00-e20r-utilities/class-loader.php',
 					'paid-memberships-pro/paid-memberships-pro.php',
@@ -201,7 +207,7 @@ class ImportMembers_UnitTest extends TFIAT {
 				true,
 			),
 			array(
-				// active_plugin_list, $mocked_plugin_list, $expected_result
+				// active_plugin_list, mocked_plugin_list, expected_result
 				array(
 					'00-e20r-utilities/class-loader.php',
 					'e20r-members-list/class.e20r-members-list.php',
@@ -213,7 +219,7 @@ class ImportMembers_UnitTest extends TFIAT {
 				false,
 			),
 			array(
-				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				// active_plugin_list, mocked_plugin_list, expected_result
 				array(
 					'00-e20r-utilities/class-loader.php',
 					'Paid-Memberships-Pro/paid-memberships-pro.php',

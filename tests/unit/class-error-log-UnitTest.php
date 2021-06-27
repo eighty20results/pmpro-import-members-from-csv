@@ -21,57 +21,94 @@
 
 namespace E20R\Test\Unit;
 
-use E20R\Import_Members\Error_Log;
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamWrapper;
 
-/**
- * Mocked (namespace specific) error_log function
- *
- * @param        $message
- * @param int    $type
- * @param string $destination
- * @param string $extra_headers
- */
-function error_log( $message, $type = 0, $destination = '', $extra_headers = '' ) {
-
-	$severity = 'PHP Notice';
-
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-	echo "{$severity}: {$message}";
-}
-
-class Error_LogTest extends \Codeception\Test\Unit {
+class ErrorLog_UnitTest extends \Codeception\Test\Unit {
 
 	use MockeryPHPUnitIntegration;
 
 	private $log_file_path = '/var/log/www/wp-content/uploads/e20r_im_errors.log';
 
+	/**
+	 * Codeception setUp() method
+	 */
 	public function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		$this->loadTestSources();
 	}
 
+	/**
+	 * Codeception tearDown() method
+	 */
 	public function tearDown(): void {
 		Monkey\tearDown();
 		parent::tearDown();
 	}
 
-	public function testLog_errors() {
+	/**
+	 * Load all needed source files for the unit test
+	 */
+	public function loadTestSources(): void {
+		require_once __DIR__ . '/../../inc/autoload.php';
+		require_once __DIR__ . '/../../src/class-error-log.php';
+	}
+
+	/**
+	 * Define function stubs for the unit test
+	 */
+	public function loadStubs() : void {
+		Functions\stubs(
+			array(
+				'__'                         => null,
+				'_e'                         => null,
+				'_ex'                        => null,
+				'_x'                         => null,
+				'_n'                         => null,
+				'_nx'                        => null,
+				'translate'                  => null,
+				'esc_html__'                 => null,
+				'esc_html_x'                 => null,
+				'esc_attr__'                 => null,
+				'esc_attr_x'                 => null,
+				'esc_html_e'                 => null,
+				'esc_attr_e'                 => null,
+				'get_transient'              => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
+				'plugin_dir_path'            => function() {
+					return '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv';
+				},
+				'esc_url'                    => function() {
+					return 'https://localhost:7537';
+				},
+				'esc_url_raw'                => function() {
+					return 'https://localhost:7537';
+				},
+				'wp_upload_dir'              => function() {
+					return array(
+						'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+						'basedir' => '/var/www/html/wp-content/uploads',
+					);
+				},
+				'register_deactivation_hook' => '__return_true',
+			)
+		);
+	}
+
+	public function test_log_errors() {
 
 	}
 
-	public function testDebug() {
+	public function test_debug() {
 
 	}
 
-	public function testAdd_error_msg() {
+	public function test_add_error_msg() {
 
 	}
 
-	public function testDisplay_admin_message() {
+	public function test_display_admin_message() {
 
 	}
 }

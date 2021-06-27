@@ -20,27 +20,20 @@ namespace E20R\Test\Unit;
 
 require_once __DIR__ . '/../../inc/autoload.php';
 
-require_once __DIR__ . '/fixtures/request-settings.php';
-require_once __DIR__ . '/fixtures/import-file-names.php';
-
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
 use Mockery;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Error_Log;
-use Brain\Monkey\Expectation\Expectation;
-
 use Exception;
-use function E20R\Test\Unit\Fixtures\import_file_names;
-use function E20R\Test\Unit\Fixtures\request_settings;
 
 class Variables_UnitTest extends Unit {
 
 	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 	/**
-	 * Codeception _before() method
+	 * Codeception setUp() method
 	 */
 	public function setUp() : void {  //phpcs:ignore
 		parent::setUp();
@@ -50,7 +43,7 @@ class Variables_UnitTest extends Unit {
 	}
 
 	/**
-	 * Codeception _after() method
+	 * Codeception tearDown() method
 	 */
 	public function tearDown() : void { //phpcs:ignore
 		Monkey\tearDown();
