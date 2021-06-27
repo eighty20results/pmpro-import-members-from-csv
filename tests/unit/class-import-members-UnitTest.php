@@ -18,9 +18,12 @@
  */
 namespace E20R\Test\Unit;
 
-require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
-
+if ( ! defined( 'E20R_UNITTEST_ROW_COUNT' ) ) {
+	define( 'E20R_UNITTEST_ROW_COUNT', 0 );
+}
 use Brain\Monkey\Functions;
+use Mockery;
+use E20R\Import_Members\Data;
 use E20R\Import_Members\Import_Members;
 use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
 
@@ -73,12 +76,12 @@ class ImportMembers_UnitTest extends TFIAT {
 		require_once __DIR__ . BASE_SRC_PATH . '/inc/autoload.php';
 		require_once __DIR__ . BASE_SRC_PATH . '/src/class-import-members.php';
 
-		require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/class-variables.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-csv.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-page.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-ajax.php';
-		require_once __DIR__ . BASE_SRC_PATH . '/class.pmpro-import-members.php';
+		//      require_once __DIR__ . BASE_SRC_PATH . '/src/class-error-log.php';
+		//      require_once __DIR__ . BASE_SRC_PATH . '/src/class-variables.php';
+		//      require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-csv.php';
+		//      require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-page.php';
+		//      require_once __DIR__ . BASE_SRC_PATH . '/src/import/class-ajax.php';
+		//      require_once __DIR__ . BASE_SRC_PATH . '/class.pmpro-import-members.php';
 	}
 
 	/**
@@ -120,35 +123,110 @@ class ImportMembers_UnitTest extends TFIAT {
 			)
 		);
 	}
-}
 
-// Instantiate the Unit test class we defined
-$bm = new ImportMembers_UnitTest();
+	/**
+	 * Test the is_pmpro_active() method
+	 *
+	 * @param string[] $active_plugin_list
+	 * @param string[]|null $mocked_plugin_list
+	 * @param bool $expected_result
+	 *
+	 * @dataProvider fixture_active_plugin_list
+	 */
+	public function test_is_pmpro_active( $active_plugin_list, $mocked_plugin_list, $expected_result ) {
 
-/**
- * Tests the plugin_row_meta() method in Import_Members()
- * @dataProvider \E20R\Test\Unit\Fixtures\plugin_row_meta_data()
- */
-$bm->it(
-	'should test that we generate the expected plugin metadata',
-	function () use ( $bm ) {
-
-		$fixture_list = plugin_row_meta_data();
-
-		foreach ( $fixture_list as $fixture ) {
-			list( $row_meta_list, $file_name, $expected_result ) = $fixture;
-
-			$mocked_data = $bm->makeEmpty(
-				'\\E20R\\Import_Members\\Data',
-				array(
-					'' => '',
-				)
-			);
-
-			$class    = Import_Members::get_instance();
-			$row_list = $class->plugin_row_meta( $row_meta_list, $file_name );
-			$result   = \count( $row_list );
-			assertEquals( $expected_result, $result );
+		if ( empty( $mocked_plugin_list ) ) {
+			try {
+				Functions\expect( 'get_site_option' )
+					->with( Mockery::contains( 'active_plugins' ) )
+					->once()
+					->andReturn( $active_plugin_list );
+			} catch ( \Exception $e ) {
+				echo 'Error: ' . $e->getMessage();
+			}
 		}
+
+		$result = Import_Members::is_pmpro_active( $mocked_plugin_list );
+		assertEquals( $expected_result, $result );
 	}
-);
+
+	/**
+	 * Fixture for the test_is_pmpro_active() unit test
+	 *
+	 * @return array[]
+	 */
+	public function fixture_active_plugin_list() {
+		return array(
+			array(
+				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'paid-memberships-pro/paid-memberships-pro.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				null,
+				true,
+			),
+			array(
+				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'Paid-Memberships-Pro/paid-memberships-pro.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				null,
+				false,
+			),
+			array(
+				// active_plugin_list, $mocked_plugin_list, $expected_result
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				null,
+				false,
+			),
+			array(
+				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'paid-memberships-pro/paid-memberships-pro.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'paid-memberships-pro/paid-memberships-pro.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				true,
+			),
+			array(
+				// active_plugin_list, $mocked_plugin_list, $expected_result
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				false,
+			),
+			array(
+				// $active_plugin_list, $mocked_plugin_list, $expected_result
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'Paid-Memberships-Pro/paid-memberships-pro.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				array(
+					'00-e20r-utilities/class-loader.php',
+					'Paid-Memberships-Pro/paid-memberships-pro.php',
+					'e20r-members-list/class.e20r-members-list.php',
+				),
+				false,
+			),
+		);
+
+	}
+}
