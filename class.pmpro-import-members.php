@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name: Import Paid Memberships Pro Members from CSV
- * Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
- * Description: Import Users and their metadata from a csv file.
- * Version: 3.0
- * Requires PHP: 7.0
- * Author: <a href="https://eighty20results.com/thomas-sjolshagen/">Thomas Sjolshagen <thomas@eighty20results.com></a>
- * License: GPL2
- * Text Domain: pmpro-import-members-from-csv
- * Domain Path: languages/
- */
+Plugin Name: Import Paid Memberships Pro Members from CSV
+Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
+Description: Import Users and their metadata from a csv file.
+Version: 3.0
+Requires PHP: 7.0
+Author: <a href="https://eighty20results.com/thomas-sjolshagen/">Thomas Sjolshagen <thomas@eighty20results.com></a>
+License: GPL2
+Text Domain: pmpro-import-members-from-csv
+Domain Path: languages/
+*/
 
 /**
  * Copyright 2017-2021 - Thomas Sjolshagen (https://eighty20results.com/thomas-sjolshagen)
