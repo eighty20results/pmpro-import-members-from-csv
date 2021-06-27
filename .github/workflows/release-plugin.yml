@@ -5,7 +5,7 @@ on:
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
     types: [edited, published]
-    branch:
+    branches:
       - main
 
 jobs:
