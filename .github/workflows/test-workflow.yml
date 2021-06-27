@@ -13,16 +13,23 @@ jobs:
     name: Test of "Push to wordpress.org" workflow
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        repository: eighty20results/pmpro-import-members-from-csv
-        ref: test_workflow_updates
-    - name: Run unit tests
-      run: make unit-test
-    - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
-      uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
-      env:
-        SLUG: pmpro-import-members-from-csv
-        SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-        SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB }}
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+      - uses: actions/checkout@v2
+        with:
+          repository: eighty20results/pmpro-import-members-from-csv
+          ref: test_workflow_updates
+      - name: Run unit tests
+        run: make unit-test
+      - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
+        uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
+        env:
+          SLUG: pmpro-import-members-from-csv
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
