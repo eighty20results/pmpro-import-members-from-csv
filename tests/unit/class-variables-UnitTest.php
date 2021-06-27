@@ -19,39 +19,43 @@
 namespace E20R\Test\Unit;
 
 require_once __DIR__ . '/../../inc/autoload.php';
-require_once __DIR__ . '/Test_Framework_In_A_Tweet/TFIAT.php';
 
 require_once __DIR__ . '/fixtures/request-settings.php';
 require_once __DIR__ . '/fixtures/import-file-names.php';
 
+use Brain\Monkey;
 use Brain\Monkey\Functions;
-use Codeception\TestCase;
-use AspectMock\Test as test;
-use E20R\Import_Members\Data;
+use Codeception\Test\Unit;
+use Mockery;
 use E20R\Import_Members\Variables;
-use E20R\Import_Members\Import\CSV;
 use E20R\Import_Members\Error_Log;
-use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
+use Brain\Monkey\Expectation\Expectation;
 
 use Exception;
 use function E20R\Test\Unit\Fixtures\import_file_names;
 use function E20R\Test\Unit\Fixtures\request_settings;
 
-class Variables_UnitTest extends TFIAT {
+class Variables_UnitTest extends Unit {
+
+	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 	/**
-	 * Mock for the Error_Log class
-	 *
-	 * @var null|Error_Log $this->error_log_mock_mock
+	 * Codeception _before() method
 	 */
-	private $error_log_mock = null;
+	public function setUp() : void {  //phpcs:ignore
+		parent::setUp();
+		Monkey\setUp();
+		$this->loadMocks();
+		$this->loadTestSources();
+	}
 
 	/**
-	 * Mock for the CSV class
-	 *
-	 * @var null|CSV
+	 * Codeception _after() method
 	 */
-	private $csv_mock = null;
+	public function tearDown() : void { //phpcs:ignore
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
 	/**
 	 * Load all function mocks we need (with namespaces)
@@ -74,119 +78,222 @@ class Variables_UnitTest extends TFIAT {
 					'basedir' => '/var/www/html/wp-content/uploads',
 				)
 			);
-		Functions\when( 'get_option' )
-			->justReturn( 'https://www.paypal.com/cgi-bin/webscr' );
-
-		Functions\when( 'update_option' )
-			->justReturn( true );
-
 	}
 
-	public function loadFixtures(): void {
-		// TODO: Implement loadFixtures() method.
-	}
 
+	/**
+	 * Load all needed source files for the unit test
+	 */
 	public function loadTestSources(): void {
-		// TODO: Implement loadTestSources() method.
+		require_once __DIR__ . '/../../src/class-error-log.php';
+		require_once __DIR__ . '/../../src/import/class-csv.php';
+		require_once __DIR__ . '/../../src/class-variables.php';
 	}
 
 	/**
-	 * Test the happy pathf for the is_configured method
+	 * Test the happy path for the is_configured method
+	 *
 	 * @dataProvider fixture_is_configured
 	 */
-	public function test_is_configured( $request_variables, $file_info ) {
+	public function test_is_configured( $request_variables, $file_info, $error_msgs, $sponsor_links ) {
 
-		$tmp_file_name = $file_info[0]['members_csv']['tmp_name'];
-		$file_name     = $file_info[0]['members_csv']['name'];
+		$errlog_mock = $this->getMockBuilder( Error_Log::class )
+							->onlyMethods( array( 'debug', 'add_error_msg' ) )
+							->getMock();
 
-		$this->error_log_mock = \Mockery::mock( \E20R\Import_Members\Error_Log::class )
-										->makePartial();
-		$this->error_log_mock
-			->shouldReceive( 'debug' )
-			->with( 'Instantiating the Variables class' );
-//			->once();
-//
-//		$this->error_log_mock
-//			->shouldReceive( 'debug' )
-//			->with( "Will redirect since we're processing in the background" )
-//			->once();
-//
-//		$this->error_log_mock
-//			->shouldReceive( 'debug' )
-//			->with( "Will redirect since we're processing in the background" )
-//			->once();
-//
-//		$this->error_log_mock
-//			->shouldReceive( 'debug' )
-//			->with( "Before processing FILES array:  vs {$tmp_file_name}" )
-//			->once();
+		$errlog_mock->method( 'debug' )
+					->willReturn( null );
+		$errlog_mock->method( 'add_error_msg' )
+					->willReturn( null );
 
-		$this->error_log_mock
-			->shouldReceive( 'add_error_msg' )
-//			->once()
-			->with( 'CSV file not selected. Nothing to import!', 'error' );
+		try {
+			Functions\expect( 'get_option' )
+				->with( Mockery::contains( 'e20r_im_error_msg' ) )
+				->andReturn( $error_msgs );
+		} catch ( \Exception $e ) {
+			echo "Error: " . $e->getMessage(); // phpcs:ignore
+			return false;
+		}
 
-		$this->data_mock = \Mockery::mock( \E20R\Import_Members\Data::class )
-			->makePartial();
-		//
-		//      $this->error_log_mock->debug( 'Instantiating the Variables class' );
-		//      $this->error_log_mock->debug( 'The settings have been instantiated already' );
-		//      $this->error_log_mock->debug( "Will redirect since we're processing in the background" );
-		//      $this->error_log_mock->debug( 'Nothing to do without an import file!' );
-		//      $this->error_log_mock->debug( "Before processing FILES array:  vs {$tmp_file_name}" );
-		//      $this->error_log_mock->debug( "Will redirect since we're processing in the background" );
-		//      $this->error_log_mock->add_error_msg(
-		//          __( 'CSV file not selected. Nothing to import!', 'pmpro-import-members-from-csv' ),
-		//          'error'
-		//      );
-		//
-		//      if ( 1 === $request_variables['update_users'] ) {
-		//          $this->error_log_mock->debug( 'Settings users update to: True' )->willReturn( false );
-		//      } else {
-		//          $this->error_log_mock->debug( 'Settings users update to: False' )->willReturn( false );
-		//      }
-		//      if ( 1 === $request_variables['suppress_pwdmsg'] ) {
-		//          $this->error_log_mock->debug( 'Do we suppress the changed password email? Yes' )->willReturn( false );
-		//      } else {
-		//          $this->error_log_mock->debug( 'Do we suppress the changed password email? No' )->willReturn( false );
-		//      }
+		try {
+			Functions\expect( 'get_option' )
+				->with( Mockery::contains( 'e20r_link_for_sponsor' ) )
+				->andReturn( $sponsor_links );
+		} catch ( \Exception $e ) {
+			echo "Error: " . $e->getMessage(); // phpcs:ignore
+			return false;
+		}
+
+		try {
+			Functions\expect( 'update_option' )
+				->with( Mockery::contains( 'e20r_im_error_msg' ) )
+				->andReturn( true );
+		} catch ( \Exception $e ) {
+			echo "Error: " . $e->getMessage(); // phpcs:ignore
+			return false;
+		}
+
+		try {
+			Functions\expect( 'get_transient' )
+				->with( Mockery::contains( 'e20r_import_filename' ) )
+				->andReturn( $file_info[0]['members_csv']['name'] );
+		} catch ( Exception $e ) {
+			echo 'Error mocking get_transient(): ' . $e->getMessage(); // phpcs:ignore
+			return false;
+		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$_REQUEST = $_REQUEST + $request_variables;
-		$_FILES   = $_FILES + $file_info[0];
-		$expected = ! empty( $file_info[1] );
+		$_REQUEST  = $_REQUEST + $request_variables;
+		$_FILES    = $_FILES + $file_info[0];
+		$expected  = ! empty( $file_info[1] );
+		$variables = new Variables();
 
-		$this->it(
-			'should verify that a file name is configured',
-			function() use ( $expected, $file_name ) {
-				$variables = new Variables();
+		$result = $variables->is_configured();
+		$this->assertEquals( $expected, $result );
+	}
 
-				$this->csv_mock = \Mockery::mock( \E20R\Import_Members\Import\CSV::class )->makePartial();
-
-				$this->csv_mock
-					->shouldReceive( '__construct' )
-					->with( $variables )
-					->once();
-
-				$result = $variables->is_configured();
-				$this->assertEquals( $expected, $result );
-			}
+	/**
+	 * Fixture: File name fixture for unit tests
+	 * TODO: List length must equal the # items returned from fixture_request_settings()
+	 *
+	 * @return array[]
+	 */
+	private function fixture_import_file_names() {
+		return array(
+			array(
+				array(
+					'members_csv' => array(
+						'tmp_name' => 'jklflkkk.csv',
+						'name'     => '/home/user1/csv_files/test-error-imports.csv',
+					),
+				),
+				'test-error-imports.csv',
+			),
+			array(
+				array(
+					'members_csv' => array(
+						'tmp_name' => 'jklflkkk.csv',
+						'name'     => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
+					),
+				),
+				'example_file.csv',
+			),
+			array(
+				array(
+					'members_csv' => array(
+						'tmp_name' => '',
+						'name'     => null,
+					),
+				),
+				null,
+			),
 		);
 	}
 
 	/**
 	 * Fixture for the Variables::is_configured method
+	 *
 	 * @return array
 	 */
 	public function fixture_is_configured() : array {
 
-		$fixture   = array();
-		$file_info = import_file_names();
+		$fixture        = array();
+		$file_info      = $this->fixture_import_file_names();
+		$error_msg_list = $this->fixture_error_msgs();
+		$sponsor_links  = $this->fixture_sponsor_links();
 
-		foreach ( request_settings() as $key_id => $request ) {
-			$fixture[] = array( $request, $file_info[ $key_id ] );
+		foreach ( $this->fixture_request_settings() as $key_id => $request ) {
+			$fixture[] = array(
+				$request,
+				$file_info[ $key_id ],
+				$error_msg_list[ $key_id ] ?? array(),
+				$sponsor_links[ $key_id ] ?? array(),
+			);
 		}
 
 		return $fixture;
+	}
+
+	/**
+	 * Fixture: List of sponsor link options
+	 * TODO: List length must equal the # items returned from fixture_request_settings()
+	 *
+	 * @return \array[][]
+	 */
+	private function fixture_sponsor_links() {
+		return array(
+			array( array() ),
+		);
+	}
+
+	/**
+	 * Fixture: List of error messages
+	 * TODO: List length must equal the # items returned from fixture_request_settings()
+	 *
+	 * @return \array[][]
+	 */
+	private function fixture_error_msgs() {
+		return array(
+			array( array() ),
+		);
+	}
+
+	/**
+	 * Fixture for the CSV::get_import_file_path() unit test
+	 *
+	 * Expected info for fixture:
+	 *      string full path, (string) $expected_file_name
+	 *
+	 * @return array[]
+	 */
+	private function fixture_request_settings() {
+		return array(
+			// $_REQUEST
+			array(
+				'update_users'                => 1,
+				'background_import'           => 1,
+				'deactivate_old_memberships'  => 0,
+				'create_order'                => 0,
+				'password_nag'                => 0,
+				'password_hashing_disabled'   => 0,
+				'new_user_notification'       => 1,
+				'suppress_pwdmsg'             => 1,
+				'admin_new_user_notification' => 0, // WP's standard Admin notification
+				'send_welcome_email'          => 0, // User notification w/custom template
+				'new_member_notification'     => 0, // WP's standard User notification
+				'per_partial'                 => 1, // Whether to batch this (and background it)
+				'site_id'                     => 1, // The WordPress Site ID (default is 1)
+			),
+			array(
+				'update_users'                => 1,
+				'background_import'           => 1,
+				'deactivate_old_memberships'  => 0,
+				'create_order'                => 0,
+				'password_nag'                => 0,
+				'password_hashing_disabled'   => 0,
+				'new_user_notification'       => 1,
+				'suppress_pwdmsg'             => 1,
+				'admin_new_user_notification' => 0, // WP's standard Admin notification
+				'send_welcome_email'          => 0, // User notification w/custom template
+				'new_member_notification'     => 0, // WP's standard User notification
+				'per_partial'                 => 1, // Whether to batch this (and background it)
+				'site_id'                     => 1, // The WordPress Site ID (default is 1)
+			),
+			array(
+				'update_users'                => 1,
+				'background_import'           => 1,
+				'deactivate_old_memberships'  => 0,
+				'create_order'                => 0,
+				'password_nag'                => 0,
+				'password_hashing_disabled'   => 0,
+				'new_user_notification'       => 1,
+				'suppress_pwdmsg'             => 1,
+				'admin_new_user_notification' => 0, // WP's standard Admin notification
+				'send_welcome_email'          => 0, // User notification w/custom template
+				'new_member_notification'     => 0, // WP's standard User notification
+				'per_partial'                 => 1, // Whether to batch this (and background it)
+				'site_id'                     => 1, // The WordPress Site ID (default is 1)
+			),
+		);
 	}
 }
