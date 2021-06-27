@@ -2,8 +2,6 @@ name: Test of "Release to wordpress.org" workflows
 
 on:
   push:
-    branches:
-      - test_workflow_updates
     tags:
       - test_workflow*
 

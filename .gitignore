@@ -12,10 +12,6 @@
 .idea/**/dataSources/
 .idea/**/dataSources.ids
 .idea/**/dataSources.xml
-.idea/**/dataSources.local.xml
-.idea/**/sqlDataSources.xml
-.idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
 
 # Gradle:
 .idea/**/gradle.xml
@@ -29,8 +25,6 @@ cmake-build-debug/
 
 ## File-based project format:
 *.iws
-
-## Plugin-specific files:
 
 # IntelliJ
 out/
@@ -49,6 +43,13 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+# Editor-based Rest Client
+.idea/httpRequests
+
+# Android studio 3.1+ serialized cache file
+.idea/caches/build_file_checksums.ser
+
 .idea/*
 
 .circleci/docker/test/db_backup
