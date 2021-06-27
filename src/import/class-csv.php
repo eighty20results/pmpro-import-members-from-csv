@@ -77,6 +77,8 @@ class CSV {
 	}
 
 	/**
+	 * Return the path to the import file (from the $_REQUEST, the $_FILES array, or a transient)
+	 *
 	 * @param null|string $file_name
 	 *
 	 * @return bool|string
