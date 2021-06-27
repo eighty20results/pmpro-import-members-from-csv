@@ -52,13 +52,6 @@ class Error_LogTest extends \Codeception\Test\Unit {
 	public function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-
-		vfsStreamWrapper::register();
-		vfsStreamWrapper::setRoot(
-			new vfsStreamDirectory(
-				basename( $this->log_file_path )
-			)
-		);
 	}
 
 	public function tearDown(): void {
