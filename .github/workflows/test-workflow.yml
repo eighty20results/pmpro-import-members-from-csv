@@ -15,8 +15,9 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
-          extensions: mbstring, xdebug
+          extensions: mbstring
           tools: composer:v2
+          ini-values: xdebug.mode=coverage
           coverage: pcov
       - name: Checkout repository
         uses: actions/checkout@v2

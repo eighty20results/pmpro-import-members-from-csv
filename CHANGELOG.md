@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v3.0.2 - 2021-06-27
+- BUG FIX: Attempting to add code coverage (Thomas Sjolshagen)
+- BUG FIX: Updates to GitHub Actions (Thomas Sjolshagen)
+- BUG FIX: Wrong plugin file specified (Thomas Sjolshagen)
+- BUG FIX: Use pcov for code coverage (Thomas Sjolshagen)
+- BUG FIX: Exclude development files from plugin (Thomas Sjolshagen)
+- BUG FIX: Didn't use the correct main repo name (Thomas Sjolshagen)
+- BUG FIX: Clean up changelog management (Thomas Sjolshagen)
+- BUG FIX: WP Plugin header w/o unneeded characters (Thomas Sjolshagen)
+- BUG FIX: Fix changelog handlers (Thomas Sjolshagen)
+- BUG FIX: Added new workflow for PRs and fixed RM list for SVN commit (Thomas Sjolshagen)
+- BUG FIX: SVN tags directory doesn't need to be processed when testing (Thomas Sjolshagen)
+- BUG FIX: Fix paths to exclude from SVN repo and update release-plugin action (Thomas Sjolshagen)
+- BUG FIX: Renamed entrypoint.sh to be more indicative of purpose (Thomas Sjolshagen)
+- BUG FIX: Set the expected composer.phar path (Thomas Sjolshagen)
+- BUG FIX: Troubleshooting composer issue(s) (Thomas Sjolshagen)
+- BUG FIX: Nit update of name strings (Thomas Sjolshagen)
+- BUG FIX: Adding/Updating *ignore files (Thomas Sjolshagen)
+
 ## v3.0.1 - 2021-06-27
 - BUG FIX: Exclude development files from plugin (Thomas Sjolshagen)
 
