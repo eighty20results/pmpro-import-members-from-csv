@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0] - 2021-06-27
+## v3.0 - 2021-06-27
 - BUG FIX: Incorrect path to the import.csv example file (Thomas Sjolshagen)
 - BUG FIX: Added new workflow for PRs and fixed RM list for SVN commit (Thomas Sjolshagen)
 - BUG FIX: SVN tags directory doesn't need to be processed when testing (Thomas Sjolshagen)
