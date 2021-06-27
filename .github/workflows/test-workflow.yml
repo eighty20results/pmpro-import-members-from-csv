@@ -13,13 +13,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        repository: eighty20results/e20r-members-list
+        repository: eighty20results/pmpro-import-members-from-csv
         ref: test_workflow_updates
     - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
-      uses: eighty20results/e20r-members-list@test_workflow_updates
+      uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
       env:
-        SLUG: e20r-members-list
+        SLUG: pmpro-import-members-from-csv
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
         SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
         GITHUB_TOKEN: ${{ secrets.GITHUB }}
-

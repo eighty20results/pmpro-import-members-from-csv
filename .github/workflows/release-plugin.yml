@@ -7,6 +7,15 @@ on:
     types: [edited, published]
 
 jobs:
+  # Execute the unit tests
+  unit-test:
+    name: Execute all available unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Test Unit tests
+        uses: eight20results/pmpro-import-members-from-csv@main
+
   # To push the release (sources) to the WordPress.org SVN instance for this plugin
   wordpress:
     name: Push plugin to wordpress.org
@@ -18,10 +27,9 @@ jobs:
         #  repository: git@github.com:eighty20results/Utilities.git
         #  token: ${{ secrets.UTILITIES_ACCESS }}
         #  path: class/utilities
-        uses: eighty20results/e20r-members-list@main
+        uses: eighty20results/pmpro-import-members-from-csv@main
         env:
-          SLUG: e20r-members-list
+          SLUG: pmpro-import-members-from-csv
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
-
