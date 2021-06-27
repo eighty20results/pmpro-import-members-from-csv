@@ -61,8 +61,11 @@ SVN_DIR="/github/svn-${SLUG}"
 
 # Should be excluded from the Wordpress.org repo
 read -r -a RM_LIST <<< "trunk/.git \
+	trunk/.circleci \
+	trunk/.github \
 	trunk/action.yml \
 	trunk/Dockerfile \
+	trunk/Makefile \
 	trunk/remove_update.sh \
 	trunk/metadata.json \
 	trunk/package.json \

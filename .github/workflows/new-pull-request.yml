@@ -1,0 +1,30 @@
+name: Run Unit Tests when creating a PR
+
+# Run Unit Test when new PR is created
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Execute tests when creating a PR
+  wordpress:
+    name: Run Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/pmpro-import-members-from-csv
+          ref: test_workflow_updates
+      - name: Run the unit tests
+        run: |
+          ln -s $(which composer) ./composer.phar
+          make unit-test
