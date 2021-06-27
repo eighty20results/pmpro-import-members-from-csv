@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v3.0.1 - 2021-06-27
+- BUG FIX: Exclude development files from plugin (Thomas Sjolshagen)
+
 ## v3.0 - 2021-06-27
 - BUG FIX: Incorrect path to the import.csv example file (Thomas Sjolshagen)
 - BUG FIX: Added new workflow for PRs and fixed RM list for SVN commit (Thomas Sjolshagen)

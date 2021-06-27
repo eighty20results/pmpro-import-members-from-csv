@@ -66,6 +66,12 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/action.yml \
 	trunk/Dockerfile \
 	trunk/Makefile \
+	trunk/docker-env \
+	trunk/.gitignore \
+	trunk/.dockerignore \
+	trunk/.editorconfig \
+	trunk/build_readmes \
+	trunk/patchwork.json \
 	trunk/remove_update.sh \
 	trunk/metadata.json \
 	trunk/package.json \
