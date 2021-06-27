@@ -27,7 +27,7 @@ jobs:
           ref: test_workflow_updates
       - name: Run the unit tests
         run: |
-          which composer
+          ln -s $(which composer) ./composer.phar
           make unit-test
       - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
         uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
