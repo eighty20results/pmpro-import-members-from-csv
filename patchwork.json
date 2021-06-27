@@ -1,6 +1,5 @@
 {
   "redefinable-internals": [
-	"dirname",
-    "basename"
+	"file_exists"
   ]
 }
