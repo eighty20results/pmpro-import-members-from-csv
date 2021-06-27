@@ -183,14 +183,15 @@ svn add . --force > /dev/null
 # Also suppress stdout here
 svn status | grep '^\!' | sed 's/! *//' | xargs -I% svn rm %@ > /dev/null
 
-echo "➤ Copying tag..."
-svn cp "trunk" "tags/${VERSION}"
-
-svn status
-
 echo "➤ Testing that we need to push to Wordpress.org"
 
 if [[ -n "${BRANCH}" && "${BRANCH}" =~ ^v[0-9]+\..*[0-9]$ ]]; then
+
+	echo "➤ Copying tag..."
+	svn cp "trunk" "tags/${VERSION}"
+
+	svn status
+
 	echo "➤ In main branch so committing files to Wordpress.org SVN repository..."
 	svn commit -m "Update to version ${VERSION} from GitHub" \
 	--no-auth-cache \
