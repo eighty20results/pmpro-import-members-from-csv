@@ -20,11 +20,12 @@ jobs:
           extensions: mbstring, xdebug
           tools: composer:v2
           coverage: pcov
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
         with:
           repository: eighty20results/pmpro-import-members-from-csv
           ref: test_workflow_updates
-      - name: Run unit tests
+      - name: Run the unit tests
         run: make unit-test
       - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
         uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
