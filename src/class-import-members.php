@@ -142,6 +142,9 @@ class Import_Members {
 	 **/
 	public function load_hooks() {
 
+		if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
+			add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10 );
+		}
 		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99 );
 		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99 );
 		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99 );
@@ -181,13 +184,9 @@ class Import_Members {
 		remove_action( 'is_iu_post_user_import', 'pmprosm_is_iu_post_user_import', 20 );
 
 		if ( class_exists( 'E20R\Utilities\Licensing\Licensing' ) ) {
-
 			$licensing = new Licensing( self::E20R_LICENSE_SKU );
 
-			if (
-				class_exists( 'E20R\Utilities\Licensing\Licensing' ) &&
-				$licensing->is_licensed( self::E20R_LICENSE_SKU, false )
-			) {
+			if ( $licensing->is_licensed( self::E20R_LICENSE_SKU, false ) ) {
 				do_action( 'e20r_import_load_licensed_modules' );
 			}
 		}

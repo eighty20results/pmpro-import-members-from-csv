@@ -60,7 +60,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 			$plugin = plugin_basename( trim( $plugin ) );
 
 			if ( self::is_active( $plugin ) ) {
-				return null;
+				return true;
 			}
 
 			if ( is_multisite() && ( $network_wide || is_network_only_plugin( $plugin ) ) ) {
@@ -108,7 +108,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 					ob_end_clean();
 			}
 
-			return null;
+			return self::is_active( $plugin );
 		}
 
 		/**
@@ -146,9 +146,9 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 			}
 
 			$path = trim( $path );
+			error_log( "Notice: Using {$path}" );
 
 			if ( ! file_exists( $path ) ) {
-				error_log( "Didn't find the plugin file for the Utilities plugin" );
 				add_action(
 					'admin_notices',
 					function() use ( $path ) {
@@ -166,9 +166,9 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				return false;
 			}
 
-			if ( ! self::is_active( $path ) ) {
+			if ( ! self::is_active( self::$plugin_slug ) ) {
 
-				$result = self::activate_plugin( $path );
+				$result = self::activate_plugin( self::$plugin_slug );
 
 				if ( ! is_wp_error( $result ) ) {
 					add_action(
@@ -202,7 +202,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				}
 			}
 
-			if ( self::is_active( $path ) ) {
+			if ( self::is_active( self::$plugin_slug ) ) {
 				return true;
 			}
 

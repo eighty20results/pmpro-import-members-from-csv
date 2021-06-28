@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v3.0.3 - 2021-06-28
+- BUG FIX: Refactored utilities module filter location (Thomas Sjolshagen)
+- BUG FIX: PHP Notice warnings (Thomas Sjolshagen)
+- BUG FIX: Didn't recognise the utilities module when it's active (Thomas Sjolshagen)
+
 ## v3.0.2 - 2021-06-27
 - BUG FIX: Attempting to add code coverage (Thomas Sjolshagen)
 - BUG FIX: Updates to GitHub Actions (Thomas Sjolshagen)
