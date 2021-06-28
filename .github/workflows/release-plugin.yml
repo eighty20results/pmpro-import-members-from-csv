@@ -4,7 +4,7 @@ on:
   # Deploy when a new release is created
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
-    types: [edited, published]
+    types: [published]
     branches:
       - main
 
