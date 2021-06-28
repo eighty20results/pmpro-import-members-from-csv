@@ -146,7 +146,6 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 			}
 
 			$path = trim( $path );
-			error_log( "Notice: Using {$path}" );
 
 			if ( ! file_exists( $path ) ) {
 				add_action(
