@@ -133,8 +133,8 @@ class Ajax {
 	 */
 	public function get_client_ip() {
 
-		$client    = @$_SERVER['HTTP_CLIENT_IP'];
-		$forward   = @$_SERVER['HTTP_X_FORWARDED_FOR'];
+		$client    = $_SERVER['HTTP_CLIENT_IP'] ?? null;
+		$forward   = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
 		$remote    = $_SERVER['REMOTE_ADDR'];
 		$client_ip = null;
 
