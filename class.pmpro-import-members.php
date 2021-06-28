@@ -3,8 +3,8 @@
 Plugin Name: Import Paid Memberships Pro Members from CSV
 Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
 Description: Import Users and their metadata from a csv file.
-Version: 3.0.3
-Requires PHP: 7.0
+Version: 3.0.4
+Requires PHP: 7.3
 Author: <a href="https://eighty20results.com/thomas-sjolshagen/">Thomas Sjolshagen <thomas@eighty20results.com></a>
 License: GPL2
 Text Domain: pmpro-import-members-from-csv
@@ -54,7 +54,7 @@ if ( ! defined( 'E20R_IM_CSV_ENCLOSURE' ) ) {
 }
 
 if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
-	define( 'E20R_IMPORT_VERSION', '3.0.3' );
+	define( 'E20R_IMPORT_VERSION', '3.0.4' );
 }
 
 require_once plugin_dir_path( __FILE__ ) . '/ActivateUtilitiesPlugin.php';

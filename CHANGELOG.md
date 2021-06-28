@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v3.0.4 - 2021-06-28
+- BUG FIX: Require PHP 7.3+ (Thomas Sjolshagen)
+- BUG FIX: Disabled excessive error_log() message (Thomas Sjolshagen)
+- BUG FIX: Re-activate the installed_paths setting for phpcs (Thomas Sjolshagen)
+
 ## v3.0.3 - 2021-06-28
 - BUG FIX: Refactored utilities module filter location (Thomas Sjolshagen)
 - BUG FIX: PHP Notice warnings (Thomas Sjolshagen)
