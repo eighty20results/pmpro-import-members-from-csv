@@ -42,7 +42,7 @@ This plugin supports Network Activation on a WordPress Multisite (WPMU) installa
 * Allows large user/member import without having to configure the PHP max_execution_time variable (if the option is selected)
 * Import hashed password for new/updating users (if the option is selected)
 
-*NOTE*: The plugin may not import some of data if it detects a problem. To find out what the problem was, read this documentation and the FAQ section to ensure you have correctly formatted _all_ of your import data.
+**NOTE**: The plugin may not import some of data if it detects a problem. To find out what the problem was, read this documentation and the FAQ section to ensure you have correctly formatted _all_ of your import data.
 
 For feature request and bug reports, [please use the issues section on GitHub](https://github.com/eighty20results/pmpro-import-members-from-csv/issues).
 Code contributions are welcome [on Github](https://github.com/eighty20results/pmpro-import-members-from-csv).
@@ -236,7 +236,7 @@ The 'status' column has a limited number of valid values. By default, we recomme
 
 All timestamp values ('timestamp') must use the same format as the one used by the MySQL database's 'DATETIME' format: `YYYY-MM-DD HH:MM:SS`
 
-*PLEASE NOTE:*
+**PLEASE NOTE:**
 
 Although you _can_ specify an account number (accountnumber) in the import file, doing that will *not* result in this plugin importing and activating subscriptions or payments by credit card.
 
@@ -248,7 +248,7 @@ A masked credit card number = Only the last 4 digits are real and the rest are r
 
 [1] = Importing a full credit card number will exponentially increase the probability that you, in the event of a security problem on your site, will have to pay the Payment Card Industry (PCI) massive fines. Simply put; Don't import Credit Card information! Instead, ask your members to resubmit their information when the site is back online/live.
 
-*This plugin does NOT mask your credit card numbers for you!*
+**This plugin does NOT mask your credit card numbers for you!**
 
 = Supported membership_gateway options =
 
@@ -304,7 +304,7 @@ This is due to what I'd term a bug in Paid Memberships Pro. This issue doesn't c
 
 Basically, the 'inactive' status will only apply to the order record (if it's created, see above) and *not* to the user's membership status.
 
-NOTE: Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the 'membership_status' column.
+**NOTE:** Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the 'membership_status' column.
 
 = How do I import an existing payment plan (recurring billing plan) for a user? =
 

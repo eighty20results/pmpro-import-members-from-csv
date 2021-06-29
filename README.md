@@ -1,11 +1,11 @@
 ### Import Members from CSV for Paid Memberships Pro
-`Contributors: eighty20results, sorich87, ideadude`<br />
-`Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro`<br />
-`Requires at least: 5.0`<br />
-`Tested up to: 5.7.2`<br />
-`Stable tag: 3.0.5`<br />
-`License: GPLv2`<br />
-`License URI: http://www.gnu.org/licenses/gpl`<br />
+`Contributors: eighty20results, sorich87, ideadude` <br />
+`Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro` <br />
+`Requires at least: 5.0` <br />
+`Tested up to: 5.7.2` <br />
+`Stable tag: 3.0.5` <br />
+`License: GPLv2` <br />
+`License URI: http://www.gnu.org/licenses/gpl` <br />
 
 Import and create user + PMPro member records from a CSV file to your WordPress with Paid Memberships Pro website. Can import the membership information, user meta data, PMPro order data and will link any pre-existing recurring payment records for your payment gateway integration.
 
@@ -42,12 +42,12 @@ This plugin supports Network Activation on a WordPress Multisite (WPMU) installa
 - Allows large user/member import without having to configure the PHP max_execution_time variable (if the option is selected)
 - Import hashed password for new/updating users (if the option is selected)
 
-*NOTE*: The plugin may not import some of data if it detects a problem. To find out what the problem was, read this documentation and the FAQ section to ensure you have correctly formatted _all_ of your import data.
+**NOTE**: The plugin may not import some of data if it detects a problem. To find out what the problem was, read this documentation and the FAQ section to ensure you have correctly formatted _all_ of your import data.
 
 For feature request and bug reports, [please use the issues section on GitHub](https://github.com/eighty20results/pmpro-import-members-from-csv/issues).
 Code contributions are welcome [on Github](https://github.com/eighty20results/pmpro-import-members-from-csv).
 
-`NOTE: In order to hide the `<br />"Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.
+`NOTE: In order to hide the ` <br />"Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.
 
 The tracking information is stored in the WordPress options table (wp_options) using the `e20r_import_has_donated` option name and can safely be deleted in the database if you do not wish to leave it. Deleting the option from the database will obviously re-enable the Donation nag.
 
@@ -140,7 +140,7 @@ In my experience, MS Excel(tm) is _really_ good at changing the date format in a
 
 However, human readable is often problematic for CSV imports, so you *have to ensure* the format follows the YYYY-MM-DD HH:ii:ss (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and for the enddate I'd suggest using `23:59:59`.
 
-`Just to be clear: The _only_ date format for the `<br />*membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
+`Just to be clear: The _only_ date format for the ` <br />*membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -236,7 +236,7 @@ The 'status' column has a limited number of valid values. By default, we recomme
 
 All timestamp values ('timestamp') must use the same format as the one used by the MySQL database's 'DATETIME' format: `YYYY-MM-DD HH:MM:SS`
 
-*PLEASE NOTE:*
+**PLEASE NOTE:**
 
 Although you _can_ specify an account number (accountnumber) in the import file, doing that will *not* result in this plugin importing and activating subscriptions or payments by credit card.
 
@@ -248,7 +248,7 @@ A masked credit card number = Only the last 4 digits are real and the rest are r
 
 [1] = Importing a full credit card number will exponentially increase the probability that you, in the event of a security problem on your site, will have to pay the Payment Card Industry (PCI) massive fines. Simply put; Don't import Credit Card information! Instead, ask your members to resubmit their information when the site is back online/live.
 
-*This plugin does NOT mask your credit card numbers for you!*
+**This plugin does NOT mask your credit card numbers for you!**
 
 ## Supported membership_gateway options
 
@@ -269,7 +269,7 @@ During the import operation, the plugin will verify that the specified payment g
 
 Specifying a Payment Gateway Integration that has not been configured for use during the PMPro checkout process would render the order record invalid.
 
-`NOTE: The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.`<br />
+`NOTE: The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.` <br />
 
 ## Adding billing address information to the PMPro Order import
 
@@ -304,7 +304,7 @@ This is due to what I'd term a bug in Paid Memberships Pro. This issue doesn't c
 
 Basically, the 'inactive' status will only apply to the order record (if it's created, see above) and *not* to the user's membership status.
 
-`NOTE: Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the `<br />'membership_status' column.
+**NOTE:** Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the 'membership_status' column.
 
 ## How do I import an existing payment plan (recurring billing plan) for a user?
 
