@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v3.0.5 - 2021-06-29
+- BUG FIX: Use command for git (Thomas Sjolshagen)
+- BUG FIX: Updating changelog source (Thomas Sjolshagen)
+- BUG FIX: Reverted CHANGELOG status (Thomas Sjolshagen)
+- BUG FIX: Separate CHANGELOG and README file generation (Thomas Sjolshagen)
+- BUG FIX: Updated version number (v3.0.5) (Thomas Sjolshagen)
+- BUG FIX: Create README.md from the README.txt file (Thomas Sjolshagen)
+- BUG FIX: Separate CHANGELOG and README file generation (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Updated version (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Didn't include a README.md file for the plugin (Thomas Sjolshagen)
+
 ## v3.0.4 - 2021-06-28
 - BUG FIX: Require PHP 7.3+ (Thomas Sjolshagen)
 - BUG FIX: Disabled excessive error_log() message (Thomas Sjolshagen)
