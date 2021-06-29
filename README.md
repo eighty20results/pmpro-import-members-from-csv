@@ -1,11 +1,11 @@
 ### Import Members from CSV for Paid Memberships Pro
-`Contributors: eighty20results, sorich87, ideadude`
-`Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro`
-`Requires at least: 5.0`
-`Tested up to: 5.7.2`
-`Stable tag: 3.0.5`
-`License: GPLv2`
-`License URI: http://www.gnu.org/licenses/gpl`
+Contributors: eighty20results, sorich87, ideadude
+Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro
+Requires at least: 5.0
+Tested up to: 5.7.2
+Stable tag: 3.0.5
+License: GPLv2
+License URI: http://www.gnu.org/licenses/gpl
 
 Import and create user + PMPro member records from a CSV file to your WordPress with Paid Memberships Pro website. Can import the membership information, user meta data, PMPro order data and will link any pre-existing recurring payment records for your payment gateway integration.
 
@@ -47,7 +47,7 @@ This plugin supports Network Activation on a WordPress Multisite (WPMU) installa
 For feature request and bug reports, [please use the issues section on GitHub](https://github.com/eighty20results/pmpro-import-members-from-csv/issues).
 Code contributions are welcome [on Github](https://github.com/eighty20results/pmpro-import-members-from-csv).
 
-`NOTE: In order to hide the "Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.`
+NOTE: In order to hide the "Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.
 
 The tracking information is stored in the WordPress options table (wp_options) using the `e20r_import_has_donated` option name and can safely be deleted in the database if you do not wish to leave it. Deleting the option from the database will obviously re-enable the Donation nag.
 
@@ -140,7 +140,7 @@ In my experience, MS Excel(tm) is _really_ good at changing the date format in a
 
 However, human readable is often problematic for CSV imports, so you *have to ensure* the format follows the YYYY-MM-DD HH:ii:ss (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and for the enddate I'd suggest using `23:59:59`.
 
-`Just to be clear: The _only_ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.`
+Just to be clear: The _only_ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -269,7 +269,7 @@ During the import operation, the plugin will verify that the specified payment g
 
 Specifying a Payment Gateway Integration that has not been configured for use during the PMPro checkout process would render the order record invalid.
 
-`NOTE: The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.`
+NOTE: The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.
 
 ## Adding billing address information to the PMPro Order import
 
@@ -304,7 +304,7 @@ This is due to what I'd term a bug in Paid Memberships Pro. This issue doesn't c
 
 Basically, the 'inactive' status will only apply to the order record (if it's created, see above) and *not* to the user's membership status.
 
-`NOTE: Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the 'membership_status' column.`
+NOTE: Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the 'membership_status' column.
 
 ## How do I import an existing payment plan (recurring billing plan) for a user?
 
