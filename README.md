@@ -5,7 +5,7 @@
 `Tested up to: 5.7.2`<br />
 `Stable tag: 3.0.5`<br />
 `License: GPLv2`<br />
-`License URI: http`<br />://www.gnu.org/licenses/gpl
+`License URI: http://www.gnu.org/licenses/gpl`<br />
 
 Import and create user + PMPro member records from a CSV file to your WordPress with Paid Memberships Pro website. Can import the membership information, user meta data, PMPro order data and will link any pre-existing recurring payment records for your payment gateway integration.
 
