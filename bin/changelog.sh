@@ -52,6 +52,7 @@ if [[ -f ./README.txt ]]; then
 	 				 -e "s/^Tested up to: ([0-9]+\.[0-9].*)/Tested up to: ${wordpress_version}/g"\
 	 				 ./README.txt > ./NEW_README.txt
 	mv ./NEW_README.txt ./README.txt
+	cp ./README.txt ./README.md
 fi
 
 if [[ ! -f "${changelog_out}" ]]; then
@@ -81,4 +82,4 @@ if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	rm -f "${tmp_changelog}"
 fi
 
-git commit -m "Updated version info during build (v${version} for WP ${wordpress_version})" CHANGELOG.md README.txt # metadata.json
+$(which git) commit -m "BUG FIX: Updated version (v${version} for WP ${wordpress_version})" CHANGELOG.md README.txt README.md # metadata.json
