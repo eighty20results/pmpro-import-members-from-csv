@@ -132,15 +132,15 @@ If a column has no data, you should remove the column and it's column header fro
 
 This is a pretty common question and the reason is almost always because there is something unexpected in the `membership_` portion of the row being imported.
 
-Most often it's the date/time format for the membership_startdate and membership_enddate columns.
+Most often it's the date/time format for the `membership_startdate` and `membership_enddate` columns.
 
 If you use MS Excel(tm) to prepare your .CSV file, you're in for a treat...
 
-In my experience, MS Excel(tm) is _really_ good at changing the date format in a spreadsheet column to whatever it thinks works best (i.e. human readable).
+In my experience, MS Excel(tm) is _really_ good at changing the date format in a spreadsheet column to whatever it thinks works best (i.e. human readable). (If my sarcasm doesn't shine through; This actually __isn't__ a good thing!)
 
-However, human readable is often problematic for CSV imports, so you *have to ensure* the format follows the YYYY-MM-DD HH:ii:ss (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and for the enddate I'd suggest using `23:59:59`.
+However, human readable is often problematic for CSV imports, so you **have to make sure** the date format follows the `YYYY-MM-DD HH:ii:ss` template (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and for the enddate I'd suggest using `23:59:59`.
 
-Just to be clear: The __only__ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
+Just to be clear: The __only__ date format for the `membership_startdate`, `membership_enddate` and the `user_registered` columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -175,7 +175,7 @@ When importing a sponsor there are a couple of scenarios;
 
 For scenario 1; The sponsor code (discount code) already has a Discount Code ID (integer value, found on the PMPro "Discount Codes" settings page). This ID needs to be added in the `membership_code_id` column of the import file for the sponsor (user record), along with a numeric value in the `pmprosm_seats` column.
 
-For scenario 2; The sponsor code is created by this plugin. It happens automatically if the sponsor user exists - or is being imported at the same time as - when the *sponsored* user is attempted imported and linked. The discount code created attempts to use the settings from the PMPro Sponsored Members add-on for the discount code.
+For scenario 2; The sponsor code is created by this plugin. It happens automatically if the sponsor user exists - or is being imported at the same time as - when the **sponsored** user is attempted imported and linked. The discount code created attempts to use the settings from the PMPro Sponsored Members add-on for the discount code.
 
 === Caveat ===
 
@@ -230,21 +230,21 @@ The supported order record columns are:
 1. billing_country (*)
 1. billing_phone (*)
 
-All of these columns/fields should be prefixed with 'membership_'. I.e. 'membership_paypal_token' or 'membership_tax', etc. The exceptions are the 'user_id' and 'membership_id' columns/fields which should be left as 'user_id' and 'membership_id' respectively if you want to include them in the import operation(s).
+All of these columns/fields should be prefixed with `membership_`. I.e. `membership_paypal_token` or `membership_tax`, etc. The exceptions are the `user_id` and `membership_id` columns/fields which should be left as `user_id` and `membership_id` respectively if you want to include them in the import operation(s).
 
-The 'status' column has a limited number of valid values. By default, we recommend using either 'success' or 'cancelled'
+The `status` column has a limited number of valid values. By default, we recommend using either `success` or `cancelled`
 
 All timestamp values ('timestamp') must use the same format as the one used by the MySQL database's 'DATETIME' format: `YYYY-MM-DD HH:MM:SS`
 
 **PLEASE NOTE:**
 
-Although you _can_ specify an account number (accountnumber) in the import file, doing that will *not* result in this plugin importing and activating subscriptions or payments by credit card.
+Although you _can_ specify an account number (`accountnumber`) in the import file, doing that will *not* result in this plugin importing and activating subscriptions or payments by credit card.
 
-You CANNOT use this tool to import and *create* subscription plans, or transactions, on the payment gateway for your Paid Memberships Pro users.
+You CANNOT use this tool to import and **create** subscription plans, or transactions, on the payment gateway for your Paid Memberships Pro users.
 
-Including anything other than a masked Credit Card number for the "membership_accountnumber" column *is a really bad idea*[1]!
+Including anything other than a masked Credit Card number for the `membership_accountnumber` column *is a really bad idea*[1]!
 
-A masked credit card number = Only the last 4 digits are real and the rest are repetitions of the 'X' character (XXXXXXXXXXXX1234).
+A masked credit card number = Only the last 4 digits are real and the rest are repetitions of the 'X' character (`XXXXXXXXXXXX1234`).
 
 [1] = Importing a full credit card number will exponentially increase the probability that you, in the event of a security problem on your site, will have to pay the Payment Card Industry (PCI) massive fines. Simply put; Don't import Credit Card information! Instead, ask your members to resubmit their information when the site is back online/live.
 
@@ -273,9 +273,9 @@ NOTE: The limitations to how Paid Memberships Pro supports/handles multiple paym
 
 = Adding billing address information to the PMPro Order import =
 
-The normal way to import billing address data to the database for a member/user is to use the `pmpro_b[*]` fields (pmpro_bfirstname, pmpro_blastname, pmpro_baddress1, pmpro_baddress2, pmpro_bcity, pmpro_bstate, pmpro_bzipcode, pmpro_bcountry and pmpro_bphone).
+The normal way to import billing address data to the database for a member/user is to use the `pmpro_b[*]` fields (`pmpro_bfirstname`, `pmpro_blastname`, `pmpro_baddress1`, `pmpro_baddress2`, `pmpro_bcity`, `pmpro_bstate`, `pmpro_bzipcode`, `pmpro_bcountry` and `pmpro_bphone`).
 
-If the pmpro_b* field data is present in the row and the 'Add order' option is selected for the import file, the import will attempt to populate the order billing information using the pmpro_b* data.
+If the `pmpro_b*` field data is present in the row and the 'Add order' option is selected for the import file, the import will attempt to populate the order billing information using the `pmpro_b*` data.
 
 = How should the .csv file be defined? =
 
