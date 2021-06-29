@@ -6,10 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## v3.0.5 - 2021-06-29
-- BUG FIX: Didn't include a README.md file for the plugin (Thomas Sjolshagen)
-- BUG FIX: Update repository name (Thomas Sjolshagen)
-
 ## v3.0.4 - 2021-06-28
 - BUG FIX: Require PHP 7.3+ (Thomas Sjolshagen)
 - BUG FIX: Disabled excessive error_log() message (Thomas Sjolshagen)
