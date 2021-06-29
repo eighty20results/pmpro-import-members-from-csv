@@ -289,8 +289,8 @@ build-test: docker-deps start-stack db-import
 test: clean deps code-standard-test start-stack db-import wp-unit-test # TODO: phpstan-test between phpcs & unit tests
 
 changelog: build_readmes/current.txt
-	@./bin/readme.sh
-	@./bin/changelog.sh
+	@./bin/changelog.sh \
+	&& ./bin/readme.sh
 
 gitlog:
 	@./bin/create_log.sh

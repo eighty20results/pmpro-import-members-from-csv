@@ -50,7 +50,7 @@ fi
 #
 # Create the CHANGELOG.md for the current ${version}
 #
-# Extract the old changelog entries iof they don't already exist in the log
+# Extract the old changelog entries if they don't already exist in the log
 if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	echo "Updating the CHANGELOG.md file"
 	# shellcheck disable=SC2016
@@ -69,4 +69,4 @@ if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	rm -f "${tmp_changelog}"
 fi
 
-git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md # metadata.json
+git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" ./CHANGELOG.md # metadata.json
