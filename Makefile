@@ -59,6 +59,11 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
     		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) ps -q 2> /dev/null | wc -l)
 
 .PHONY: \
+	docs \
+	readme \
+	changelog \
+	metadata \
+	git-log \
 	clean \
 	real-clean \
 	deps \
@@ -75,7 +80,6 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	wp-unit-test \
 	acceptance-test \
 	build-test \
-	gitlog \
 	new-release \
 	wp-shell \
 	wp-log \
@@ -288,14 +292,21 @@ build-test: docker-deps start-stack db-import
 
 test: clean deps code-standard-test start-stack db-import wp-unit-test # TODO: phpstan-test between phpcs & unit tests
 
-changelog: build_readmes/current.txt
-	@./bin/changelog.sh \
-	&& ./bin/readme.sh
-
-gitlog:
+git-log:
 	@./bin/create_log.sh
+
+metadata:
+	@./bin/metadata.sh
+
+changelog: build_readmes/current.txt
+	@./bin/changelog.sh
+
+readme: changelog metadata
+	@./bin/readme.sh
 
 new-release: test composer-prod
 	@./bin/get_version.sh && \
 		git tag $${VERSION} && \
 		./build_env/create_release.sh
+
+docs: git-log readme

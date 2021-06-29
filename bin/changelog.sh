@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-short_name="pmpro-import-members-from-csv"
-server="eighty20results.com"
 sed="$(which sed)"
 readme_path="./build_readmes/"
 changelog_source=${readme_path}current.txt
@@ -20,27 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
 __EOF__
 )
-
-#if [[ ! -f ./metadata.json ]]; then
-#	cp "${readme_path}/skel/metadata.json" ./metadata.json
-#fi
-
-###########
-#
-# Update plugin and wordpress version info in metadata.json
-#
-#if [[ -f ./metadata.json ]]; then
-#	echo "Updating the metadata.json file"
-#	"${sed}" -r -e "s/\"version\": \"([0-9]+\.[0-9].*)\"\,/\"version\": \"${version}\"\,/" \
-#					 -e "s/\"tested\"\:\ \"([0-9]+\.[0-9].*)\"\,/\"tested\"\:\ \"${wordpress_version}\"\,/" \
-#					 -e "s/\"last_updated\": \"(.*)\",/\"last_updated\": \"${today} $(date +%H:%M:00) CET\",/g" \
-#					 -e "s/\"download_url\": \"https:\/\/${server}\/protected-content\/${short_name}\/${short_name}-([0-9]+\.[0-9].*)\.zip\",/\"download_url\": \"https:\/\/${server}\/protected-content\/${short_name}\/${short_name}-${version}\.zip\",/g" \
-#					 ./metadata.json > ./new_metadata.json
-#		mv ./new_metadata.json ./metadata.json
-#fi
 
 if [[ ! -f "${changelog_out}" ]]; then
 	cp "${readme_path}/${changelog_out}" "./${changelog_out}"
@@ -69,4 +48,5 @@ if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	rm -f "${tmp_changelog}"
 fi
 
-git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" ./CHANGELOG.md # metadata.json
+# TODO: Make sure metadata.json is included and uncommented
+git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" ./CHANGELOG.md
