@@ -269,7 +269,7 @@ During the import operation, the plugin will verify that the specified payment g
 
 Specifying a Payment Gateway Integration that has not been configured for use during the PMPro checkout process would render the order record invalid.
 
-`NOTE: The limitations to how Paid Memberships Pro supports`/handles multiple payment gateway integrations at the same time still apply.
+`NOTE: The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.`
 
 ## Adding billing address information to the PMPro Order import
 
