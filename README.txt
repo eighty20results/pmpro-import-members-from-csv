@@ -17,7 +17,7 @@ We designed this plugin to give you an error free import of a user/member to a W
 
 Unlike the "Import User From CSV Integration" add-on by Paid Memberships Pro, this "Import Members from CSV" plugin will verify the data you are trying to import during the import operation. This is done to reduce the probability of problem after the import. If there are any errors/issues,information about the problem will be logged to the pmp_updates.log saved in the `wp-content/uploads/` directory.
 
-*NOTE*: You can run the import multiple times with the same/slightly modified import .csv file and the appropriate settings (see the FAQ/description below). If you configure the plugin settings correctly, this will only result in overwriting/changing the existing member data.
+**NOTE**: You can run the import multiple times with the same/slightly modified import .csv file and the appropriate settings (see the FAQ/description below). If you configure the plugin settings correctly, this will only result in overwriting/changing the existing member data.
 
 Using a CSV (Comma Separated Values) file, the will add users with basic user information as well as user meta data fields, the user role (if applicable) and the specified Paid Memberships Pro member configuration/information. It can also generate an order record to ensure your recurring subscriptions continue to get attributed to the imported member.
 
@@ -90,12 +90,12 @@ Click on the 'Import Members' link in the 'Membership' menu, then select your CS
 Next you have to decide whether you:
 
 1. want to deactivate previously existing member record(s) for the user - The CSV record has to specify the same membership as the user previously had so this is most useful when having to reimport/update data (default: enabled and recommended),
-1. update the existing user/member's information (default: enabled and recommended)
-1. send a notification email to new users (default: disabled),
-1. want the password nag to be displayed when the user logs in (default: disabled),
-1. have included a hashed (encoded) password specified in the import file and (default: disabled)
-1. want to use the background import option (default: enabled and recommended)
-1. create a PMPro order record based on supplied payment info in the .csv file (default: disabled)
+2. update the existing user/member's information (default: enabled and recommended)
+3. send a notification email to new users (default: disabled),
+4. want the password nag to be displayed when the user logs in (default: disabled),
+5. have included a hashed (encoded) password specified in the import file and (default: disabled)
+6. want to use the background import option (default: enabled and recommended)
+7. create a PMPro order record based on supplied payment info in the .csv file (default: disabled)
 
 Then click the 'Import' button.
 
@@ -124,7 +124,7 @@ Check the wp-content/uploads/pmp_im_errors.log log file for details on the impor
 
 = Do I need to include all the columns from the sample file? =
 
-No. _Only_ include the columns where you have data to import. I.e, if none of your members need to have their membership end date defined (i.e the membership you're importing doesn't have an expiration or it's a recurring membership with a linked Payment Gateway subscription plan), just remove the column(s) you don't need. That way, the plugin doesn't try to import data that isn't there.
+No. __Only__ include the columns where you have data to import. I.e, if none of your members need to have their membership end date defined (i.e the membership you're importing doesn't have an expiration or it's a recurring membership with a linked Payment Gateway subscription plan), just remove the column(s) you don't need. That way, the plugin doesn't try to import data that isn't there.
 
 If a column has no data, you should remove the column and it's column header from the import file!
 
@@ -140,7 +140,7 @@ In my experience, MS Excel(tm) is _really_ good at changing the date format in a
 
 However, human readable is often problematic for CSV imports, so you *have to ensure* the format follows the YYYY-MM-DD HH:ii:ss (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and for the enddate I'd suggest using `23:59:59`.
 
-Just to be clear: The _only_ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
+Just to be clear: The __only__ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -157,7 +157,7 @@ In version 2.60, we added support for importing Sponsors and their sponsored mem
 
 To link sponsored users with their sponsors, add the `pmprosm_sponsor` column to your import file.
 
-On the data row for the _sponsored_ user, the pmprosm_sponsor column must contain the user key for the sponsor you want to link them with.
+On the data row for the __sponsored__ user, the `pmprosm_sponsor` column must contain the user key for the sponsor you want to link them with.
 
 Or, if they don't have a sponsor, that column must be blank.
 
