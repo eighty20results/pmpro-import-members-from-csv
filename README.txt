@@ -47,7 +47,7 @@ This plugin supports Network Activation on a WordPress Multisite (WPMU) installa
 For feature request and bug reports, [please use the issues section on GitHub](https://github.com/eighty20results/pmpro-import-members-from-csv/issues).
 Code contributions are welcome [on Github](https://github.com/eighty20results/pmpro-import-members-from-csv).
 
-NOTE: In order to hide the "Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.
+**NOTE**: In order to hide the "Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.
 
 The tracking information is stored in the WordPress options table (wp_options) using the `e20r_import_has_donated` option name and can safely be deleted in the database if you do not wish to leave it. Deleting the option from the database will obviously re-enable the Donation nag.
 
@@ -350,13 +350,13 @@ Nag tracking can be disabled altogether with the `e20r_import_donation_tracking_
 == Installation ==
 
 1. Upload the `pmpro-import-members-from-csv` folder to the `/wp-content/plugins/` directory.
-1. Activate the plugin through the 'Plugins' menu in WordPress.
+2. Activate the plugin through the 'Plugins' menu in WordPress.
 
 == Screenshots ==
 
 1. User import screen
-1. Ongoing (background) import screen
-1. Default settings on the user import screen
+2. Ongoing (background) import screen
+3. Default settings on the user import screen
 
 == Known Issues ==
 
