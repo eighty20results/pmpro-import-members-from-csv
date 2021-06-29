@@ -1,9 +1,9 @@
 ### Import Members from CSV for Paid Memberships Pro
-`Contributors: eighty20results`, sorich87, ideadude
-`Tags: user`, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro
-`Requires at least: 5`.0
-`Tested up to: 5`.7.2
-`Stable tag: 3`.0.5
+`Contributors: eighty20results, sorich87, ideadude`
+`Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro`
+`Requires at least: 5.0`
+`Tested up to: 5.7.2`
+`Stable tag: 3.0.5`
 `License: GPLv2`
 `License URI: http`://www.gnu.org/licenses/gpl
 
@@ -304,7 +304,7 @@ This is due to what I'd term a bug in Paid Memberships Pro. This issue doesn't c
 
 Basically, the 'inactive' status will only apply to the order record (if it's created, see above) and *not* to the user's membership status.
 
-`NOTE: Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete`, regardless of the value supplied for the 'membership_status' column.
+`NOTE: Assigning a membership level for a user will cause them to be given an active membership on the site when the import operation is complete, regardless of the value supplied for the `'membership_status' column.
 
 ## How do I import an existing payment plan (recurring billing plan) for a user?
 
