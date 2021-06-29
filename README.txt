@@ -44,8 +44,8 @@ This plugin supports Network Activation on a WordPress Multisite (WPMU) installa
 
 *NOTE*: The plugin may not import some of data if it detects a problem. To find out what the problem was, read this documentation and the FAQ section to ensure you have correctly formatted _all_ of your import data.
 
-For feature request and bug reports, [please use the issues section on GitHub](https://github.com/eighty20results/import-members-from-csv/issues).
-Code contributions are welcome [on Github](https://github.com/eighty20results/import-members-from-csv).
+For feature request and bug reports, [please use the issues section on GitHub](https://github.com/eighty20results/pmpro-import-members-from-csv/issues).
+Code contributions are welcome [on Github](https://github.com/eighty20results/pmpro-import-members-from-csv).
 
 NOTE: In order to hide the "Donation" button after a donation, this plugin will attempt to track the admin's IP address. This action may have GDPR implications for you or your administrators.
 
