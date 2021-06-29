@@ -1,3 +1,2 @@
-BUG FIX: Require PHP 7.3+ (Thomas Sjolshagen)
-BUG FIX: Disabled excessive error_log() message (Thomas Sjolshagen)
-BUG FIX: Re-activate the installed_paths setting for phpcs (Thomas Sjolshagen)
+BUG FIX: Didn't include a README.md file for the plugin (Thomas Sjolshagen)
+BUG FIX: Update repository name (Thomas Sjolshagen)
