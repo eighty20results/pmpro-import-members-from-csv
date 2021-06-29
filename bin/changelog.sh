@@ -42,19 +42,6 @@ __EOF__
 #		mv ./new_metadata.json ./metadata.json
 #fi
 
-###########
-#
-# Update plugin and wordpress version info in README.txt
-#
-if [[ -f ./README.txt ]]; then
-	echo "Updating the README.txt file"
-	"${sed}" -r -e "s/Stable tag: ([0-9]+\.[0-9].*)/Stable\ tag:\ ${version}/g" \
-	 				 -e "s/^Tested up to: ([0-9]+\.[0-9].*)/Tested up to: ${wordpress_version}/g"\
-	 				 ./README.txt > ./NEW_README.txt
-	mv ./NEW_README.txt ./README.txt
-	cp ./README.txt ./README.md
-fi
-
 if [[ ! -f "${changelog_out}" ]]; then
 	cp "${readme_path}/${changelog_out}" "./${changelog_out}"
 fi
@@ -82,4 +69,4 @@ if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	rm -f "${tmp_changelog}"
 fi
 
-$(which git) commit -m "BUG FIX: Updated version (v${version} for WP ${wordpress_version})" CHANGELOG.md README.txt README.md # metadata.json
+$(which git) commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md # metadata.json
