@@ -1,11 +1,11 @@
 ### Import Members from CSV for Paid Memberships Pro
 `Contributors: eighty20results, sorich87, ideadude`
 `Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro`
-Requires at least: 5.0
-Tested up to: 5.7.2
-Stable tag: 3.0.5
+`Requires at least: 5.0`
+`Tested up to: 5.7.2`
+`Stable tag: 3.0.5`
 `License: GPLv2`
-License URI: http://www.gnu.org/licenses/gpl
+`License URI: http://www.gnu.org/licenses/gpl`
 
 Import and create user + PMPro member records from a CSV file to your WordPress with Paid Memberships Pro website. Can import the membership information, user meta data, PMPro order data and will link any pre-existing recurring payment records for your payment gateway integration.
 
@@ -140,7 +140,7 @@ In my experience, MS Excel(tm) is _really_ good at changing the date format in a
 
 However, human readable is often problematic for CSV imports, so you *have to ensure* the format follows the YYYY-MM-DD HH:ii:ss (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and for the enddate I'd suggest using `23:59:59`.
 
-Just to be clear: The _only_ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
+`Just to be clear: The _only_ date format for the *membership_startdate*, *membership_enddate* and the *user_registered* columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.`
 
 *Use anything else and your membership data will not be imported*!
 
