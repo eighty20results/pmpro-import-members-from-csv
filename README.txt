@@ -255,21 +255,22 @@ A masked credit card number = Only the last 4 digits are real and the rest are r
 The Import Members from CSV plugin supports specifying different payment gateways for the user record(s) when importing order data (i.e. the "Attempt to create PMPro Order record" option has been selected). At present, the payment gateways that can be specified in the `membership_gateway` column are:
 
 1. authorizenet
-1. braintree
-1. check
-1. cybersource
-1. payflowpro
-1. paypal
-1. paypalexpress
-1. paypalstandard
-1. stripe
-1. twocheckout
+2. braintree
+3. check
+4. cybersource
+5. payflowpro
+6. paypal
+7. paypalexpress
+8. paypalstandard
+9. stripe
+10. twocheckout
+11. payfast
 
 During the import operation, the plugin will verify that the specified payment gateway integration is one of the supported payment gateway integrations for Paid Memberships Pro.
 
 Specifying a Payment Gateway Integration that has not been configured for use during the PMPro checkout process would render the order record invalid.
 
-NOTE: The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.
+**NOTE:** The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the same time still apply.
 
 = Adding billing address information to the PMPro Order import =
 
