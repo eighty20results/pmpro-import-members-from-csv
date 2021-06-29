@@ -13,7 +13,7 @@ Import and create user + PMPro member records from a CSV file to your WordPress 
 
 ![Release to wordpress.org](https://github.com/eighty20results/pmpro-import-members-from-csv/workflows/Release%20to%20wordpress.org/badge.svg?branch=main)
 
-This plugin is designed to give you an error free import of a user/member to a WordPress/Paid Memberships Pro site. It supports both adding and changing user data.
+We designed this plugin to give you an error free import of a user/member to a WordPress/Paid Memberships Pro site. It supports both adding and changing user data.
 
 Unlike the "Import User From CSV Integration" add-on by Paid Memberships Pro, this "Import Members from CSV" plugin will verify the data you are trying to import during the import operation. This is done to reduce the probability of problem after the import. If there are any errors/issues,information about the problem will be logged to the pmp_updates.log saved in the `wp-content/uploads/` directory.
 
