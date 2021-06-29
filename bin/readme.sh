@@ -47,4 +47,4 @@ fi
 
 
 
-$(which git) commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" README.txt README.md
+git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" README.txt README.md

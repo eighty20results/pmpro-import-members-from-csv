@@ -69,4 +69,4 @@ if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	rm -f "${tmp_changelog}"
 fi
 
-$(which git) commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md # metadata.json
+git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md # metadata.json
