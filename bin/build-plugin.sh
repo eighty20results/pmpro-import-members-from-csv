@@ -15,7 +15,8 @@ declare -a include=( \
 	"languages" \
 	"src" \
 	"class.${short_name}.php" \
-	"readme.txt" \
+	"README.txt" \
+	"README.md" \
 	"CHANGELOG.md"
 	)
 declare -a exclude=( \
