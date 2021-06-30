@@ -7,11 +7,11 @@ Stable tag: 3.0.5
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl
 
+[![Release to wordpress.org](https://github.com/eighty20results/pmpro-import-members-from-csv/actions/workflows/release-plugin.yml/badge.svg)](https://github.com/eighty20results/pmpro-import-members-from-csv/actions/workflows/release-plugin.yml)
+
 Import and create user + PMPro member records from a CSV file to your WordPress with Paid Memberships Pro website. Can import the membership information, user meta data, PMPro order data and will link any pre-existing recurring payment records for your payment gateway integration.
 
 == Description ==
-
-[![Release to wordpress.org](https://github.com/eighty20results/pmpro-import-members-from-csv/actions/workflows/release-plugin.yml/badge.svg)](https://github.com/eighty20results/pmpro-import-members-from-csv/actions/workflows/release-plugin.yml)
 
 We designed this plugin to give you an error free import of a user/member to a WordPress/Paid Memberships Pro site. It supports both adding and changing user data.
 
