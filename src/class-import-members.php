@@ -183,12 +183,21 @@ class Import_Members {
 		// Remove Import action for Sponsored Members add-on (handled directly by this plugin)
 		remove_action( 'is_iu_post_user_import', 'pmprosm_is_iu_post_user_import', 20 );
 
-		if ( class_exists( 'E20R\Utilities\Licensing\Licensing' ) ) {
-			$licensing = new Licensing( self::E20R_LICENSE_SKU );
+		if ( ! class_exists( 'E20R\Utilities\Licensing\Licensing' ) ) {
+			return;
+		}
 
-			if ( $licensing->is_licensed( self::E20R_LICENSE_SKU, false ) ) {
-				do_action( 'e20r_import_load_licensed_modules' );
-			}
+		$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
+
+		if ( false === $check->isPrivate() ) {
+			$licensing   = new Licensing( self::E20R_LICENSE_SKU, false );
+			$is_licensed = $licensing->is_licensed( self::E20R_LICENSE_SKU, false );
+		} else {
+			$is_licensed = Licensing::is_licensed( self::E20R_LICENSE_SKU, false );
+		}
+
+		if ( true === $is_licensed ) {
+			do_action( 'e20r_import_load_licensed_modules' );
 		}
 	}
 
@@ -263,6 +272,7 @@ class Import_Members {
 			null,
 			E20R_IMPORT_VERSION
 		);
+
 		// phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NotInFooter
 		wp_register_script(
 			'pmpro-import-members-from-csv',
