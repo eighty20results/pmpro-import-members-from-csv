@@ -248,8 +248,8 @@ class Import_Members {
 		 * Calculate the max timeout for the AJAX calls. Gets padded with a 20% bonus
 		 */
 		$max_run_time = (
-			apply_filters( 'pmp_im_import_time_per_record', 3 ) *
-			apply_filters( 'pmp_im_import_records_per_scan', $this->variables->get( 'per_partial' ) )
+			$this->variables->calculate_per_record_time() *
+			apply_filters( 'e20r_import_records_per_scan', $this->variables->get( 'per_partial' ) )
 		);
 
 		$timeout_value = ceil( $max_run_time * 1.2 );
