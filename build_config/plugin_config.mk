@@ -11,6 +11,8 @@ WP_IMAGE_VERSION ?= 1.0
 COMPOSER_VERSION ?= 1.29.2
 # COMPOSER_BIN := $(shell which composer)
 COMPOSER_BIN := composer.phar
+COMPOSER_DIR := inc
+
 APACHE_RUN_USER ?= $(shell id -u)
 # APACHE_RUN_GROUP ?= $(shell id -g)
 APACHE_RUN_GROUP ?= $(shell id -u)
