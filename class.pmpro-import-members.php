@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 /**
 Plugin Name: Import Paid Memberships Pro Members from CSV
 Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
@@ -140,9 +140,9 @@ class Loader {
 				if ( $f_file->isFile() && false !== stripos( $class_path, $filename ) ) {
 
 					require_once $class_path;
-					return true;
 				}
 			}
+			return true;
 		}
 	}
 
