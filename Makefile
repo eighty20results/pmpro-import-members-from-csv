@@ -97,7 +97,7 @@ clean:
 	@rm -rf workflow
 
 clean-inc:
-	@rm -rf /inc/*
+	@find inc/* -type d -maxdepth 0 -exec rm -rf {} \; && rm inc/*.php
 
 repo-login:
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
