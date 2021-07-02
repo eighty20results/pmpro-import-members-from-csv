@@ -1,7 +1,8 @@
-DOCKER_USER ?= eighty20results
-E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
-WP_IMAGE_VERSION ?= 1.0
-COMPOSER_VERSION ?= 1.29.2
+###
+# Plugin specific settings for Makefile - You may need to change information
+# in the included file!
+###
+include build_config/plugin_config.mk
 
 ###
 # Standard settings for Makefile - Probably won't need to change anything here
@@ -23,11 +24,7 @@ MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
 DB_IMAGE ?= mariadb
-DB_VERSION ?= latest
 WORDPRESS_DB_HOST ?= localhost
-WP_VERSION ?= latest
-WP_DEPENDENCIES ?= paid-memberships-pro
-E20R_DEPENDENCIES ?= 00-e20r-utilities
 WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
@@ -52,7 +49,7 @@ VOLUME_CONTAINER ?= $(PROJECT)_volume
 
 # Settings for docker-compose
 DC_CONFIG_FILE ?= $(PWD)/docker-compose.yml
-DC_ENV_FILE ?= ./tests/_envs/.env.testing
+DC_ENV_FILE ?= $(PWD)/tests/_envs/.env.testing
 
 STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
     		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
@@ -65,6 +62,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	metadata \
 	git-log \
 	clean \
+	clean-inc \
 	real-clean \
 	deps \
 	is-docker-running \
@@ -102,6 +100,9 @@ clean:
 	fi
 	@rm -rf _actions/
 	@rm -rf workflow
+
+clean-inc:
+	@rm -rf /inc/*
 
 repo-login:
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
@@ -269,7 +270,7 @@ code-standard-test:
 		--standard=WordPress-Extra \
 		--ignore='inc/*,node_modules/*,src/utilities/*' \
 		--extensions=php \
-		*.php src/members-list/admin/*/*.php
+		*.php src/*/*.php
 
 unit-test: deps
 	@inc/bin/codecept run -v --debug unit
@@ -301,12 +302,17 @@ metadata:
 changelog: build_readmes/current.txt
 	@./bin/changelog.sh
 
-readme: changelog metadata
+readme: changelog # metadata
 	@./bin/readme.sh
 
-new-release: test composer-prod
-	@./bin/get_version.sh && \
-		git tag $${VERSION} && \
-		./build_env/create_release.sh
+new-release: test clean-inc composer-prod
+	@rm -rf inc/wp_plugins
+	@mkdir -p build/kits/
+	@git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME).zip --worktree-attributes main
+
+#new-release: test composer-prod
+#	@./build_env/get_version.sh && \
+#		git tag $${VERSION} && \
+#		./build_env/create_release.sh
 
 docs: git-log readme
