@@ -20,7 +20,7 @@
 namespace E20R\Import_Members\Validate;
 
 class Date_Format {
-	
+
 	/**
 	 * Test the date supplied for MySQL compliance
 	 *
@@ -32,11 +32,10 @@ class Date_Format {
 	 * @credit Stack Overflow: User @glavić - https://stackoverflow.com/a/12323025
 	 */
 	public static function validate( $date, $format ) {
-		
+
 		$check_date = \DateTime::createFromFormat( $format, $date );
-		$retval     = ( false !== $check_date ) && ( $check_date->format( $format ) == $date );
-		
-		return $retval;
+
+		return ( false !== $check_date ) && ( $check_date->format( $format ) === $date );
 	}
-	
+
 }
