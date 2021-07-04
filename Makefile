@@ -60,6 +60,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	clean-inc \
 	real-clean \
 	deps \
+	e20r-deps \
 	is-docker-running \
 	docker-deps \
 	docker-compose-deps \
@@ -167,15 +168,27 @@ docker-compose:
 		sudo chmod +x /usr/local/bin/docker-compose ; \
 	fi
 
-00-e20r-utilities:
+# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main && \
+
+e20r-deps:
 	@echo "Loading E20R custom plugin dependencies"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
+  		NEW_LICENSING="$$( [[ 0 -eq `grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php` ]] ; echo $? )" ; \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
-  		  echo "Download and install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-		  $(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s && \
-		  $(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
-		  rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
+			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+			if [[ "00-e20r-utilities" -ne "${e20r_plugin}" || ( "0" -ne "${NEW_LICENSING}" && "00-e20r-utilities" -ne "${e20r_plugin}" ) ]]; then \
+				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
+			elif [[ "00-e20r-utilities" -eq "${e20r_plugin}" && "0" -eq "${NEW_LICENSING}" ]]; then \
+				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+				cd $(E20R_UTILITIES_PATH) && \
+				make new-release && \
+				cp "$$(ls -art build/kits/* | tail -1)" $(COMPOSER_DIR)/wp_plugins/ && \
+				cd $(BASE_DIR) ; \
+			fi ; \
+			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
+			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
   	done
 
@@ -187,7 +200,7 @@ is-docker-running:
 
 docker-deps: is-docker-running docker-compose deps
 
-deps: clean composer-dev 00-e20r-utilities
+deps: clean composer-dev e20r-deps
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
