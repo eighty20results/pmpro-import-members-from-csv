@@ -143,21 +143,21 @@ class Import_Members {
 	public function load_hooks() {
 
 		if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
-			add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10 );
+			add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10, 0 );
 		}
-		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99 );
-		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99 );
-		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99 );
+		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99, 0 );
+		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99, 0 );
+		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99, 0 );
 
 		// Add validation logic for all modules
-		add_action( 'plugins_loaded', array( User_Validation::get_instance(), 'load_actions' ), 30 );
-		add_action( 'plugins_loaded', array( PMPro_Validation::get_instance(), 'load_actions' ), 31 );
-		add_action( 'plugins_loaded', array( BuddyPress_Validation::get_instance(), 'load_actions' ), 32 );
+		add_action( 'plugins_loaded', array( User_Validation::get_instance(), 'load_actions' ), 30, 0 );
+		add_action( 'plugins_loaded', array( PMPro_Validation::get_instance(), 'load_actions' ), 31, 0 );
+		add_action( 'plugins_loaded', array( BuddyPress_Validation::get_instance(), 'load_actions' ), 32, 0 );
 
-		add_action( 'init', array( $this, 'load_i18n' ), 5 );
-		add_action( 'init', array( $this->data, 'process_csv' ) );
+		add_action( 'init', array( $this, 'load_i18n' ), 5, 0 );
+		add_action( 'init', array( $this->data, 'process_csv' ), 10, 0 );
 
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 10, 0 );
 
 		// PMPro specific import functionality
 		// phpcs:ignore - We do this in the CSV() class as it's a clean-up operation
@@ -178,7 +178,7 @@ class Import_Members {
 		add_filter( 'plugin_row_meta', array( self::get_instance(), 'plugin_row_meta' ), 10, 2 );
 
 		// Clear action handler(s) from the Import Users from CSV Integration Add-on for PMPro
-		add_action( 'wp_loaded', array( $this, 'remove_iucsv_support' ), 10 );
+		add_action( 'wp_loaded', array( $this, 'remove_iucsv_support' ), 10, 0 );
 
 		// Remove Import action for Sponsored Members add-on (handled directly by this plugin)
 		remove_action( 'is_iu_post_user_import', 'pmprosm_is_iu_post_user_import', 20 );
@@ -190,7 +190,7 @@ class Import_Members {
 		$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
 
 		if ( false === $check->isPrivate() ) {
-			$licensing   = new Licensing( self::E20R_LICENSE_SKU, false );
+			$licensing   = new Licensing( self::E20R_LICENSE_SKU );
 			$is_licensed = $licensing->is_licensed( self::E20R_LICENSE_SKU, false );
 		} else {
 			$is_licensed = Licensing::is_licensed( self::E20R_LICENSE_SKU, false );
