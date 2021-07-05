@@ -153,7 +153,7 @@ class ImportMembers_UnitTest extends Unit {
 		}
 
 		$result = Import_Members::is_pmpro_active( $mocked_plugin_list );
-		assertEquals( $expected_result, $result );
+		$this->assertEquals( $expected_result, $result );
 	}
 
 	/**
