@@ -6,17 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## v3.0.5 - 2021-06-29
-- BUG FIX: Use command for git (Thomas Sjolshagen)
-- BUG FIX: Updating changelog source (Thomas Sjolshagen)
-- BUG FIX: Reverted CHANGELOG status (Thomas Sjolshagen)
-- BUG FIX: Separate CHANGELOG and README file generation (Thomas Sjolshagen)
-- BUG FIX: Updated version number (v3.0.5) (Thomas Sjolshagen)
-- BUG FIX: Create README.md from the README.txt file (Thomas Sjolshagen)
-- BUG FIX: Separate CHANGELOG and README file generation (Thomas Sjolshagen)
-- BUG FIX: Updated README info (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
-- BUG FIX: Updated version (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
-- BUG FIX: Didn't include a README.md file for the plugin (Thomas Sjolshagen)
 
 ## v3.0.4 - 2021-06-28
 - BUG FIX: Require PHP 7.3+ (Thomas Sjolshagen)
@@ -162,7 +151,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: PHPCS updates and use a different unit test framework base class (Thomas Sjolshagen)
 - BUG FIX: Added action hook documentation (Thomas Sjolshagen)
 - BUG FIX: Fix PHPCS warnings (Thomas Sjolshagen)
-- BUG FIX: Fix PHPCS warnings (Thomas Sjolshagen)
 - BUG FIX: Rename e20r_import_load_licensed_modules action hook (Thomas Sjolshagen)
 - BUG FIX: Rename e20r_import_load_licensed_modules action hook and fix PHPCS warnings (Thomas Sjolshagen)
 - BUG FIX: Moved FILTERS.md and ACTIONS.MD to docs/ directory (Thomas Sjolshagen)
@@ -234,7 +222,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: str_contains() is no longer valid (Thomas Sjolshagen)
 - BUG FIX: Wrong path to support manual plugin testing on in development environment (Thomas Sjolshagen)
 - BUG FIX: Refactored docker-compose.override files for manual testing (Thomas Sjolshagen)
-- BUG FIX: Adding/Updating *ignore files (Thomas Sjolshagen)
 - BUG FIX: Adding/Updating *ignore files (Thomas Sjolshagen)
 - BUG FIX: More updates to support WP Unit testing (Thomas Sjolshagen)
 - BUG FIX: Various updates to support WordPress 'Unit' testing (Thomas Sjolshagen)
@@ -502,3 +489,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug with user notification
 * Fixed bugs with static/non-static function calls
 * Enhancement: JavaScript based async loading (for large imports)
+- BUG FIX: Calculated the wrong timeout value for the JS based background import (Thomas Sjolshagen)
+- BUG FIX: Updated copyright notice (Thomas Sjolshagen)
+- BUG FIX: PHPCS was a bit too inclusive (Thomas Sjolshagen)
+- BUG FIX: Include the README.md file (Thomas Sjolshagen)
+- BUG FIX: Relocate build status badge (Thomas Sjolshagen)
+- BUG FIX: Splitting log/doc/updater json generation further (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Error generating documentation (Thomas Sjolshagen)
+- BUG FIX: Use command for git (Thomas Sjolshagen)
+- BUG FIX: Updating changelog source (Thomas Sjolshagen)
+- BUG FIX: Reverted CHANGELOG status (Thomas Sjolshagen)
+- BUG FIX: Separate CHANGELOG and README file generation (Thomas Sjolshagen)
+- BUG FIX: Updated version number (v3.0.5) (Thomas Sjolshagen)
+- BUG FIX: Create README.md from the README.txt file (Thomas Sjolshagen)
+- BUG FIX: Separate CHANGELOG and README file generation (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Updated version (v3.0.5 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Didn't include a README.md file for the plugin (Thomas Sjolshagen)
+- BUG FIX: Update repository name (Thomas Sjolshagen)
+- BUG FIX: Action triggered twice (Thomas Sjolshagen)
+- Bug fix/remove debug logging (#6) (Thomas Sjølshagen)
+- BUG FIX: Re-activate the installed_paths setting for phpcs (Thomas Sjolshagen)
