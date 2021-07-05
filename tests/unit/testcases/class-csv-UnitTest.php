@@ -149,7 +149,7 @@ class CSV_UnitTest extends Unit {
 		$csv    = new CSV();
 		$result = $csv->get_import_file_path();
 
-		assertEquals( $expected_result, $result );
+		$this->assertEquals( $expected_result, $result );
 	}
 
 	/**

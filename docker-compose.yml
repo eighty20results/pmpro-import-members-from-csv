@@ -56,4 +56,4 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_RANDOM_ROOT_PASSWORD: ${MYSQL_RANDOM_ROOT_PASSWORD}
     volumes:
-      - ${LOCAL_PLUGIN_DIR}:/docker-entrypoint-initdb.d
+      - ${LOCAL_PLUGIN_DIR}/tests/_data:/docker-entrypoint-initdb.d

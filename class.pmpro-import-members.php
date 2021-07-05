@@ -1,9 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 /**
 Plugin Name: Import Paid Memberships Pro Members from CSV
 Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
 Description: Import Users and their metadata from a csv file.
-Version: 3.0.4
+Version: 3.0.5
 Requires PHP: 7.3
 Author: <a href="https://eighty20results.com/thomas-sjolshagen/">Thomas Sjolshagen <thomas@eighty20results.com></a>
 License: GPL2
@@ -41,7 +41,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use function plugin_dir_path;
 use function add_action;
-use function error_log;
+use function error_log; // phpcs:ignore
 
 if ( ! defined( 'E20R_IM_CSV_DELIMITER' ) ) {
 	define( 'E20R_IM_CSV_DELIMITER', ',' );
@@ -54,10 +54,10 @@ if ( ! defined( 'E20R_IM_CSV_ENCLOSURE' ) ) {
 }
 
 if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
-	define( 'E20R_IMPORT_VERSION', '3.0.4' );
+	define( 'E20R_IMPORT_VERSION', '3.0.5' );
 }
 
-require_once plugin_dir_path( __FILE__ ) . '/ActivateUtilitiesPlugin.php';
+require_once plugin_dir_path( __FILE__ ) . '/class-activateutilitiesplugin.php';
 
 /**
  * Class Loader - AutoLoad classes/sources for the plugin
@@ -119,7 +119,7 @@ class Loader {
 				function ( $current, $key, $iterator ) use ( $filename ) {
 
 					// Skip hidden files and directories.
-					if ( $current->getFilename()[0] === '.' || $current->getFilename() === '..' ) {
+					if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
 						return false;
 					}
 
@@ -142,6 +142,7 @@ class Loader {
 					require_once $class_path;
 				}
 			}
+			return true;
 		}
 	}
 

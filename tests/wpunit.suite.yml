@@ -9,6 +9,8 @@ modules:
         - \Helper\Wpunit
     config:
         WPLoader:
+            loadOnly: false
+            multisite: "%WP_MULTISITE%"
             wpRootFolder: "%WP_ROOT_FOLDER%"
             dbName: "%TEST_DB_NAME%"
             dbHost: "%TEST_DB_HOST%"
@@ -17,12 +19,12 @@ modules:
             tablePrefix: "%TEST_TABLE_PREFIX%"
             domain: "%TEST_SITE_WP_DOMAIN%"
             adminEmail: "%TEST_SITE_ADMIN_EMAIL%"
-            title: "Test"
+            title: "Import Members from CSV Test"
             plugins:
-              - '00-e20r-utilities/class-utility-loader.php'
+              - '00-e20r-utilities/class-loader.php'
               - 'paid-memberships-pro/paid-memberships-pro.php'
               - 'pmpro-import-members-from-csv/class.pmpro-import-members.php'
             activatePlugins:
-              - '00-e20r-utilities/class-utility-loader.php'
+              - '00-e20r-utilities/class-loader.php'
               - 'paid-memberships-pro/paid-memberships-pro.php'
               - 'pmpro-import-members-from-csv/class.pmpro-import-members.php'

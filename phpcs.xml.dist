@@ -27,6 +27,18 @@
     <!-- Exclude the Composer Vendor directory. -->
     <exclude-pattern>/inc/*</exclude-pattern>
 
+    <!-- Exclude the Javascript directory. -->
+    <exclude-pattern>/javascript/*</exclude-pattern>
+
+    <!-- Exclude the CSV Example directory. -->
+    <exclude-pattern>/examples/*</exclude-pattern>
+
+    <!-- Exclude the Emails directory. -->
+    <exclude-pattern>/emails/*</exclude-pattern>
+
+    <!-- Exclude the docs directory. -->
+    <exclude-pattern>/docs/*</exclude-pattern>
+
     <!-- Exclude the Node Modules directory. -->
     <exclude-pattern>/node_modules/*</exclude-pattern>
 

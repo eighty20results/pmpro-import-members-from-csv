@@ -243,17 +243,22 @@ class Ajax {
 
 		$this->error_log->debug( 'Nonce verified in import_members_from_csv()' );
 
-		/*
+		/* @codingStandardsIgnoreStart
+		 *
 		if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 
 			$msg = __( 'Insecure connection attempted!', 'pmpro-import-members-from-csv' );
 
-			wp_send_json_error( array( 'status'  => - 1,
-									   'message' => $msg,
-			) );
+			wp_send_json_error(
+				array(
+					'status'  => - 1,
+					'message' => $msg,
+				)
+			);
 			exit();
 		}
-		*/
+		 * @codingStandardsIgnoreEnd
+		 */
 
 		// Get our settings
 		$this->variables->load_settings();

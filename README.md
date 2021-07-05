@@ -1,11 +1,11 @@
-=== Import Members from CSV for Paid Memberships Pro ===
-Contributors: eighty20results, sorich87, ideadude
-Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro
-Requires at least: 5.0
-Tested up to: 5.7.2
-Stable tag: 3.0.5
-License: GPLv2
-License URI: http://www.gnu.org/licenses/gpl
+### Import Members from CSV for Paid Memberships Pro
+`Contributors: eighty20results, sorich87, ideadude` <br />
+`Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro` <br />
+`Requires at least: 5.0` <br />
+`Tested up to: 5.7.2` <br />
+`Stable tag: 3.0.5` <br />
+`License: GPLv2` <br />
+`License URI: http://www.gnu.org/licenses/gpl` <br />
 
 [![Release to wordpress.org](https://github.com/eighty20results/pmpro-import-members-from-csv/actions/workflows/release-plugin.yml/badge.svg)](https://github.com/eighty20results/pmpro-import-members-from-csv/actions/workflows/release-plugin.yml)
 
@@ -13,7 +13,7 @@ Import and create user + PMPro member records from a CSV file on your WordPress 
 The plugin will import the membership information, user meta data, PMPro order data, Sponsored Members information and
 can even link pre-existing recurring payment records for your payment gateway integration.
 
-== Description ==
+### Description
 
 We designed this plugin to give you an error free import of a user/member to a WordPress/Paid Memberships Pro site.
 It supports both adding and changing user data.
@@ -41,19 +41,19 @@ using in a multisite configuration)
 
 [Check out my other plugins.](http://eighty20results.com/wordpress-plugins/)
 
-= Features =
+## Features
 
-* Imports all WP User database table fields
-* Imports user meta
-* Imports PMPro membership data
-* Update existing users if they already exist in the WP Users database (if the option is selected)
-* Overwrite preexisting membership records for the same membership level as is being imported (if the option is selected)
-* Set/Update the user WordPress role for the member (if the role is specified in the import file)
-* Sends new user a notification message (if the option is selected)
-* Deactivate the standard WordPress user update email notices during the import operation
-* Shows password nag on user login (if the option is selected)
-* Allows large user/member import without having to configure the PHP max_execution_time variable (if the option is selected)
-* Import hashed password for new/updating users (if the option is selected)
+- Imports all WP User database table fields
+- Imports user meta
+- Imports PMPro membership data
+- Update existing users if they already exist in the WP Users database (if the option is selected)
+- Overwrite preexisting membership records for the same membership level as is being imported (if the option is selected)
+- Set/Update the user WordPress role for the member (if the role is specified in the import file)
+- Sends new user a notification message (if the option is selected)
+- Deactivate the standard WordPress user update email notices during the import operation
+- Shows password nag on user login (if the option is selected)
+- Allows large user/member import without having to configure the PHP max_execution_time variable (if the option is selected)
+- Import hashed password for new/updating users (if the option is selected)
 
 **NOTE**: The plugin may not import some of data if it detects a problem. To find out what the problem was, read this
 documentation and the FAQ section to ensure you have correctly formatted _all_ of your import data.
@@ -72,7 +72,7 @@ The Nag tracking can be disabled altogether with the `e20r_import_donation_track
 
 `add_filter( 'e20r_import_donation_tracking_disabled', '__return_true' );'`
 
-== Installation ==
+### Installation
 
 For an automatic installation through WordPress:
 
@@ -100,9 +100,9 @@ To upload the plugin through WordPress, instead of FTP:
 1. Search for the plugin ("Paid Memberships Pro Import Members from CSV" on the 'Add New' plugins screen in your WordPress admin area and activate.
 1. Upload your CSV file in the 'Memberships' menu, under 'Import Members'
 
-= Frequently Asked Questions =
+## Frequently Asked Questions
 
-== How to use? ==
+### How to use?
 
 Click on the 'Import Members' link in the 'Membership' menu, then select your CSV file.
 Next you have to decide whether you:
@@ -130,7 +130,7 @@ formatting/values go.
 You can always try importing the examples/import.csv file and look at the result, assuming the values specified for the
 membership_id in the example file match your membership level configuration.
 
-== The .CSV file from the "Export to CSV" button on the "Members List" page won't import? ==
+### The .CSV file from the "Export to CSV" button on the "Members List" page won't import?
 
 The purpose of the resulting .CSV file from the "Export to CSV" is to generate reports that are meaningful to a human,
 not a file that can be imported easily. This is true for any of the available Import from .CSV plugins/add-ons for
@@ -143,7 +143,7 @@ As of version 2.5, this plugin includes data checks for some of the more common 
 
 You should also check out the import example file that is linked on the "Import Members" page (under the "Choose File" button).
 
-== My import fails, what is wrong? ==
+### My import fails, what is wrong?
 
 This is almost always related to the data in the file being imported. As a result, I've added some data tests for some
 of the typical mistakes I've seen in the .CSV file(s) being imported. There is also a link to an example file on the
@@ -154,7 +154,7 @@ Check the wp-content/uploads/pmp_im_errors.log log file for details on the impor
 included in a wp-admin dashboard notice if there are errors/warnings). The log should contain suggestions on some of
 the more common mistakes in the data being imported.
 
-== Do I need to include all the columns from the sample file? ==
+### Do I need to include all the columns from the sample file?
 
 No. __Only__ include the columns where you have data to import. I.e, if none of your members need to have their
 membership end date defined (i.e the membership you're importing doesn't have an expiration or it's a recurring
@@ -163,7 +163,7 @@ the plugin doesn't try to import data that isn't there.
 
 If a column has no data, you should remove the column and it's column header from the import file!
 
-== The plugin didn't import any membership data!?! ==
+### The plugin didn't import any membership data!?!
 
 This is a pretty common question and the reason is almost always because there is something unexpected in the
 `membership_` portion of the row being imported.
@@ -179,8 +179,8 @@ However, human readable is often problematic for CSV imports, so you **have to m
 `YYYY-MM-DD HH:ii:ss` template (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and
 for the enddate I'd suggest using `23:59:59`.
 
-Just to be clear: The __only__ date format for the `membership_startdate`, `membership_enddate` and the
-`user_registered` columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
+`Just to be clear: The __only__ date format for the `membership_startdate`, `membership_enddate` and the` <br />
+``user_registered` columns that this plugin will accept is the MySQL datetime format: YYYY` <br />-MM-DD HH:ii:ss.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -193,7 +193,7 @@ on fixing something that I view to be a rather significant "bug"[1] in Excel(tm)
  [1] = Being that it's an intentional usability feature, I realize Microsoft is unlikely to be all that interested
  in fixing this "as designed" capability they've implemented.
 
-== Can this plugin be used to link sponsored members with their sponsors? ==
+### Can this plugin be used to link sponsored members with their sponsors?
 
 Yes.
 
@@ -201,7 +201,7 @@ In version 2.60, we added support for importing Sponsors and their sponsored mem
 PMPro Sponsored Members add-on installed, active and need to link sponsors and their sponsored members
 during the import with this plugin.
 
-== Importing the Sponsored user ==
+### Importing the Sponsored user
 
 To link sponsored users with their sponsors, add the `pmprosm_sponsor` column to your import file.
 
@@ -214,7 +214,7 @@ The sponsor key is either the email address they used when registering on your s
 value for their user record if they're also being imported at the same time, the WordPress user ID value (numeric),
 or the login name used (user_login value).
 
-== Importing the Sponsor ==
+### Importing the Sponsor
 
 First of all, you will need to include a `pmprosm_seats` column as well. This column contains a numeric value to
 indicate the number of seats (sponsored users) this user has paid to sponsor.
@@ -234,7 +234,7 @@ For scenario 2; The sponsor code is created by this plugin. It happens automatic
 is being imported at the same time as - when the **sponsored** user is attempted imported and linked. The discount
 code created attempts to use the settings from the PMPro Sponsored Members add-on for the discount code.
 
-=== Caveat ===
+### Caveat
 
 The order in which users are listed in the .csv import file can matter when importing sponsors and their sponsored user.
 
@@ -251,7 +251,7 @@ One with the sponsor users only, and one with the sponsor*ed* users only.
 
 Then import the sponsors first. Next you import the sponsored users.
 
-= Can this plugin be used to import order data for Paid Memberships Pro? =
+## Can this plugin be used to import order data for Paid Memberships Pro?
 
 As of version 2.20, we have an option to create member orders at the same time as we update the membership record.
 
@@ -296,7 +296,7 @@ etc. The exceptions are the `user_id` and `membership_id` columns/fields which s
 The `status` column has a limited number of valid values. By default, we recommend using either `success` or `cancelled`
 
 All timestamp values ('timestamp') must use the same format as the one used by the MySQL database's 'DATETIME'
-format: `YYYY-MM-DD HH:MM:SS`
+`format: `YYYY` <br />-MM-DD HH:MM:SS`
 
 **PLEASE NOTE:**
 
@@ -318,7 +318,7 @@ Credit Card information! Instead, ask your members to resubmit their information
 
 **This plugin does NOT mask your credit card numbers for you!**
 
-== Supported membership_gateway options ==
+### Supported membership_gateway options
 
 The Import Members from CSV plugin supports specifying different payment gateways for the user record(s) when
 importing order data (i.e. the "Attempt to create PMPro Order record" option has been selected). At present, the
@@ -345,7 +345,7 @@ render the order record invalid.
 **NOTE:** The limitations to how Paid Memberships Pro supports/handles multiple payment gateway integrations at the
 same time still apply.
 
-== Adding billing address information to the PMPro Order import ==
+### Adding billing address information to the PMPro Order import
 
 The normal way to import billing address data to the database for a member/user is to use the `pmpro_b[*]` fields
 (`pmpro_bfirstname`, `pmpro_blastname`, `pmpro_baddress1`, `pmpro_baddress2`, `pmpro_bcity`, `pmpro_bstate`,
@@ -354,13 +354,13 @@ The normal way to import billing address data to the database for a member/user 
 If the `pmpro_b*` field data is present in the row and the 'Add order' option is selected for the import file, the
 import will attempt to populate the order billing information using the `pmpro_b*` data.
 
-= How should the .csv file be defined? =
+## How should the .csv file be defined?
 
 This plugin assumes that the .csv file;
 
-* Uses a comma (,) character to denote a new column in a row
-* Uses a double-quote (") character to wrap the contents of each of the columns
-* Uses a backslash (\) character as the escape character
+- Uses a comma (,) character to denote a new column in a row
+- Uses a double-quote (") character to wrap the contents of each of the columns
+- Uses a backslash (\) character as the escape character
 
 For example;
 To have a 2 column .csv file, each row **after** the header row, the row should look something like this:
@@ -369,7 +369,7 @@ To have a 2 column .csv file, each row **after** the header row, the row should 
 The application you use to edit and export your .CSV file will need to be configured appropriately before you
 export the .csv file.
 
-= Why am I or my users not receiving New user notifications =
+## Why am I or my users not receiving New user notifications
 
 There are a couple of possible reasons, as far as I can tell. The functionality in WordPress that generates the
 "new user notification" message is what they call "pluggable". That means that it's possible for a plugin (any plugin!)
@@ -383,7 +383,7 @@ you from sending any messages.
 Third, the recipient email server may be using a SBL (Spam Black List) and have your web server IP listed as a
 typical source of Spam messages (it happens, a lot).
 
-== I've set the 'membership_status' column to 'inactive', but the user's imported membership level is currently 'active'? ==
+### I've set the 'membership_status' column to 'inactive', but the user's imported membership level is currently 'active'?
 
 This is due to what I'd term a bug in Paid Memberships Pro. This issue doesn't currently have a fix.
 
@@ -393,18 +393,18 @@ user's membership status.
 **NOTE:** Assigning a membership level for a user will cause them to be given an active membership on the site when
 the import operation is complete, regardless of the value supplied for the 'membership_status' column.
 
-== How do I import an existing payment plan (recurring billing plan) for a user? ==
+### How do I import an existing payment plan (recurring billing plan) for a user?
 
 This only works if the plan already exists on the payment gateway itself.
 
 There is no way to use this plugin to import a new member/user and have the system create a recurring billing plan
 for them.
 
-== Can I use this plugin to create new billing plans or trigger charges on the payment gateway for an imported user? ==
+### Can I use this plugin to create new billing plans or trigger charges on the payment gateway for an imported user?
 
 No.
 
-== What are the constraints for WordPress Multisite import operations? ==
+### What are the constraints for WordPress Multisite import operations?
 
 As documented by Paid Memberships Pro, the PMPro plugin cannot be Network Activated.
 
@@ -417,7 +417,7 @@ the plugin from the Network Admin dashboard (which will send you to the primary 
 The users being imported will only be linked to the site you import them to. Their membership data will only be
 visible on the PMPro site(s) that have the membership level ID(s) configured that match those in the import file.
 
-= Welcome Email Message (imported_welcome.html template) issues =
+## Welcome Email Message (imported_welcome.html template) issues
 
 If you selected the "Send the imported_member.html welcome email" option and your users still aren't receiving messages,
 please make sure the 'membership_status' field is included in the import .csv file and contains the `active` value.
@@ -425,7 +425,7 @@ please make sure the 'membership_status' field is included in the import .csv fi
 As a design philosophy, we treat an inactive member as somebody who should _not_  receive welcome messages
 (you may disagree..?)
 
-== What GDPR impacted data is stored by this plugin? ==
+### What GDPR impacted data is stored by this plugin?
 
 Obviously, there's the user data that this plugin is designed to import. This plugin does _not_ track, report, or
 allow download/deletion of any data it imports. There are (now or soon) other plugin options to handle those
@@ -448,26 +448,26 @@ The option is removed when the plugin is deactivated in the "Plugins" admin pane
 Nag tracking can be disabled altogether with the `e20r_import_donation_tracking_disabled` filter:
 `add_filter( 'e20r_import_donation_tracking_disabled', '__return_true' );'`
 
-== Installation ==
+### Installation
 
 1. Upload the `pmpro-import-members-from-csv` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
 
-== Screenshots ==
+### Screenshots
 
 1. User import screen
 2. Ongoing (background) import screen
 3. Default settings on the user import screen
 
-== Known Issues ==
+### Known Issues
 
 N/A
 
-== Changelog ==
+### Changelog
 
 See the official [CHANGELOG.md file](CHANGELOG.md).
 
-== Supported Filters and Actions ==
+### Supported Filters and Actions
 
 The list of filters and actions supported by this plugin can be found in the [Filters](./docs/FILTERS.md) and
 [Actions](./docs/ACTIONS.md) documentation.
