@@ -317,9 +317,9 @@ changelog: build_readmes/current.txt
 readme: changelog # metadata
 	@./bin/readme.sh
 
-new-release: test clean-inc composer-prod
+build: test clean-inc composer-prod
 	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) && \
-	if [[ ! -f .gitattributes ]]; then \
+	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
