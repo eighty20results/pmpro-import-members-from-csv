@@ -159,9 +159,9 @@ class Import_Members {
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 10, 0 );
 
-		// PMPro specific import functionality
-		// phpcs:ignore - We do this in the CSV() class as it's a clean-up operation
-		// add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 );
+		// PMPro specific capabilities
+		// We do this in the CSV() class as it's a clean-up operation
+		// add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 ); // phpcs:ignore
 		add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 2 );
 		add_action(
 			'e20r_after_user_import',
