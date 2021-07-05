@@ -21,10 +21,10 @@ modules:
             adminEmail: "%TEST_SITE_ADMIN_EMAIL%"
             title: "Import Members from CSV Test"
             plugins:
-              - '00-e20r-utilities/class-utility-loader.php'
+              - '00-e20r-utilities/class-loader.php'
               - 'paid-memberships-pro/paid-memberships-pro.php'
               - 'pmpro-import-members-from-csv/class.pmpro-import-members.php'
             activatePlugins:
-              - '00-e20r-utilities/class-utility-loader.php'
+              - '00-e20r-utilities/class-loader.php'
               - 'paid-memberships-pro/paid-memberships-pro.php'
               - 'pmpro-import-members-from-csv/class.pmpro-import-members.php'
