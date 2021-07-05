@@ -3,7 +3,7 @@
 #
 # Used by the custom plugin framework to build installable plugin archives
 #
-short_name="pmpro-import-members-from-csv"
+short_name="${E20R_PLUGIN_NAME}"
 remote_server="eighty20results.com"
 declare -a include=( \
 	"css" \
