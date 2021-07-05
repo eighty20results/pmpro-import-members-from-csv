@@ -58,6 +58,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	git-log \
 	clean \
 	clean-inc \
+	clean-wp-deps \
 	real-clean \
 	deps \
 	e20r-deps \
@@ -168,9 +169,12 @@ docker-compose:
 		sudo chmod +x /usr/local/bin/docker-compose ; \
 	fi
 
+clean-wp-deps:
+	@rm -rf $(COMPOSER_DIR)/wp_plugins/*
+
 # git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main && \
 
-e20r-deps:
+e20r-deps: clean-wp-deps
 	@echo "Loading E20R custom plugin dependencies"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
   		NEW_LICENSING="$$( [[ 0 -eq `grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php` ]] ; echo $? )" ; \
@@ -184,9 +188,12 @@ e20r-deps:
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make new-release && \
-				cp "$$(ls -art build/kits/* | tail -1)" $(COMPOSER_DIR)/wp_plugins/ && \
-				cd $(BASE_DIR) ; \
+				make stop-stack && \
+				echo "Copy $${e20r_plugin}.zip to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cp "$$(ls -art build/kits/* | tail -1)" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cd $(BASE_PATH) ; \
 			fi ; \
+			echo "'Installing' the $${e20r_plugin}.zip plugin" && \
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
@@ -311,12 +318,13 @@ readme: changelog # metadata
 	@./bin/readme.sh
 
 new-release: test clean-inc composer-prod
-	@if [[ ! -f .gitattributes ]]; then \
+	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) && \
+	if [[ ! -f .gitattributes ]]; then \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME).zip --worktree-attributes main ; \
+		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
 #new-release: test composer-prod
