@@ -133,16 +133,15 @@ image-pull: repo-login
         	docker pull $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION); \
      fi
 
-real-clean: stop-stack clean clean-inc
+real-clean: stop-stack clean clean-inc clean-wp-deps
 	@echo "Make sure docker-compose stack for $(PROJECT) isn't running"
 	@echo "Stack is running: $(STACK_RUNNING)"
 	@if [[ 2 -ne "$(STACK_RUNNING)" ]]; then \
 		echo "Stopping docker-compose stack" ; \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) rm --stop --force -v ; \
 	fi ; \
-	echo "Removing docker images" ; \
-	docker image remove $(PROJECT)_wordpress --force && \
-	docker image remove $(DB_IMAGE) --force
+	echo "Removing docker images" && \
+	docker image remove $(PROJECT)_wordpress --force
 
 php-composer:
 	@if [[ -z "$(PHP_BIN)" ]]; then \
@@ -174,10 +173,11 @@ clean-wp-deps:
 
 # git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main && \
 
-e20r-deps: clean-wp-deps
+e20r-deps:
 	@echo "Loading E20R custom plugin dependencies"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
   		NEW_LICENSING="$$( [[ 0 -eq `grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php` ]] ; echo $? )" ; \
+  		echo "Checking for presence of $${e20r_plugin}..." && \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
 			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
@@ -303,7 +303,7 @@ build-test: docker-deps start-stack db-import
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean deps code-standard-test start-stack db-import wp-unit-test # TODO: phpstan-test between phpcs & unit tests
+test: clean deps code-standard-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
 
 git-log:
 	@./bin/create_log.sh
