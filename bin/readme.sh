@@ -26,6 +26,4 @@ if [[ -f ./README.txt ]]; then
 	mv ./NEW_README.md ./README.md
 fi
 
-
-
 git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" ./README.txt ./README.md
