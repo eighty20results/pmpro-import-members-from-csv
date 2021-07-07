@@ -320,7 +320,9 @@ changelog: build_readmes/current.txt
 readme: changelog # metadata
 	@./bin/readme.sh
 
-build: test clean-inc composer-prod
+$(E20R_PLUGIN_BASE_FILE): test clean-inc composer-prod
+
+build: $(E20R_PLUGIN_BASE_FILE)
 	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
 	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
