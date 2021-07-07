@@ -328,9 +328,7 @@ changelog: build_readmes/current.txt
 readme: changelog # metadata
 	@./bin/readme.sh
 
-$(E20R_PLUGIN_BASE_FILE): test clean-inc composer-prod
-
-build: $(E20R_PLUGIN_BASE_FILE)
+$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
 	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
@@ -339,6 +337,9 @@ build: $(E20R_PLUGIN_BASE_FILE)
 		mkdir -p build/kits/ && \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
+
+build: $(E20R_PLUGIN_BASE_FILE)
+	@echo "Built kit for $(E20R_PLUGIN_NAME)"
 
 #new-release: test composer-prod
 #	@./build_env/get_version.sh && \
