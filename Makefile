@@ -40,9 +40,7 @@ else
 	LOCAL_E20R_UTILITIES_REPO := 1
 endif
 
-ifeq (1, $(LOCAL_E20R_UTILITIES_REPO))
-	NEW_LICENSING_MODEL := 1
-endif
+NEW_LICENSING_MODEL := $(LOCAL_E20R_UTILITIES_REPO)
 
 #ifeq ($(CONTAINER_ACCESS_TOKEN),)
 #	echo "Error: Docker login token is not defined!"
@@ -190,10 +188,10 @@ e20r-deps:
 		echo "Checking for presence of $${e20r_plugin}..." ; \
 		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
 			echo "Download or build $${e20r_plugin}.zip dependency" && \
-			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || -z "${NEW_LICENSING_MODEL}" ]]; then \
+			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || "0" -eq "$(NEW_LICENSING_MODEL)" ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
-			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "1" -eq "${NEW_LICENSING_MODEL}" ]]; then \
+			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "1" -eq "$(NEW_LICENSING_MODEL)" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make build && \
