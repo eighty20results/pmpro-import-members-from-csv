@@ -75,6 +75,7 @@ class Email_Templates {
 		$fields     = $this->variables->get( 'fields' );
 
 		// Email 'your membership account is active' to member if they were imported with an active member status
+		// @phpstan-ignore-next-line
 		if ( true === (bool) $send_email &&
 			 isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
 			 1 === version_compare( PMPRO_VERSION, '1.9.5' )
@@ -93,7 +94,7 @@ class Email_Templates {
 
 			// Apply the saved
 			if ( empty( $subject ) ) {
-				$subject = pmpro_getOption( "email_{$template_name}_subject" );
+				$subject = pmpro_getOption( "email_{$template_name}_subject" ); // @phpstan-ignore-line
 
 				if ( empty( $subject ) ) {
 					$subject = $pmproet_email_defaults[ $template_name ]['subject'] ?? __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
@@ -102,7 +103,7 @@ class Email_Templates {
 
 			$this->error_log->debug( "Using {$template_name} template for '{$subject}' message" );
 
-			$email           = new \PMProEmail();
+			$email           = new \PMProEmail(); // @phpstan-ignore-line
 			$email->email    = $user->user_email;
 			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() );
 			$email->subject  = $subject;
@@ -115,6 +116,7 @@ class Email_Templates {
 			}
 
 			$email->body = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
+			$email->body = apply_filters( 'e20r_import_member_message_body', $email->body );
 
 			// Process and send email
 			$email->sendEmail();
@@ -147,6 +149,7 @@ class Email_Templates {
 		global $pmproet_email_defaults;
 
 		// Email disabled?
+		// @phpstan-ignore-next-line
 		if ( true === (bool) pmpro_getOption( "email_{$template_name}_disabled}" ) ) {
 			return null;
 		}
@@ -158,11 +161,11 @@ class Email_Templates {
 
 		$this->error_log->debug( "Setting the message subject for {$template_name} template" );
 
-		$template_body   = pmpro_getOption( "email_{$template_name}_body" );
-		$template_header = pmpro_getOption( 'email_header_body' );
-		$template_footer = pmpro_getOption( 'email_footer_body' );
+		$template_body   = pmpro_getOption( "email_{$template_name}_body" ); // @phpstan-ignore-line
+		$template_header = pmpro_getOption( 'email_header_body' ); // @phpstan-ignore-line
+		$template_footer = pmpro_getOption( 'email_footer_body' ); // @phpstan-ignore-line
 
-		// Header disabled?
+		// Header disabled? @phpstan-ignore-next-line
 		if ( true !== (bool) pmpro_getOption( 'email_header_disabled' ) ) {
 			if ( ! empty( $template_header ) ) {
 				$email_text = $template_header;
@@ -181,7 +184,7 @@ class Email_Templates {
 			$email_text .= $this->load_template_part( $template_name );
 		}
 
-		// Footer disabled?
+		// Footer disabled? @phpstan-ignore-next-line
 		if ( true === (bool) pmpro_getOption( 'email_footer_disabled' ) ) {
 			if ( ! empty( $template_footer ) ) {
 				$email_text .= $template_footer;
@@ -227,7 +230,7 @@ class Email_Templates {
 			// Try to locate the template file in the file system
 			foreach ( $locations as $path ) {
 				if ( true === file_exists( $path ) ) {
-					$body = file_get_contents( $path );
+					$body = file_get_contents( $path ); // phpcs:ignore
 					break;
 				}
 			}
@@ -264,6 +267,7 @@ class Email_Templates {
 		$pmproet_email_defaults['imported_member'] = array(
 			'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
 			'description' => __( 'Import: Welcome Member', 'pmpro-import-members-from-csv' ),
+			// phpcs:ignore
 			'body'        => file_get_contents( Import_Members::$plugin_path . '/emails/imported_member.html' ),
 		);
 	}
