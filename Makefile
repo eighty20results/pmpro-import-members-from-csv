@@ -176,17 +176,16 @@ clean-wp-deps:
 e20r-deps:
 	@echo "Loading E20R custom plugin dependencies"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-  		if [[ ! -f $(E20R_UTILTIES_PATH)/src/licensing/class-licensing.php && ! grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php ]]; then \
+  		if [[ ! -f $(E20R_UTILTIES_PATH)/src/licensing/class-licensing.php && ! $$(grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php) ]]; then \
   			export NEW_LICENSING=1 ; \
-  		endif ; \
+  		fi ; \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
-  		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
-			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			if [[ "00-e20r-utilities" -ne "${e20r_plugin}" || ( -n "${NEW_LICENSING}" && "00-e20r-utilities" -ne "${e20r_plugin}" ) ]]; then \
+  		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
+			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}. Using local? '$${NEW_LICENSING}'" && \
+			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || ( -n "$${NEW_LICENSING}" && "00-e20r-utilities" -ne "$${e20r_plugin}" ) ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
-			elif [[ "00-e20r-utilities" -eq "${e20r_plugin}" && -n "${NEW_LICENSING}" ]]; then \
+			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && -n "$${NEW_LICENSING}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make new-release && \
@@ -195,6 +194,7 @@ e20r-deps:
 				cp "$$(ls -art build/kits/* | tail -1)" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
 				cd $(BASE_PATH) ; \
 			fi ; \
+			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 			echo "'Installing' the $${e20r_plugin}.zip plugin" && \
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
