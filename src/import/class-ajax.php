@@ -118,12 +118,12 @@ class Ajax {
 
 				$this->error_log->debug( "Visitor ({$client_ip}) clicked the 'Donate' button" );
 				wp_send_json_success();
-				exit();
+				exit(); // @phpstan-ignore-line
 			}
 		}
 
 		wp_send_json_error();
-		exit();
+		exit(); // @phpstan-ignore-line
 	}
 
 	/**
@@ -161,12 +161,12 @@ class Ajax {
 
 		if ( false === $this->delete_file( $logfile_path ) ) {
 			wp_send_json_error();
-			exit();
+			exit(); // @phpstan-ignore-line
 		}
 
 		// Return success
 		wp_send_json_success();
-		exit();
+		exit(); // @phpstan-ignore-line
 	}
 
 	/**
@@ -185,7 +185,7 @@ class Ajax {
 		if ( empty( $file_name ) ) {
 			$this->error_log->debug( 'File not found/not available. Nothing to clean!' );
 			wp_send_json_success();
-			exit();
+			exit(); // @phpstan-ignore-line
 		}
 
 		$file = basename( $file_name );
@@ -196,7 +196,7 @@ class Ajax {
 		if ( false === $this->delete_file( $file_name ) ) {
 
 			wp_send_json_error();
-			exit();
+			exit(); // @phpstan-ignore-line
 		}
 
 		delete_option( "e20rcsv_{$file}" );
@@ -207,7 +207,7 @@ class Ajax {
 		$sponsors->trigger_sponsor_updates();
 
 		wp_send_json_success();
-		exit();
+		exit(); // @phpstan-ignore-line
 	}
 
 	/**
@@ -272,7 +272,7 @@ class Ajax {
 					'message' => __( 'No import file provided!', 'pmpro-import-members-from-csv' ),
 				)
 			);
-			exit();
+			exit(); // @phpstan-ignore-line
 		}
 
 		//figure out upload dir
@@ -291,7 +291,7 @@ class Ajax {
 					),
 				)
 			);
-			exit();
+			exit(); // @phpstan-ignore-line
 		}
 
 		//import next few lines of file
@@ -376,6 +376,7 @@ class Ajax {
 		}
 
 		$buffered_text = ob_get_clean();
+		$display_errors = $this->variables->get( 'display_errors' );
 
 		// No users imported (or done)
 		if ( empty( $results['user_ids'] ) ) {
@@ -387,7 +388,6 @@ class Ajax {
 
 			//Clear position
 			delete_option( "e20rcsv_{$file}" );
-			$display_errors = $this->variables->get( 'display_errors' );
 
 			// Delete the transient storing the file name
 			delete_transient( 'e20r_import_filename' );
@@ -401,7 +401,7 @@ class Ajax {
 					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
 				)
 			);
-			exit();
+			exit(); // @phpstan-ignore-line
 
 		} elseif ( ! empty( $results['errors'] ) ) {
 
@@ -429,7 +429,7 @@ class Ajax {
 					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
 				)
 			);
-			exit();
+			exit(); // @phpstan-ignore-line
 		} else {
 
 			/**
@@ -466,7 +466,7 @@ class Ajax {
 					'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
 				)
 			);
-			exit();
+			exit(); // @phpstan-ignore-line
 		}
 	}
 
