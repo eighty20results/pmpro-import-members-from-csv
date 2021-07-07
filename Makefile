@@ -36,10 +36,10 @@ DOWNLOAD_MODULE := 1
 
 # Determine if there is a local (to this system) instance of the E20R Utilities module repository
 ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php), "")
-	DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php ; echo $$?)
+	DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php && echo "0")
 endif
 
-$(info Status: $(DOWNLOAD_MODULE))
+$(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
 
 #ifeq ($(CONTAINER_ACCESS_TOKEN),)
 #	echo "Error: Docker login token is not defined!"
@@ -182,23 +182,23 @@ clean-wp-deps:
 # git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main &&
 
 e20r-deps:
-	@echo "Loading defined E20R custom plugin dependencies: $(DOWNLOAD_MODULE)"
+	@echo "Loading defined E20R custom plugin dependencies"
+	@mkdir -p $(BASE_PATH)/inc/wp_plugins
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
 		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
-			echo "Download or build $${e20r_plugin}.zip dependency" && \
-			if [[ "1" -eq "$(DOWNLOAD_MODULE)" ]]; then \
-				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
-			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "0" -eq "$(DOWNLOAD_MODULE)" ]]; then \
+			echo "Download or build $${e20r_plugin}.zip dependency?" && \
+			if [[ "0" -eq "$(DOWNLOAD_MODULE)" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make build && \
-				make stop-stack && \
 				new_kit="$$(ls -art build/kits/$${e20r_plugin}* | tail -1)" && \
 				echo "Copy $${new_kit} to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
 				cp "$${new_kit}" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
 				cd $(BASE_PATH) ; \
+			else \
+				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 			fi ; \
 			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 			echo "Installing the $${e20r_plugin}.zip plugin" && \
@@ -311,7 +311,7 @@ build-test: docker-deps start-stack db-import
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean deps code-standard-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
+test: clean deps code-standard-test unit-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
 
 git-log:
 	@./bin/create_log.sh
@@ -326,12 +326,12 @@ readme: changelog # metadata
 	@./bin/readme.sh
 
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
-	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
-	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
+	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
