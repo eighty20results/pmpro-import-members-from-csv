@@ -57,7 +57,7 @@ if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
 	define( 'E20R_IMPORT_VERSION', '3.0.5' );
 }
 
-require_once plugin_dir_path( __FILE__ ) . '/class-activateutilitiesplugin.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-activateutilitiesplugin.php';
 
 /**
  * Class Loader - AutoLoad classes/sources for the plugin
