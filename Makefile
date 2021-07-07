@@ -160,11 +160,11 @@ php-composer:
         $(which php) -r "unlink('composer-setup.php');" ; \
     fi
 
-composer-prod: real-clean clean-inc php-composer
+composer-prod: composer.json real-clean clean-inc php-composer
 	@echo "Install/Update the Production composer dependencies"
 	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
 
-composer-dev: php-composer
+composer-dev: composer.json php-composer
 	@echo "Use composer to install/update the PHP test dependencies"
 	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
 
@@ -274,11 +274,9 @@ db-backup:
 	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database \
  		/usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
-phpstan-test: start-stack db-import
+phpstan-test: composer-dev
 	@echo "Loading the PHP-Stan tests"
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress inc/bin/phpstan analyze --configuration=./phpstan.dist.neon --memory-limit=128
+	@inc/bin/phpstan analyze --configuration=./phpstan.dist.neon --memory-limit=128
 
 code-standard-test:
 	@echo "Running WP Code Standards testing"
