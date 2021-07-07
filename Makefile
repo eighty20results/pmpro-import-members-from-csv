@@ -32,15 +32,14 @@ DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
 endif
+DOWNLOAD_MODULE := 1
 
 # Determine if there is a local (to this system) instance of the E20R Utilities module repository
-ifeq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php), "")
-	LOCAL_E20R_UTILITIES_REPO := 0
-else
-	LOCAL_E20R_UTILITIES_REPO := 1
+ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php), "")
+	DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php ; echo $$?)
 endif
 
-NEW_LICENSING_MODEL := $(LOCAL_E20R_UTILITIES_REPO)
+$(info Status: $(DOWNLOAD_MODULE))
 
 #ifeq ($(CONTAINER_ACCESS_TOKEN),)
 #	echo "Error: Docker login token is not defined!"
@@ -183,15 +182,15 @@ clean-wp-deps:
 # git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main &&
 
 e20r-deps:
-	@echo "Loading defined E20R custom plugin dependencies: $(NEW_LICENSING_MODEL)"
+	@echo "Loading defined E20R custom plugin dependencies: $(DOWNLOAD_MODULE)"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
 		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
 			echo "Download or build $${e20r_plugin}.zip dependency" && \
-			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || "0" -eq "$(NEW_LICENSING_MODEL)" ]]; then \
+			if [[ "1" -eq "$(DOWNLOAD_MODULE)" ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
-			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "1" -eq "$(NEW_LICENSING_MODEL)" ]]; then \
+			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "0" -eq "$(DOWNLOAD_MODULE)" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make build && \
