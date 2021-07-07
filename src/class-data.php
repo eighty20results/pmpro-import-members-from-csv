@@ -84,14 +84,14 @@ class Data {
 			// @phpstan-ignore-next-line
 			$user->membership_level = (
 			function_exists( 'pmpro_getMembershipLevelForUser' ) ?
-				pmpro_getMembershipLevelForUser( $user->ID, true ) :
+				pmpro_getMembershipLevelForUser( $user->ID, true ) : // @phpstan-ignore-line
 				false
 			);
 
 			// @phpstan-ignore-next-line
 			$user->membership_levels = (
 			function_exists( 'pmpro_getMembershipLevelsForUser' ) ?
-				pmpro_getMembershipLevelsForUser( $user->ID, true ) :
+				pmpro_getMembershipLevelsForUser( $user->ID, true ) : // @phpstan-ignore-line
 				false
 			);
 		}
