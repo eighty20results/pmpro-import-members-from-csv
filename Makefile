@@ -33,6 +33,17 @@ ifeq ($(CONTAINER_ACCESS_TOKEN),)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
 endif
 
+# Determine if there is a local (to this system) instance of the E20R Utilities module repository
+ifeq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php), "")
+	LOCAL_E20R_UTILITIES_REPO := 0
+else
+	LOCAL_E20R_UTILITIES_REPO := 1
+endif
+
+ifeq (1, $(LOCAL_E20R_UTILITIES_REPO))
+	NEW_LICENSING_MODEL := 1
+endif
+
 #ifeq ($(CONTAINER_ACCESS_TOKEN),)
 #	echo "Error: Docker login token is not defined!"
 #	exit 1
@@ -171,21 +182,18 @@ docker-compose:
 clean-wp-deps:
 	@rm -rf $(COMPOSER_DIR)/wp_plugins/*
 
-# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main && \
+# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main &&
 
 e20r-deps:
-	@echo "Loading E20R custom plugin dependencies"
+	@echo "Loading defined E20R custom plugin dependencies: $(NEW_LICENSING_MODEL)"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-  		if [[ -f $(E20R_UTILTIES_PATH)/src/licensing/class-licensing.php && $$(grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php) ]]; then \
-  			export NEW_LICENSING_MODEL=1 ; \
-  		fi ; \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
-  		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
-			echo "Download $${e20r_plugin}.zip to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || ( -n "$${NEW_LICENSING_MODEL}" && "00-e20r-utilities" -ne "$${e20r_plugin}" ) ]]; then \
+		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
+			echo "Download or build $${e20r_plugin}.zip dependency" && \
+			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || -z "${NEW_LICENSING_MODEL}" ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
-			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && -z "$${NEW_LICENSING_MODEL}" ]]; then \
+				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
+			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "1" -eq "${NEW_LICENSING_MODEL}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make build && \
@@ -200,7 +208,7 @@ e20r-deps:
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
-  	done
+	done
 
 is-docker-running:
 	@if [[ "0" -eq $(DOCKER_IS_RUNNING) ]]; then \
