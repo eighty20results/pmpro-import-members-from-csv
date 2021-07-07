@@ -259,7 +259,7 @@ stop-stack:
 	fi
 
 
-restart: stop-stack start-stack db-import
+restart: stop-stack db-import
 
 wp-shell:
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec wordpress /bin/bash
@@ -275,10 +275,10 @@ db-backup:
  		/usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
 phpstan-test: start-stack db-import
-	@echo "Loading the WordPress test stack"
+	@echo "Loading the PHP-Stan tests"
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress php -d display_errors=on $(COMPOSER_DIR)/bin/phpstan.phar analyse -c ./phpstan.dist.neon --memory-limit 128M
+		wordpress inc/bin/phpstan analyze --configuration=./phpstan.dist.neon --memory-limit=128
 
 code-standard-test:
 	@echo "Running WP Code Standards testing"
@@ -288,18 +288,19 @@ code-standard-test:
 		--colors \
 		-p \
 		--standard=WordPress-Extra \
-		--ignore='$(COMPOSER_DIR)/*,node_modules/*,src/utilities/*' \
+		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
-		*.php src/*/*.php
+		$(PHP_CODE_PATHS)
 
 unit-test: deps
+	# TODO: Add coverage
 	@$(COMPOSER_DIR)/bin/codecept run -v --debug unit
 
 wp-unit-test: docker-deps start-stack db-import
+	# TODO: Add coverage
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
 		wordpress $(COMPOSER_DIR)/bin/codecept run -v wpunit
-		# --coverage --coverage-html
 
 acceptance-test: docker-deps start-stack db-import
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
