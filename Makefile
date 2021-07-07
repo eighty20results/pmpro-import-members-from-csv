@@ -24,7 +24,7 @@ WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
-CONTAINER_ACCESS_TOKEN := $(shell [[ -f ./docker.hub.key ]] && cat ./docker.hub.key)
+CONTAINER_ACCESS_TOKEN := $(shell if [[ -f ./docker.hub.key ]]; then cat ./docker.hub.key ; fi)
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
@@ -176,16 +176,16 @@ clean-wp-deps:
 e20r-deps:
 	@echo "Loading E20R custom plugin dependencies"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-  		if [[ ! -f $(E20R_UTILTIES_PATH)/src/licensing/class-licensing.php && ! $$(grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php) ]]; then \
-  			export NEW_LICENSING=1 ; \
+  		if [[ -f $(E20R_UTILTIES_PATH)/src/licensing/class-licensing.php && $$(grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php) ]]; then \
+  			export NEW_LICENSING_MODEL=1 ; \
   		fi ; \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
   		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
-			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || ( -n "$${NEW_LICENSING}" && "00-e20r-utilities" -ne "$${e20r_plugin}" ) ]]; then \
+			echo "Download $${e20r_plugin}.zip to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || ( -n "$${NEW_LICENSING_MODEL}" && "00-e20r-utilities" -ne "$${e20r_plugin}" ) ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
-			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && -n "$${NEW_LICENSING}" ]]; then \
+			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && -z "$${NEW_LICENSING_MODEL}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
 				make build && \
@@ -196,7 +196,7 @@ e20r-deps:
 				cd $(BASE_PATH) ; \
 			fi ; \
 			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			echo "'Installing' the $${e20r_plugin}.zip plugin" && \
+			echo "Installing the $${e20r_plugin}.zip plugin" && \
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
