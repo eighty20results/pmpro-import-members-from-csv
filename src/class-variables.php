@@ -301,7 +301,7 @@ class Variables {
 
 		$this->error_log->debug( "File name from transient is {$this->filename} vs tmp name of {$tmp_name}" );
 
-		if ( empty( $filename ) && ( ! empty( $tmp_name ) && file_exists( $tmp_name ) ) ) {
+		if ( empty( $this->filename ) && ( ! empty( $tmp_name ) && file_exists( $tmp_name ) ) ) {
 
 			$this->error_log->debug( "Update/move the {$tmp_name} file!" );
 			$this->filename = $csv_file->pre_process_file( $tmp_name );
@@ -311,8 +311,6 @@ class Variables {
 				wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
 				exit();
 			}
-		} elseif ( ! empty( $filename ) ) {
-			$this->filename = $filename;
 		}
 
 		// @codingStandardsIgnoreStart
@@ -344,7 +342,7 @@ class Variables {
 		$per_record_time = $this->calculate_per_record_time();
 
 		if ( ! empty( $max_exec_time ) && ( is_numeric( $per_record_time ) ) ) {
-			$this->per_partial = round( ceil( $max_exec_time / (float) $per_record_time ), 0 );
+			$this->per_partial = intval( round( ceil( $max_exec_time / (float) $per_record_time ), 0 ) );
 		}
 
 		if ( $this->per_partial > 60 ) {
