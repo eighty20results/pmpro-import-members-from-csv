@@ -181,17 +181,18 @@ e20r-deps:
   		fi ; \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
   		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
-			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}. Using local? '$${NEW_LICENSING}'" && \
+			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || ( -n "$${NEW_LICENSING}" && "00-e20r-utilities" -ne "$${e20r_plugin}" ) ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
 			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && -n "$${NEW_LICENSING}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
-				make new-release && \
+				make build && \
 				make stop-stack && \
-				echo "Copy $${e20r_plugin}.zip to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
-				cp "$$(ls -art build/kits/* | tail -1)" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				new_kit="$$(ls -art build/kits/$${e20r_plugin}* | tail -1)" && \
+				echo "Copy $${new_kit} to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cp "$${new_kit}" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
 				cd $(BASE_PATH) ; \
 			fi ; \
 			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
