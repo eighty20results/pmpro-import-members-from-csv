@@ -68,7 +68,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	clean-inc \
 	clean-wp-deps \
 	real-clean \
-	deps \
+	wp-deps \
 	e20r-deps \
 	is-docker-running \
 	docker-deps \
@@ -213,9 +213,9 @@ is-docker-running:
 		exit 1; \
 	fi
 
-docker-deps: is-docker-running docker-compose deps
+docker-deps: is-docker-running docker-compose wp-deps
 
-deps: clean composer-dev e20r-deps
+wp-deps: clean composer-dev e20r-deps
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
@@ -290,7 +290,7 @@ code-standard-test:
 		--extensions=php \
 		$(PHP_CODE_PATHS)
 
-unit-test: deps
+unit-test: wp-deps
 	# TODO: Add coverage
 	@$(COMPOSER_DIR)/bin/codecept run -v --debug unit
 
@@ -310,7 +310,7 @@ build-test: docker-deps start-stack db-import
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean deps code-standard-test unit-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
+test: clean wp-deps code-standard-test unit-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
 
 git-log:
 	@./bin/create_log.sh
