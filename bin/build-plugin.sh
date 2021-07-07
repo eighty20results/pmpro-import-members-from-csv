@@ -14,7 +14,7 @@ declare -a include=( \
 	"javascript" \
 	"languages" \
 	"src" \
-	"class.${short_name}.php" \
+	"class.pmpro-import-members.php" \
 	"README.txt" \
 	"README.md" \
 	"CHANGELOG.md"
