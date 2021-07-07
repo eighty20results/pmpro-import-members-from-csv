@@ -47,7 +47,7 @@ class Sponsor {
 	/**
 	 * Sponsor constructor.
 	 *
-	 * @param $user_id
+	 * @param int|string $user_id
 	 *
 	 * @throws \Exception
 	 */
