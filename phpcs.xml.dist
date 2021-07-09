@@ -50,7 +50,12 @@
         <exclude name="WordPress.XSS.EscapeOutput"/>
     </rule>
 
+
     <!-- Add in some extra rules from other standards. -->
+    <ruleset name="WP-Neutron-Standard">
+    	<description>WP/Automattic Neutron</description>
+    	<rule ref="NeutronStandard"/>
+    </ruleset>
     <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
     <rule ref="Generic.Commenting.Todo"/>
 
