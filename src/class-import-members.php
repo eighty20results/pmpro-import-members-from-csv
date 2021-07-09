@@ -193,6 +193,7 @@ class Import_Members {
 			$licensing   = new Licensing( self::E20R_LICENSE_SKU );
 			$is_licensed = $licensing->is_licensed( self::E20R_LICENSE_SKU, false );
 		} else {
+			// @phpstan-ignore-next-line
 			$is_licensed = Licensing::is_licensed( self::E20R_LICENSE_SKU, false );
 		}
 
@@ -269,7 +270,7 @@ class Import_Members {
 		wp_enqueue_style(
 			'pmpro-import-members-from-csv',
 			plugins_url( 'css/pmpro-import-members-from-csv.css', E20R_IMPORT_PLUGIN_FILE ),
-			null,
+			array(),
 			E20R_IMPORT_VERSION
 		);
 
@@ -367,7 +368,7 @@ class Import_Members {
 	 */
 	public function plugin_row_meta( $links, $file ) {
 
-		if ( true === stripos( $file, 'class.pmpro-import-members.php' ) ) {
+		if ( false !== stripos( $file, 'class.pmpro-import-members.php' ) ) {
 			// Add (new) 'Import Users from CSV' links to plugin listing
 			$new_links = array(
 				'donate'        => sprintf(
