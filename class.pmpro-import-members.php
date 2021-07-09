@@ -106,32 +106,42 @@ class Loader {
 
 		foreach ( $base_paths as $base_path ) {
 
-			$iterator = new RecursiveDirectoryIterator(
-				$base_path,
-				RecursiveDirectoryIterator::SKIP_DOTS |
-				RecursiveIteratorIterator::SELF_FIRST |
-				RecursiveIteratorIterator::CATCH_GET_CHILD |
-				RecursiveDirectoryIterator::FOLLOW_SYMLINKS
-			);
+			try {
+				$iterator = new RecursiveDirectoryIterator(
+					$base_path,
+					RecursiveDirectoryIterator::SKIP_DOTS |
+					RecursiveIteratorIterator::SELF_FIRST |
+					RecursiveIteratorIterator::CATCH_GET_CHILD |
+					RecursiveDirectoryIterator::FOLLOW_SYMLINKS
+				);
+			} catch ( \Exception $e ) {
+				print 'Error: ' . $e->getMessage(); // phpcs:ignore
+				return;
+			}
 
-			$filter = new RecursiveCallbackFilterIterator(
-				$iterator,
-				function ( $current, $key, $iterator ) use ( $filename ) {
+			try {
+				$filter = new RecursiveCallbackFilterIterator(
+					$iterator,
+					function ( $current, $key, $iterator ) use ( $filename ) {
 
-					// Skip hidden files and directories.
-					if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
-						return false;
+						// Skip hidden files and directories.
+						if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
+							return false;
+						}
+
+						if ( $current->isDir() ) {
+							// Only recurse into intended subdirectories.
+							return $current->getFilename() === $filename;
+						} else {
+							// Only consume files of interest.
+							return str_starts_with( $current->getFilename(), $filename );
+						}
 					}
-
-					if ( $current->isDir() ) {
-						// Only recurse into intended subdirectories.
-						return $current->getFilename() === $filename;
-					} else {
-						// Only consume files of interest.
-						return str_starts_with( $current->getFilename(), $filename );
-					}
-				}
-			);
+				);
+			} catch ( \Exception $e ) {
+				echo 'Autoloader error: ' . $e->getMessage(); // phpcs:ignore
+				return;
+			}
 
 			foreach ( new RecursiveIteratorIterator( $iterator ) as $f_filename => $f_file ) {
 
@@ -142,7 +152,6 @@ class Loader {
 					require_once $class_path;
 				}
 			}
-			// return true;
 		}
 	}
 
