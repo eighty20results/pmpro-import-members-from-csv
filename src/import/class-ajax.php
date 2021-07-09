@@ -375,7 +375,7 @@ class Ajax {
 			}
 		}
 
-		$buffered_text = ob_get_clean();
+		$buffered_text  = ob_get_clean();
 		$display_errors = $this->variables->get( 'display_errors' );
 
 		// No users imported (or done)
