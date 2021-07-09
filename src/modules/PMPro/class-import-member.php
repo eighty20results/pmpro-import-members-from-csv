@@ -175,12 +175,7 @@ class Import_Member {
 
 		$has_error              = false;
 		$membership_in_the_past = false;
-
-		// Define table names
-		$pmpro_member_table = "{$wpdb->prefix}pmpro_memberships_users";
-		$pmpro_dc_table     = "{$wpdb->prefix}pmpro_discount_codes";
-
-		$current_blog_id = get_current_blog_id();
+		$current_blog_id        = get_current_blog_id();
 
 		$this->error_log->debug( "Current blog ID: {$current_blog_id}" );
 
@@ -265,7 +260,7 @@ class Import_Member {
 			$user_meta['membership_code_id'] = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT dc.id
-                              FROM {$pmpro_dc_table} AS dc
+                              FROM {$wpdb->prefix}pmpro_discount_codes AS dc
                               WHERE dc.code = %s
                               LIMIT 1",
 					$user_data['membership_discount_code']
@@ -290,7 +285,7 @@ class Import_Member {
 
 				// Update all currently active memberships with the specified ID for the specified user
 				$updated = $wpdb->update(
-					$pmpro_member_table,
+					"{$wpdb->prefix}pmpro_memberships_users",
 					array( 'status' => 'admin_cancelled' ),
 					array(
 						'user_id'       => $user_id,
@@ -391,7 +386,7 @@ class Import_Member {
 				$record_id = $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT mt.id
-                                      FROM {$pmpro_member_table} AS mt
+                                      FROM {$wpdb->prefix}pmpro_memberships_users AS mt
                                       WHERE mt.user_id = %d AND mt.membership_id = %d AND mt.status = %s
                                       ORDER BY mt.id DESC LIMIT 1",
 						$user_id,
@@ -403,7 +398,7 @@ class Import_Member {
 				$record_id = $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT mt.id
-                                      FROM {$pmpro_member_table} AS mt
+                                      FROM {$wpdb->prefix}pmpro_memberships_users AS mt
                                       WHERE mt.user_id = %d AND mt.membership_id = %d
                                       ORDER BY mt.id DESC LIMIT 1",
 						$user_id,
@@ -429,7 +424,7 @@ class Import_Member {
 				}
 
 				if ( false !== $wpdb->update(
-					$pmpro_member_table,
+					"{$wpdb->prefix}pmpro_memberships_users",
 					array(
 						'status'  => 'inactive',
 						'enddate' => $user_meta['membership_enddate'],
@@ -468,7 +463,7 @@ class Import_Member {
 			) {
 
 				if ( false === $wpdb->update(
-					$pmpro_member_table,
+					"{$wpdb->prefix}pmpro_memberships_users",
 					array(
 						'status'  => 'active',
 						'enddate' => $user_meta['membership_enddate'],
@@ -591,9 +586,11 @@ class Import_Member {
 				}
 			}
 
-			$order                 = new \MemberOrder();
-			$order->user_id        = $user_id;
-			$order->membership_id  = isset( $record['membership_id'] ) ?? $record['membership_id'];
+			$order                = new \MemberOrder();
+			$order->user_id       = $user_id;
+			$order->membership_id = isset( $record['membership_id'] ) ?? $record['membership_id'];
+
+			// phpcs:ignore
 			$order->InitialPayment = ! empty( $record['membership_initial_payment'] ) ? $record['membership_initial_payment'] : null;
 
 			/**
