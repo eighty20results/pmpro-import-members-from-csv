@@ -101,7 +101,6 @@ clean:
 		if [[ -f $(COMPOSER_DIR)/bin/codecept ]]; then \
 			$(COMPOSER_DIR)/bin/codecept clean ; \
 		fi ; \
-		rm -rf $(COMPOSER_DIR)/wp_plugins ; \
 	fi
 	@rm -rf _actions/
 	@rm -rf workflow
@@ -183,7 +182,7 @@ clean-wp-deps:
 
 e20r-deps:
 	@echo "Loading defined E20R custom plugin dependencies"
-	@mkdir -p $(BASE_PATH)/inc/wp_plugins
+	@mkdir -p $(COMPOSER_DIR)/wp_plugins
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
 		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
@@ -274,12 +273,19 @@ db-backup:
 	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database \
  		/usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
+
 phpstan-test: composer-dev
-	@echo "Loading the PHP-Stan tests"
-	@inc/bin/phpstan analyze --configuration=./phpstan.dist.neon --memory-limit=-1
+	@echo "Loading the PHP-Stan tests for $(PROJECT)"
+	@inc/bin/phpstan analyze \
+		--ansi \
+		--debug \
+		-v \
+		--configuration=./phpstan.dist.neon \
+		--no-interaction \
+		--memory-limit=-1
 
 code-standard-test:
-	@echo "Running WP Code Standards testing"
+	@echo "Running WP Code Standards testing for $(PROJECT)"
 	@$(COMPOSER_DIR)/bin/phpcs \
 		--runtime-set ignore_warnings_on_exit true \
 		--report=full \
@@ -291,7 +297,8 @@ code-standard-test:
 		$(PHP_CODE_PATHS)
 
 unit-test: wp-deps
-	# TODO: Add coverage
+	@echo "Running Unit tests for $(PROJECT)"
+# TODO: Add coverage
 	@$(COMPOSER_DIR)/bin/codecept run -v --debug unit
 
 wp-unit-test: docker-deps start-stack db-import
