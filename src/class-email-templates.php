@@ -75,10 +75,11 @@ class Email_Templates {
 		$fields     = $this->variables->get( 'fields' );
 
 		// Email 'your membership account is active' to member if they were imported with an active member status
-		// @phpstan-ignore-next-line
-		if ( true === (bool) $send_email &&
-			 isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
-			 1 === version_compare( PMPRO_VERSION, '1.9.5' )
+		if (
+			true === (bool) $send_email &&
+			isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
+			// @phpstan-ignore-next-line
+			1 === version_compare( PMPRO_VERSION, '1.9.5' )
 		) {
 			$subject = null;
 			$body    = null;
@@ -94,7 +95,7 @@ class Email_Templates {
 
 			// Apply the saved
 			if ( empty( $subject ) ) {
-				$subject = pmpro_getOption( "email_{$template_name}_subject" ); // @phpstan-ignore-line
+				$subject = pmpro_getOption( "email_{$template_name}_subject" );
 
 				if ( empty( $subject ) ) {
 					$subject = $pmproet_email_defaults[ $template_name ]['subject'] ?? __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
@@ -103,16 +104,19 @@ class Email_Templates {
 
 			$this->error_log->debug( "Using {$template_name} template for '{$subject}' message" );
 
-			$email           = new \PMProEmail(); // @phpstan-ignore-line
-			$email->email    = $user->user_email;
-			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() );
-			$email->subject  = $subject;
-			$email->template = $template_name;
+			// PMPro is not good at defining properties in classes (badly reliant on the historically dynamic nature of PHP)
+			// so will have PHPStan ignore these lines until PMPro cleans up their stuff
+			// (i.e. TODO when PMPro takes better advantage of PHP)
+			$email           = new \PMProEmail();
+			$email->email    = $user->user_email; // @phpstan-ignore-line
+			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
+			$email->subject  = $subject; // @phpstan-ignore-line
+			$email->template = $template_name; // @phpstan-ignore-line
 
 			if ( ! empty( $body ) ) {
-				$email->body = $body;
+				$email->body = $body; // @phpstan-ignore-line
 			} else {
-				$email->body = $this->load_email_body( null, $email->template );
+				$email->body = $this->load_email_body( null, $email->template ); // @phpstan-ignore-line
 			}
 
 			$email->body = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
@@ -149,7 +153,6 @@ class Email_Templates {
 		global $pmproet_email_defaults;
 
 		// Email disabled?
-		// @phpstan-ignore-next-line
 		if ( true === (bool) pmpro_getOption( "email_{$template_name}_disabled}" ) ) {
 			return null;
 		}
@@ -161,11 +164,11 @@ class Email_Templates {
 
 		$this->error_log->debug( "Setting the message subject for {$template_name} template" );
 
-		$template_body   = pmpro_getOption( "email_{$template_name}_body" ); // @phpstan-ignore-line
-		$template_header = pmpro_getOption( 'email_header_body' ); // @phpstan-ignore-line
-		$template_footer = pmpro_getOption( 'email_footer_body' ); // @phpstan-ignore-line
+		$template_body   = pmpro_getOption( "email_{$template_name}_body" );
+		$template_header = pmpro_getOption( 'email_header_body' );
+		$template_footer = pmpro_getOption( 'email_footer_body' );
 
-		// Header disabled? @phpstan-ignore-next-line
+		// Header disabled?
 		if ( true !== (bool) pmpro_getOption( 'email_header_disabled' ) ) {
 			if ( ! empty( $template_header ) ) {
 				$email_text = $template_header;
@@ -184,7 +187,7 @@ class Email_Templates {
 			$email_text .= $this->load_template_part( $template_name );
 		}
 
-		// Footer disabled? @phpstan-ignore-next-line
+		// Footer disabled?
 		if ( true === (bool) pmpro_getOption( 'email_footer_disabled' ) ) {
 			if ( ! empty( $template_footer ) ) {
 				$email_text .= $template_footer;
