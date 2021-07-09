@@ -284,7 +284,7 @@ phpstan-test: composer-dev
 		--no-interaction \
 		--memory-limit=-1
 
-code-standard-test:
+code-standard-test: wp-deps
 	@echo "Running WP Code Standards testing for $(PROJECT)"
 	@$(COMPOSER_DIR)/bin/phpcs \
 		--runtime-set ignore_warnings_on_exit true \
