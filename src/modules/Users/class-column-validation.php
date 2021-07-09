@@ -133,7 +133,7 @@ class Column_Validation extends Base_Validation {
 	 * @param array                $record
 	 * @param null|string|string[] $field_name
 	 *
-	 * @return bool|int|false
+	 * @return bool|int
 	 */
 	public function validate_user_id( $has_error, $user_id, $record, $field_name = null ) {
 
@@ -146,10 +146,6 @@ class Column_Validation extends Base_Validation {
 		if ( ! ( isset( $record['ID'] ) || isset( $record['user_email'] ) || isset( $record['user_login'] ) ) ) {
 			$this->error_log->debug( 'Cannot find one of the expected column(s): ID, user_email, user_login' );
 			return $has_error;
-		}
-
-		if ( is_array( $field_name ) ) {
-			// TODO: Process list of fields
 		}
 
 		$allow_update = (bool) $this->variables->get( 'update_users' );
@@ -188,14 +184,5 @@ class Column_Validation extends Base_Validation {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Disable the __clone() magic method
-	 *
-	 * @access private
-	 */
-	private function __clone() {
-		// TODO: Implement __clone() method.
 	}
 }
