@@ -22,13 +22,16 @@
 namespace E20R\Import_Members\Validate;
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
+use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
+use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BP_Validation;
 
 abstract class Base_Validation {
 
 	/**
 	 * Instance of the column validation logic for PMPro
 	 *
-	 * @var null|Base_Validation
+	 * @var null|Base_Validation|PMPro_Validation|User_Validation|BP_Validation
 	 */
 	protected static $instance = null;
 
@@ -74,7 +77,7 @@ abstract class Base_Validation {
 	/**
 	 * Get or instantiate and get the current class
 	 *
-	 * @return Column_Validation|Base_Validation|null
+	 * @return User_Validation|PMPro_Validation|BP_Validation|Base_Validation|null
 	 */
 	abstract public static function get_instance();
 
