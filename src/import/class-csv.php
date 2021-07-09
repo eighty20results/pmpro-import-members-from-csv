@@ -20,7 +20,6 @@
 namespace E20R\Import_Members\Import;
 
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
@@ -34,13 +33,6 @@ class CSV {
 	 * @var null|CSV
 	 */
 	private static $instance = null;
-
-	/**
-	 * The CSV file (as a SplFileObject() class )
-	 *
-	 * @var SplFileObject $file_object
-	 */
-	private $file_object;
 
 	/**
 	 * Error log class
@@ -59,7 +51,7 @@ class CSV {
 	 *
 	 * @var null|CSV $csv
 	 */
-	private $csv = null;
+	private $csv;
 
 	/**
 	 * CSV constructor.
@@ -200,13 +192,14 @@ class CSV {
 			$this->error_log->debug( ( "Moved {$_FILES['members_csv']['tmp_name']} to $destination_name" ) );
 		}
 
+		// @phpstan-ignore-next-line
+		$this->error_log->debug( 'Directory error? ' . ( $directory_error ? 'Yes' : 'No' ) );
+		$this->error_log->debug( 'File upload not selected error? ' . ( $no_file_error ? 'Yes' : 'No' ) );
+		$this->error_log->debug( 'File limit error? ' . ( $clean_file_error ? 'Yes' : 'No' ) );
+
+		// @phpstan-ignore-next-line
 		if ( ( true === $no_file_error || true === $directory_error || true === $clean_file_error ) ) {
-
 			$this->error_log->debug( 'Error: Problem with uploaded file...' );
-			$this->error_log->debug( 'Directory error? ' . ( $directory_error ? 'Yes' : 'No' ) );
-			$this->error_log->debug( 'File upload not selected error? ' . ( $no_file_error ? 'Yes' : 'No' ) );
-			$this->error_log->debug( 'File limit error? ' . ( $clean_file_error ? 'Yes' : 'No' ) );
-
 			return false;
 		}
 
@@ -332,7 +325,7 @@ class CSV {
 		$per_partial     = apply_filters( 'e20r_import_records_per_scan', $per_partial );
 
 		// Mac CR+LF fix
-		ini_set( 'auto_detect_line_endings', true );
+		ini_set( 'auto_detect_line_endings', '1' );
 
 		$file        = basename( $file_name );
 		$file_object = new SplFileObject( $file_name, 'r' );
@@ -413,7 +406,6 @@ class CSV {
 			$user_data = $user_meta = array(); // phpcs:ignore
 
 			$this->error_log->debug( "Processing next user data. (previous line #: {$active_line_number})" );
-
 			$this->extract_data(
 				$line,
 				$user_data,
@@ -492,7 +484,7 @@ class CSV {
 			// Try to import user record and trigger other import modules
 			$user_id = $import_user->import( $user_data, $user_meta, $headers );
 
-			if ( false === $user_ids ) {
+			if ( ! $user_ids ) {
 
 				$msg = sprintf(
 					// translators: %d - Line number in the CSV file being imported
@@ -518,7 +510,7 @@ class CSV {
 
 		// Close the file (done by the destructor for the SplFileObject() class)
 		$file_object = null;
-		ini_set( 'auto_detect_line_endings', true );
+		ini_set( 'auto_detect_line_endings', '1' );
 
 		// One more thing to do after all imports?
 		do_action( 'is_iu_post_users_import', $user_ids, $e20r_import_err );
