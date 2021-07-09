@@ -83,8 +83,6 @@ abstract class Base_Validation {
 
 	/**
 	 * Load all validation actions for the specific module
-	 *
-	 * @return null
 	 */
 	abstract public function load_actions();
 
