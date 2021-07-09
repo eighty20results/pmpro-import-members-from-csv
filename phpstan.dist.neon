@@ -2,12 +2,10 @@ parameters:
     level: 5
     paths:
         - class.pmpro-import-members.php
+        - class-activateutilitiesplugin.php
         - src/
-        - src/import
-        - src/modules
-        - src/validate
     scanDirectories:
-    	- inc/wp_plugins/paid-memberships-pro
+    	- inc/
     bootstrapFiles:
     	- tests/bootstrap.php
     	- class.pmpro-import-members.php
