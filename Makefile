@@ -24,7 +24,7 @@ WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
-CONTAINER_ACCESS_TOKEN := $(shell if [[ -f ./docker.hub.key ]]; then cat ./docker.hub.key ; fi)
+CONTAINER_ACCESS_TOKEN := $(shell bash -c "if [[ -f ./docker.hub.key ]]; then cat ./docker.hub.key ; fi")
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
