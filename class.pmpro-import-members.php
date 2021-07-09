@@ -142,7 +142,7 @@ class Loader {
 					require_once $class_path;
 				}
 			}
-			return true;
+			// return true;
 		}
 	}
 
