@@ -46,7 +46,7 @@ class Column_Validation extends Base_Validation {
 	/**
 	 * Get or instantiate and get the current class
 	 *
-	 * @return Column_Validation|null
+	 * @return Column_Validation|Base_Validation|null
 	 */
 	public static function get_instance() {
 
@@ -131,7 +131,7 @@ class Column_Validation extends Base_Validation {
 		}
 
 		if ( isset( $fields['bp_field_name'] ) && empty( $fields['bp_field_name'] ) ) {
-			$has_error = $has_error && ( true && ! $this->ignore_validation_error( 'bp_field_name' ) );
+			$has_error = $has_error && ( ! $this->ignore_validation_error( 'bp_field_name' ) );
 		}
 
 		// FIXME: Add check for 'bp_field_exists' for the supplied fields/data
