@@ -1,5 +1,9 @@
 name: Test of "Release to wordpress.org" workflows
 
+defaults:
+  run:
+    shell: bash
+
 on:
   push:
     tags:
@@ -24,10 +28,8 @@ jobs:
         with:
           repository: eighty20results/pmpro-import-members-from-csv
           ref: test_workflow_updates
-      - name: Run the unit tests
-        run: |
-          ln -s $(which composer) ./composer.phar
-          make unit-test
+      - name: Run the plugin tests
+        run: make test
       - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
         uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
         env:
