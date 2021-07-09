@@ -70,6 +70,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	real-clean \
 	wp-deps \
 	e20r-deps \
+	php-composer \
 	is-docker-running \
 	docker-deps \
 	docker-compose-deps \
@@ -220,7 +221,7 @@ wp-deps: clean composer-dev e20r-deps
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to $(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
-  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" -s && \
+  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" && \
   		  $(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
   		  rm -f "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" ; \
   		fi ; \
@@ -298,11 +299,10 @@ code-standard-test: wp-deps
 
 unit-test: wp-deps
 	@echo "Running Unit tests for $(PROJECT)"
-# TODO: Add coverage
 	@$(COMPOSER_DIR)/bin/codecept run -v --debug unit
 
+# TODO: Add coverage
 wp-unit-test: docker-deps start-stack db-import
-	# TODO: Add coverage
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
 		wordpress $(COMPOSER_DIR)/bin/codecept run -v wpunit
