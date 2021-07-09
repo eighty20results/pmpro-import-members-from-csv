@@ -317,7 +317,7 @@ build-test: docker-deps start-stack db-import
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean wp-deps code-standard-test unit-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
+test: clean wp-deps code-standard-test phpstan-test unit-test db-import wp-unit-test stop-stack
 
 git-log:
 	@./bin/create_log.sh
