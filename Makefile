@@ -34,9 +34,11 @@ CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
 endif
 DOWNLOAD_MODULE := 1
 
+$(info Wildcard result: $(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php))
+
 # Determine if there is a local (to this system) instance of the E20R Utilities module repository
-ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php), "")
-	DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php && echo "0")
+ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php),)
+	DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php 2>/dev/null && echo "0")
 endif
 
 $(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
@@ -184,13 +186,14 @@ clean-wp-deps:
 e20r-deps:
 	@echo "Loading defined E20R custom plugin dependencies"
 	@mkdir -p $(COMPOSER_DIR)/wp_plugins
-	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
+	@DOWNLOAD_MODULE=${DOWNLOAD_MODULE} ; \
+	for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
 		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
 			echo "Download or build $${e20r_plugin}.zip dependency?" && \
-			if [[ "0" -eq "$(DOWNLOAD_MODULE)" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
+			if [[ "0" -eq "$${DOWNLOAD_MODULE}" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				cd $(E20R_UTILITIES_PATH) && \
+				cd ${E20R_UTILITIES_PATH} && \
 				make build && \
 				new_kit="$$(ls -art build/kits/$${e20r_plugin}* | tail -1)" && \
 				echo "Copy $${new_kit} to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
