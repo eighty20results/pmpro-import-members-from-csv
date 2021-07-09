@@ -1,17 +1,12 @@
 parameters:
     level: 5
+    scanDirectories:
+    	- inc/
     paths:
         - class.pmpro-import-members.php
         - class-activateutilitiesplugin.php
         - src/
-    scanDirectories:
-    	- inc/
     bootstrapFiles:
-    	- tests/bootstrap.php
     	- class.pmpro-import-members.php
     excludePaths:
-        - tests/wpunit
-        - tests/unit
-        - tests/functional
-        - tests/acceptance
-        - tests/*/data/*
+        - tests/
