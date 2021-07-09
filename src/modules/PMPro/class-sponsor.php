@@ -115,7 +115,7 @@ class Sponsor {
 	/**
 	 * Return the type specific parameter (membership info, user info, class variable)
 	 *
-	 * @param string $type
+	 * @param string|null $type
 	 * @param string $param
 	 *
 	 * @return bool|mixed|null
