@@ -35,7 +35,7 @@ class Column_Validation extends Base_Validation {
 	/**
 	 * Get or instantiate and get the current class
 	 *
-	 * @return Column_Validation|null
+	 * @return Column_Validation|Base_Validation|null
 	 */
 	public static function get_instance() {
 
