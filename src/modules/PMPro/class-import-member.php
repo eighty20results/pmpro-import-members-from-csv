@@ -509,9 +509,7 @@ class Import_Member {
 		}
 
 		// Update the error status
-		if ( true === $has_error ) {
-			update_option( 'e20r_import_errors', $has_error );
-		}
+		update_option( 'e20r_import_errors', $has_error );
 
 		if ( is_multisite() ) {
 			switch_to_blog( $current_blog_id );
@@ -587,11 +585,11 @@ class Import_Member {
 			}
 
 			$order                = new \MemberOrder();
-			$order->user_id       = $user_id;
-			$order->membership_id = isset( $record['membership_id'] ) ?? $record['membership_id'];
+			$order->user_id       = $user_id; // @phpstan-ignore-line
+			$order->membership_id = isset( $record['membership_id'] ) ?? $record['membership_id']; // @phpstan-ignore-line
 
 			// phpcs:ignore
-			$order->InitialPayment = ! empty( $record['membership_initial_payment'] ) ? $record['membership_initial_payment'] : null;
+			$order->InitialPayment = ! empty( $record['membership_initial_payment'] ) ? $record['membership_initial_payment'] : null; // @phpstan-ignore-line
 
 			/**
 			 * Dynamically provide data for all configured Order fields...
@@ -612,7 +610,7 @@ class Import_Member {
 				if ( 1 === preg_match( '/billing_(.*)/', $field_name, $matches ) ) {
 
 					if ( ! isset( $order->billing ) ) {
-						$order->billing = new \stdClass();
+						$order->billing = new \stdClass();  // @phpstan-ignore-line
 					}
 
 					if ( ! isset( $order->billing->{$matches[1]} ) ) {
@@ -631,18 +629,19 @@ class Import_Member {
 					// Process payment (amount)
 					if ( 'total' === $field_name && ! empty( $record['membership_initial_payment'] ) ) {
 
-						$order->total = $record['membership_initial_payment'];
+						$order->total = $record['membership_initial_payment']; // @phpstan-ignore-line
 
 					} elseif ( 'total' === $field_name && (
 							empty( $record['membership_initial_payment'] ) &&
 							! empty( $record['membership_billing_amount'] )
 						) ) {
 
-						$order->total = $record['membership_billing_amount'];
+						$order->total = $record['membership_billing_amount']; // @phpstan-ignore-line
 
 					} elseif ( 'total' !== $field_name ) {
 
 						if ( 'status' === $field_name ) {
+							// @phpstan-ignore-next-line
 							$order->{$field_name} = ( isset( $record[ $full_field_name ] ) && 'active' === $record[ $full_field_name ] ? 'success' : 'cancelled' );
 						} else {
 							$order->{$field_name} = ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null;
@@ -659,11 +658,11 @@ class Import_Member {
 			}
 
 			if ( isset( $record['membership_gateway_environment'] ) && strtolower( $default_environment ) !== strtolower( $record['membership_gateway_environment'] ) ) {
-				$order->gateway_environment = strtolower( $record['membership_gateway_environment'] );
+				$order->gateway_environment = strtolower( $record['membership_gateway_environment'] ); // @phpstan-ignore-line
 			}
 
 			if ( true === $membership_in_the_past ) {
-				$order->status = 'cancelled';
+				$order->status = 'cancelled'; // @phpstan-ignore-line
 			}
 
 			/**
