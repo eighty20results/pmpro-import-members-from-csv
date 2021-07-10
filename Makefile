@@ -30,6 +30,7 @@ CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
+$(info Setting CONTAINER_ACCESS_TOKEN from environment variable)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
 endif
 DOWNLOAD_MODULE := 1
@@ -112,9 +113,7 @@ clean-inc:
 	@find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php
 
 repo-login:
-	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
-		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-		docker login --username $(DOCKER_USER) --password-stdin <<< $${CONTAINER_ACCESS_TOKEN}
+	echo $(CONTAINER_ACCESS_TOKEN) | docker login --username $(DOCKER_USER) --password-stdin
 
 image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
