@@ -24,7 +24,10 @@ WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
-CONTAINER_ACCESS_TOKEN := $(shell bash -c "if [[ -f ./docker.hub.key ]]; then cat ./docker.hub.key ; fi")
+
+ifneq ($(wildcard $(BASE_PATH)/docker.hub.key),)
+CONTAINER_ACCESS_TOKEN := $(shell cat $(BASE_PATH)/docker.hub.key)
+endif
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
@@ -113,7 +116,7 @@ clean-inc:
 	@find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php
 
 repo-login:
-	echo $(CONTAINER_ACCESS_TOKEN) | docker login --username $(DOCKER_USER) --password-stdin
+	docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN)
 
 image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
