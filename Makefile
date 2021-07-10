@@ -25,8 +25,9 @@ E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 
-ifneq ($(wildcard $(BASE_PATH)/docker.hub.key),)
-CONTAINER_ACCESS_TOKEN := $(shell cat $(BASE_PATH)/docker.hub.key)
+ifneq ($(wildcard ./docker.hub.key),)
+$(info Path to key for docker hub exists)
+CONTAINER_ACCESS_TOKEN := $(shell cat ./docker.hub.key)
 endif
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
@@ -42,7 +43,7 @@ $(info Wildcard result: $(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-li
 
 # Determine if there is a local (to this system) instance of the E20R Utilities module repository
 ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php),)
-	DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php 2>/dev/null && echo "0")
+DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php 2>/dev/null && echo "0")
 endif
 
 $(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
@@ -116,7 +117,10 @@ clean-inc:
 	@find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php
 
 repo-login:
-	docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN)
+	@if [[ -z $${CONTAINER_ACCESS_TOKEN} ]]; then \
+  		echo "Logging in to repo using access token" && \
+		docker login --username $(DOCKER_USER) --password-stdin < ./docker.hub.key ; \
+	fi
 
 image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
