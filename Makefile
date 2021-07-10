@@ -117,8 +117,8 @@ clean-inc:
 	@find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php
 
 repo-login:
-	@if [[ -z $${CONTAINER_ACCESS_TOKEN} ]]; then \
-  		echo "Logging in to repo using access token" && \
+	@if [[ -f ./docker.hub.key ]]; then \
+  		echo "Logging in to repo using file based access token" && \
 		docker login --username $(DOCKER_USER) --password-stdin < ./docker.hub.key ; \
 	fi
 
