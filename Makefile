@@ -114,7 +114,7 @@ clean-inc:
 repo-login:
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN)
+		docker login --username $(DOCKER_USER) --password-stdin <<< $${CONTAINER_ACCESS_TOKEN}
 
 image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
