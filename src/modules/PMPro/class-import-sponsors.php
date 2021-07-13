@@ -67,6 +67,28 @@ class Import_Sponsors {
 	 */
 	public function load_actions() {
 		add_action( 'e20r_import_load_licensed_modules', array( $this, 'load_sponsor_import' ) );
+		add_filter( 'e20r_import_supported_fields', array( $this, 'load_fields' ), 1, 1 );
+	}
+
+	/**
+	 * Load all supported import field (column) names for the PMPro module
+	 *
+	 * @param array $fields
+	 *
+	 * @return array
+	 */
+	public function load_fields( $fields ) {
+
+		// Configure fields for PMPro import
+		$fields = array_merge_recursive(
+			$fields,
+			array(
+				'pmprosm_sponsor' => null,
+				'pmprosm_seats'   => null,
+			)
+		);
+
+		return apply_filters( 'e20r_import_modules_pmpro_headers', $fields );
 	}
 
 	/**
@@ -447,3 +469,5 @@ class Import_Sponsors {
 	private function __clone() {
 	}
 }
+
+add_action( 'e20r_import_load_licensed_modules', array( new Import_Sponsors(), 'load_actions' ) );
