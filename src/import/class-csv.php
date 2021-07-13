@@ -484,7 +484,7 @@ class CSV {
 			// Try to import user record and trigger other import modules
 			$user_id = $import_user->import( $user_data, $user_meta, $headers );
 
-			if ( ! $user_ids ) {
+			if ( ! $user_id ) {
 
 				$msg = sprintf(
 					// translators: %d - Line number in the CSV file being imported
