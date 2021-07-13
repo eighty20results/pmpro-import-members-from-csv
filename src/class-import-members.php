@@ -239,13 +239,11 @@ class Import_Members {
 	}
 
 	/**
-	 * Add admin JS
-	 *
-	 * @param string $hook
+	 * Load JavaScript and styles for wp-admin page
 	 *
 	 * @since 1.0
 	 **/
-	public function admin_enqueue_scripts( $hook ) {
+	public function admin_enqueue_scripts() {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_REQUEST['page'] ) || 'pmpro-import-members-from-csv' !== $_REQUEST['page'] ) {
