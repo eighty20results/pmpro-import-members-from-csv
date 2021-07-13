@@ -124,9 +124,9 @@ class Variables {
 	/**
 	 * The ID of the multisite to import the user data to/for
 	 *
-	 * @var null|int $site_id
+	 * @var int $site_id
 	 */
-	private $site_id = null;
+	private $site_id = 0;
 
 	/**
 	 * Import the CSV file as a "background" process (i.e. with a JavaScript loop)
@@ -218,7 +218,13 @@ class Variables {
 		}
 
 		// Set the error log info
-		$upload_dir         = wp_upload_dir();
+		$upload_dir = wp_upload_dir();
+
+		if ( empty( $upload_dir ) ) {
+			$this->error_log->debug( 'Error: Cannot find the WP_UPLOAD_DIR location!!' );
+			die();
+		}
+
 		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
 		$this->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
 		$this->fields       = apply_filters( 'e20r_import_supported_field_list', array() );
@@ -424,8 +430,11 @@ class Variables {
 	 */
 	public function get( $variable_name = null ) {
 		if ( empty( $variable_name ) ) {
+			$this->error_log->debug( 'Returning all variables' );
 			return $this->get_current_vars();
 		}
+		// phpcs:ignore
+		$this->error_log->debug( "Loading variable value from {$variable_name}: " . print_r( $this->{$variable_name}, true ) );
 
 		if ( ! isset( $this->{$variable_name} ) ) {
 			return null;
