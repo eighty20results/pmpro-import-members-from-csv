@@ -98,9 +98,7 @@ class PMPro {
 	 * Load PMPro specific functionality
 	 */
 	public function load_hooks() {
-
-		add_filter( 'e20r_import_supported_field_list', array( $this, 'load_fields' ), 1, 1 );
-		// TODO: Add apply_filters() for e20r_import_default_field_values
+		add_filter( 'e20r_import_supported_fields', array( $this, 'load_fields' ), 1, 1 );
 		add_filter( 'e20r_import_default_field_values', array( $this, 'update_field_values' ), 2, 3 );
 	}
 
