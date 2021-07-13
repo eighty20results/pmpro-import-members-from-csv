@@ -71,22 +71,22 @@ class Email_Templates {
 	public function maybe_send_email( $user ) {
 		global $pmproiufcsv_email;
 
-		$send_email = $this->variables->get( 'send_welcome_email' );
+		$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 		$fields     = $this->variables->get( 'fields' );
 
 		// Email 'your membership account is active' to member if they were imported with an active member status
 		if (
-			true === (bool) $send_email &&
+			true === $send_email &&
 			isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
 			// @phpstan-ignore-next-line
-			1 === version_compare( PMPRO_VERSION, '1.9.5' )
+			-1 === version_compare( PMPRO_VERSION, '1.9.5' )
 		) {
 			$subject = null;
 			$body    = null;
 
 			if ( ! empty( $pmproiufcsv_email ) ) {
-				$subject = apply_filters( 'pmp_im_imported_member_message_subject', $pmproiufcsv_email['subject'] );
-				$body    = apply_filters( 'pmp_im_imported_member_message_body', $pmproiufcsv_email['body'] );
+				$subject = $pmproiufcsv_email['subject'];
+				$body    = $pmproiufcsv_email['body'];
 			}
 
 			global $pmproet_email_defaults;
@@ -110,6 +110,7 @@ class Email_Templates {
 			$email           = new \PMProEmail();
 			$email->email    = $user->user_email; // @phpstan-ignore-line
 			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
+			$email->data     = apply_filters( 'e20r_import_message_data', $email->data ); // @phpstan-ignore-line
 			$email->subject  = $subject; // @phpstan-ignore-line
 			$email->template = $template_name; // @phpstan-ignore-line
 
@@ -119,8 +120,10 @@ class Email_Templates {
 				$email->body = $this->load_email_body( null, $email->template ); // @phpstan-ignore-line
 			}
 
-			$email->body = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
-			$email->body = apply_filters( 'e20r_import_member_message_body', $email->body );
+			$email->body    = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
+			$email->body    = apply_filters( 'e20r_import_message_body', $email->body );
+			$email->subject = apply_filters( 'pmp_im_imported_member_message_subject', $email->subject );
+			$email->subject = apply_filters( 'e20r_import_message_subject', $email->subject );
 
 			// Process and send email
 			$email->sendEmail();
