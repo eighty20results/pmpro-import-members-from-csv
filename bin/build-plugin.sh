@@ -4,7 +4,7 @@
 # Used by the custom plugin framework to build installable plugin archives
 #
 short_name="${E20R_PLUGIN_NAME}"
-remote_server="eighty20results.com"
+remote_server="${2}"
 declare -a include=( \
 	"css" \
 	"docs" \
