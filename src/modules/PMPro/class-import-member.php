@@ -497,7 +497,7 @@ class Import_Member {
 		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data );
 
 		$this->error_log->debug( "Should we send welcome email ({$send_email})? " . ( $send_email ? 'Yes' : 'No' ) );
-		$emails->maybe_send_email( $user );
+		$emails->maybe_send_email( $user, $user_meta );
 
 		// Log errors to log file
 		if ( ! empty( $e20r_import_err ) ) {
@@ -541,10 +541,14 @@ class Import_Member {
 
 		// If we don't need to create the order record, we'll exit here.
 		if ( false === (bool) $this->variables->get( 'create_order' ) ) {
+			$this->error_log->debug( "Will not attempt to add order for {$user_id}" );
 			return true;
 		}
 
 		$pmpro_dc_uses_table = "{$wpdb->base_prefix}pmpro_discount_codes_uses";
+
+		// BUG: If we don't have a membership_subscription_transaction_id _and_ a membership_gateway defined then
+		// we won't add a payment record (that's just not right!)
 
 		// Add a PMPro order record so integration with gateway doesn't cause surprises
 		if ( ! empty( $record['membership_subscription_transaction_id'] ) && ! empty( $record['membership_gateway'] ) ) {
@@ -573,8 +577,10 @@ class Import_Member {
 
 			if ( empty( $record['membership_initial_payment'] ) && empty( $record['membership_billing_amount'] ) && ! empty( $record['membership_id'] ) ) {
 
+				// BUG: Need the default values for the record (in case the data is missing from the import data)
 				$default_level = pmpro_getLevel( $record['membership_id'] );
 
+				// BUG: Only update the record data with default data _if_ the record data is missing
 				if ( ! empty( $default_level ) ) {
 					$record['membership_initial_payment'] = $default_level->initial_payment;
 					$record['membership_billing_amount']  = $default_level->billing_amount;
