@@ -494,11 +494,12 @@ readme: changelog # metadata
 #
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "pmpro-import-members"; \
+  		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)" "$(E20R_DEPLOYMENT_SERVER)"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "loader") \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
