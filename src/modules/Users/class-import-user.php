@@ -189,12 +189,12 @@ class Import_User {
 			return $user_ids;
 		}
 
+		$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
+
 		// If creating a new user and no password was set, let auto-generate one!
-		if ( true === Create_Password::validate( $user_data, $allow_update ) ) {
+		if ( true === Create_Password::validate( $user_data, $allow_update, ( $user_id_exists ? $user : null ) ) ) {
 			$user_data['user_pass'] = wp_generate_password( 12, false );
 		}
-
-		$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
 
 		// Insert, Update or insert without (re) hashing the password
 		if ( true === $needs_update && false === $password_hashing_disabled ) {
