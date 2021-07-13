@@ -94,9 +94,16 @@ class Import_Members {
 	private $validations = array();
 
 	/**
+	 * Instance of the PMPro import logic
+	 *
+	 * @var PMPro|null $pmpro
+	 */
+	private $pmpro = null;
+	/**
 	 * Import_Members constructor.
 	 */
 	private function __construct() {
+		$this->pmpro       = PMPro::get_instance();
 		$this->data        = new Data();
 		$this->import_user = new Import_User();
 		$this->variables   = new Variables();
@@ -146,7 +153,8 @@ class Import_Members {
 		if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
 			add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10, 0 );
 		}
-		add_action( 'plugins_loaded', array( PMPro::get_instance(), 'load_hooks' ), 11, 0 );
+		add_action( 'plugins_loaded', array( $this->pmpro, 'load_hooks' ), 11, 0 );
+		add_action( 'plugins_loaded', array( $this->import_user, 'load_actions' ), 11, 0 );
 		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99, 0 );
 		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99, 0 );
 		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99, 0 );
@@ -164,7 +172,7 @@ class Import_Members {
 		// PMPro specific capabilities
 		// We do this in the CSV() class as it's a clean-up operation
 		// add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 ); // phpcs:ignore
-		add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 2 );
+		// add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 3 );
 		add_action(
 			'e20r_after_user_import',
 			array(
