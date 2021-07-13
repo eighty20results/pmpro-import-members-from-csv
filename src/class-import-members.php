@@ -24,6 +24,7 @@ use E20R\Import_Members\Import\Page;
 use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BuddyPress_Validation;
 use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
+use E20R\Import_Members\Modules\PMPro\PMPro;
 use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Validate\Validate;
@@ -145,6 +146,7 @@ class Import_Members {
 		if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
 			add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10, 0 );
 		}
+		add_action( 'plugins_loaded', array( PMPro::get_instance(), 'load_hooks' ), 11, 0 );
 		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99, 0 );
 		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99, 0 );
 		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99, 0 );
