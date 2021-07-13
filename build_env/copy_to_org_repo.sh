@@ -71,6 +71,7 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/.dockerignore \
 	trunk/.editorconfig \
 	trunk/build_readmes \
+	trunk/build_config \
 	trunk/patchwork.json \
 	trunk/remove_update.sh \
 	trunk/metadata.json \
@@ -88,13 +89,7 @@ read -r -a RM_LIST <<< "trunk/.git \
 	trunk/bin \
 	trunk/inc \
 	tags/${VERSION}/.git \
-	trunk/class/utilities/.git \
-	trunk/class/utilities/bin \
-	trunk/class/utilities/.gitignore \
-	trunk/class/utilities/README.txt \
-	trunk/class/utilities/.editorconfig \
-	trunk/class/utilities/metadata.json \
-	trunk/class/utilities/composer.json \
+	trunk/class \
 	trunk/tests"
 
 
