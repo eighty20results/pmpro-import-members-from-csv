@@ -1,5 +1,9 @@
 name: Release to wordpress.org
 
+defaults:
+  run:
+    shell: bash
+
 on:
   # Deploy when a new release is created
   release:
@@ -27,14 +31,18 @@ jobs:
         with:
           repository: eighty20results/pmpro-import-members-from-csv
           ref: main
-      - name: Run the unit tests
-        run: |
-          ln -s $(which composer) ./composer.phar
-          make unit-test
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+      - name: Run the plugin tests
+        run: make test
       - name: WordPress Plugin Deployment for ${{ github.ref }}
         uses: eighty20results/pmpro-import-members-from-csv@main
         env:
           SLUG: pmpro-import-members-from-csv
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB }}

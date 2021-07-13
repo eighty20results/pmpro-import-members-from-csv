@@ -66,7 +66,7 @@ class Error_Log {
 				),
 				'error'
 			);
-
+			return;
 		}
 
 		if ( false === $log ) {
@@ -145,11 +145,11 @@ class Error_Log {
 	/**
 	 * Identify the calling function (used in debug logger
 	 *
-	 * @return array|string
+	 * @return string
 	 *
 	 * @access public
 	 */
-	private function who_called_me() {
+	private function who_called_me() : string {
 		$trace  = debug_backtrace(); // phpcs:ignore
 		$caller = $trace[2];
 

@@ -1,4 +1,5 @@
 E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
+E20R_PLUGIN_BASE_FILE ?= class.pmpro-import-members.php
 WP_DEPENDENCIES ?= paid-memberships-pro
 
 E20R_DEPENDENCIES ?= 00-e20r-utilities
@@ -7,8 +8,6 @@ E20R_UTILITIES_PATH ?= ~/PhpStormProjects/Utilities
 DOCKER_USER ?= eighty20results
 DOCKER_ENV ?= Docker.app
 DOCKER_IS_RUNNING := $(shell ps -ef | grep $(DOCKER_ENV) | wc -l | xargs)
-CONTAINER_ACCESS_TOKEN := $(shell [[ -f ../docker.hub.key ]] && cat ../docker.hub.key)
-WP_IMAGE_VERSION ?= 1.0
 
 COMPOSER_VERSION ?= 1.29.2
 # COMPOSER_BIN := $(shell which composer)
@@ -21,3 +20,7 @@ APACHE_RUN_GROUP ?= $(shell id -u)
 
 WP_VERSION ?= latest
 DB_VERSION ?= latest
+WP_IMAGE_VERSION ?= 1.0
+
+PHP_CODE_PATHS := *.php src/*/*.php src/*/*/*.php
+PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*,src/utilities/*

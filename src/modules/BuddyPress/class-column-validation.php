@@ -37,29 +37,29 @@
 
 namespace E20R\Import_Members\Modules\BuddyPress;
 
-
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Base_Validation;
+use E20R\Import_Members\Modules\BuddyPress\BuddyPress;
 
 class Column_Validation extends Base_Validation {
-	
+
 	/**
 	 * Get or instantiate and get the current class
 	 *
-	 * @return Column_Validation|null
+	 * @return Column_Validation|Base_Validation|null
 	 */
 	public static function get_instance() {
 
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
-			
+
 			add_filter(
 				'e20r_import_errors_to_ignore',
 				array( self::$instance, 'load_ignored_module_errors' ),
 				10,
-			2
+				2
 			);
-			
+
 			// Add list of errors to ignore for the BuddyPress module
 			self::$instance->errors_to_ignore = apply_filters(
 				'e20r_import_errors_to_ignore',
@@ -70,7 +70,7 @@ class Column_Validation extends Base_Validation {
 
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Define the module specific errors to ignore
 	 *
@@ -80,20 +80,20 @@ class Column_Validation extends Base_Validation {
 	 * @return array
 	 */
 	public function load_ignored_module_errors( $ignored_error_list, $module_name = 'buddypress' ) {
-		
-		if ( $module_name !== 'buddypress' ) {
+
+		if ( 'buddypress' !== $module_name ) {
 			return $ignored_error_list;
 		}
-		
-		$this->error_log->debug("Loading BuddyPress specific error(s) when it's safe to can continue importing");
-		
+
+		$this->error_log->debug( "Loading BuddyPress specific error(s) when it's safe to can continue importing" );
+
 		$this->errors_to_ignore = array(
 			'bp_field_name' => true,
 		);
-		
+
 		return $ignored_error_list + $this->errors_to_ignore;
 	}
-	
+
 	/**
 	 * Load action and filter handlers for PMPro validation
 	 */
@@ -102,7 +102,7 @@ class Column_Validation extends Base_Validation {
 		if ( ! function_exists( 'bp_core_new_nav_default' ) ) {
 			return;
 		}
-		
+
 		add_filter( 'e20r_import_members_validate_field_data', array( $this, 'bp_field_exists' ), 1, 3 );
 	}
 
@@ -116,35 +116,26 @@ class Column_Validation extends Base_Validation {
 	 * @return bool
 	 */
 	public function bp_field_exists( $has_error, $user_id, $fields ) {
-		
-		$buddy_press = BuddyPress::get_instance();
+
+		$buddy_press = new BuddyPress();
 		$buddy_press->load_fields( array() );
 
-		if ( ! isset( $fields['bp_field_name'])) {
-			$this->error_log->debug("No need to process 'bp_field_name' column");
+		if ( ! isset( $fields['bp_field_name'] ) ) {
+			$this->error_log->debug( "No need to process 'bp_field_name' column" );
 			return $has_error;
 		}
 
-		if ( ! isset( $fields['bp_field_name'] ) && in_array( 'bp_field_name', array_keys( $fields ) ) ) {
+		if ( ! isset( $fields['bp_field_name'] ) && in_array( 'bp_field_name', array_keys( $fields ), true ) ) {
 			$this->error_log->debug( "'bp_field_name' is doesn't need to be processed..." );
 			return $has_error;
 		}
 
 		if ( isset( $fields['bp_field_name'] ) && empty( $fields['bp_field_name'] ) ) {
-			$has_error = $has_error && ( true && ! $this->ignore_validation_error( 'bp_field_name' ) );
+			$has_error = $has_error && ( ! $this->ignore_validation_error( 'bp_field_name' ) );
 		}
 
 		// FIXME: Add check for 'bp_field_exists' for the supplied fields/data
-		
-		return $has_error;
-	}
 
-	/**
-	 * Disable the __clone() magic method
-	 *
-	 * @access private
-	 */
-	private function __clone() {
-		// TODO: Implement __clone() method.
+		return $has_error;
 	}
 }

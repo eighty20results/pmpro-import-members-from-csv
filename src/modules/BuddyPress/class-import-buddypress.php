@@ -19,7 +19,6 @@
 
 namespace E20R\Import_Members\Modules\BuddyPress;
 
-
 class Import_BuddyPress {
-
+	// TODO: Create BuddyPress import class
 }

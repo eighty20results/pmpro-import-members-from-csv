@@ -3,7 +3,7 @@
 Plugin Name: Import Paid Memberships Pro Members from CSV
 Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
 Description: Import Users and their metadata from a csv file.
-Version: 3.0.5
+Version: 3.0.6
 Requires PHP: 7.3
 Author: <a href="https://eighty20results.com/thomas-sjolshagen/">Thomas Sjolshagen <thomas@eighty20results.com></a>
 License: GPL2
@@ -54,10 +54,10 @@ if ( ! defined( 'E20R_IM_CSV_ENCLOSURE' ) ) {
 }
 
 if ( ! defined( 'E20R_IMPORT_VERSION' ) ) {
-	define( 'E20R_IMPORT_VERSION', '3.0.5' );
+	define( 'E20R_IMPORT_VERSION', '3.0.6' );
 }
 
-require_once plugin_dir_path( __FILE__ ) . '/class-activateutilitiesplugin.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-activateutilitiesplugin.php';
 
 /**
  * Class Loader - AutoLoad classes/sources for the plugin
@@ -106,32 +106,42 @@ class Loader {
 
 		foreach ( $base_paths as $base_path ) {
 
-			$iterator = new RecursiveDirectoryIterator(
-				$base_path,
-				RecursiveDirectoryIterator::SKIP_DOTS |
-				RecursiveIteratorIterator::SELF_FIRST |
-				RecursiveIteratorIterator::CATCH_GET_CHILD |
-				RecursiveDirectoryIterator::FOLLOW_SYMLINKS
-			);
+			try {
+				$iterator = new RecursiveDirectoryIterator(
+					$base_path,
+					RecursiveDirectoryIterator::SKIP_DOTS |
+					RecursiveIteratorIterator::SELF_FIRST |
+					RecursiveIteratorIterator::CATCH_GET_CHILD |
+					RecursiveDirectoryIterator::FOLLOW_SYMLINKS
+				);
+			} catch ( \Exception $e ) {
+				print 'Error: ' . $e->getMessage(); // phpcs:ignore
+				return;
+			}
 
-			$filter = new RecursiveCallbackFilterIterator(
-				$iterator,
-				function ( $current, $key, $iterator ) use ( $filename ) {
+			try {
+				$filter = new RecursiveCallbackFilterIterator(
+					$iterator,
+					function ( $current, $key, $iterator ) use ( $filename ) {
 
-					// Skip hidden files and directories.
-					if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
-						return false;
+						// Skip hidden files and directories.
+						if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
+							return false;
+						}
+
+						if ( $current->isDir() ) {
+							// Only recurse into intended subdirectories.
+							return $current->getFilename() === $filename;
+						} else {
+							// Only consume files of interest.
+							return str_starts_with( $current->getFilename(), $filename );
+						}
 					}
-
-					if ( $current->isDir() ) {
-						// Only recurse into intended subdirectories.
-						return $current->getFilename() === $filename;
-					} else {
-						// Only consume files of interest.
-						return str_starts_with( $current->getFilename(), $filename );
-					}
-				}
-			);
+				);
+			} catch ( \Exception $e ) {
+				echo 'Autoloader error: ' . $e->getMessage(); // phpcs:ignore
+				return;
+			}
 
 			foreach ( new RecursiveIteratorIterator( $iterator ) as $f_filename => $f_file ) {
 
@@ -142,7 +152,6 @@ class Loader {
 					require_once $class_path;
 				}
 			}
-			return true;
 		}
 	}
 

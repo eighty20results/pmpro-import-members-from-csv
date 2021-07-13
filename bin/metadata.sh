@@ -46,5 +46,5 @@ if [[ -f ./metadata.json ]]; then
 		mv ./new_metadata.json ./metadata.json
 fi
 
-# git commit -m "BUG FIX: Updated metdata.json for v${version} and WP ${wordpress_version}" ./metadata.json
+git commit -m "BUG FIX: Updated metdata.json for v${version} and WP ${wordpress_version}" ./metadata.json
 

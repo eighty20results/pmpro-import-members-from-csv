@@ -18,7 +18,6 @@
  */
 namespace E20R\Import_Members\Modules\PMPro;
 
-
 use E20R\Import_Members\Error_Log;
 
 class PMPro {

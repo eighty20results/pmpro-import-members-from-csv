@@ -1,18 +1,19 @@
 parameters:
     level: 5
+    parallel:
+    	maximumNumberOfProcesses: 2
+    ignoreErrors:
+        # Uses func_get_args()
+        - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
+        - '#Parameter .* \$function_to_.* of function .* expects .*callable\(\): mixed.* given\.$#'
+        - '#Parameter .* \$level of function pmpro_changeMembershipLevel expects int, array\<string, mixed\> given\.$#'
+    scanDirectories:
+    	- inc/
     paths:
         - class.pmpro-import-members.php
+        - class-activateutilitiesplugin.php
         - src/
-        - src/Import
-        - src/modules
-        - src/validate
-        - tests/wpunit
-        - tests/unit
-        - tests/functional
-        - tests/acceptance
     bootstrapFiles:
-    	- tests/bootstrap.php
     	- class.pmpro-import-members.php
     excludePaths:
-        - inc/
-        - tests/*/data/*
+        - tests/

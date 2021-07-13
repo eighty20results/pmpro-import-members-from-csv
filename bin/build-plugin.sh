@@ -14,7 +14,7 @@ declare -a include=( \
 	"javascript" \
 	"languages" \
 	"src" \
-	"class.${short_name}.php" \
+	"class.pmpro-import-members.php" \
 	"README.txt" \
 	"README.md" \
 	"CHANGELOG.md"
@@ -30,9 +30,7 @@ declare -a build=( \
 	"inc/yahnis-elsts" \
 )
 plugin_path="${short_name}"
-version=$(egrep "^Version:" ../class-utility-loader.php | \
-	sed 's/[[:alpha:]|(|[:space:]|\:]//g' | \
-	awk -F- '{printf "%s", $1}')
+version=$(./get_plugin_version.sh class.pmpro-import-members.php)
 metadata="../metadata.json"
 src_path="../"
 dst_path="../build/${plugin_path}"

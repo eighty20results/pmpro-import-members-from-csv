@@ -14,7 +14,7 @@ CURL := $(shell which curl)
 UNZIP := $(shell which unzip)
 PHP_BIN := $(shell which php)
 DC_BIN := $(shell which docker-compose)
-SQL_BACKUP_FILE ?= $(PWD)/.circleci/docker/test/db_backup
+SQL_BACKUP_FILE ?= $(BASE_PATH)/tests/_data
 MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
@@ -24,14 +24,33 @@ WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
-CONTAINER_ACCESS_TOKEN := $(shell [[ -f ./docker.hub.key ]] && cat ./docker.hub.key)
+
+FOUND_WP_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/wpunit/testcases/*.php)
+FOUND_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/unit/testcases/*.php)
+FOUND_WP_ACCEPTANCE_TESTS ?= $(wildcard $(BASE_PATH)/tests/acceptance/testcases/*.php)
+
+ifneq ($(wildcard ./docker.hub.key),)
+$(info Path to key for docker hub exists)
+CONTAINER_ACCESS_TOKEN := $(shell cat ./docker.hub.key)
+endif
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
+$(info Setting CONTAINER_ACCESS_TOKEN from environment variable)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
 endif
+DOWNLOAD_MODULE := 1
+
+$(info Wildcard result: $(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php))
+
+# Determine if there is a local (to this system) instance of the E20R Utilities module repository
+ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php),)
+DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php 2>/dev/null && echo "0")
+endif
+
+$(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
 
 #ifeq ($(CONTAINER_ACCESS_TOKEN),)
 #	echo "Error: Docker login token is not defined!"
@@ -46,9 +65,11 @@ VOLUME_CONTAINER ?= $(PROJECT)_volume
 DC_CONFIG_FILE ?= $(PWD)/docker-compose.yml
 DC_ENV_FILE ?= $(PWD)/tests/_envs/.env.testing
 
-STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
     		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-    		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) ps -q 2> /dev/null | wc -l)
+    		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) ps -q 2> /dev/null | wc -l | xargs)
+
+$(info Number of running docker images:$(STACK_RUNNING))
 
 .PHONY: \
 	docs \
@@ -60,8 +81,9 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	clean-inc \
 	clean-wp-deps \
 	real-clean \
-	deps \
+	wp-deps \
 	e20r-deps \
+	php-composer \
 	is-docker-running \
 	docker-deps \
 	docker-compose-deps \
@@ -88,36 +110,55 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	image-scan \
 	repo-login
 
+#
+# Clean up Codeception and GitHub action artifacts
+#
 clean:
 	@if [[ -n "$(STACK_RUNNING)" ]]; then \
 		if [[ -f $(COMPOSER_DIR)/bin/codecept ]]; then \
 			$(COMPOSER_DIR)/bin/codecept clean ; \
 		fi ; \
-		rm -rf $(COMPOSER_DIR)/wp_plugins ; \
 	fi
 	@rm -rf _actions/
 	@rm -rf workflow
 
+#
+# Remove all installed composer, WordPress and E20R plugins/components from the $(COMPOSER_DIR) - /inc - directory
+#
 clean-inc:
 	@find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php
 
+#
+# Log in to your Docker HUB account before performing pull/push operations
+#
 repo-login:
-	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
-		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN)
+	@if [[ -f ./docker.hub.key ]]; then \
+  		echo "Logging in to repo using file based access token" && \
+		docker login --username $(DOCKER_USER) --password-stdin < ./docker.hub.key ; \
+	fi
 
+#
+# (re)Build the Docker images for this development/test environment
+#
 image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
     	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty
 
+#
+# Trigger the security scan of the docker image(s)
+#
 image-scan: repo-login
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
     	docker scan --accept-license $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION)
 
-image-push: repo-login # image-scan - TODO: Enable image-scan if we can get the issues fixed
+#
+# Push the custom Docker images for this plugin to the Docker HUB (security scan if possible)
+# FIXME: Enable the image-scan target (if we can get the issues fixed)
+#
+image-push: repo-login # image-scan
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker tag $(PROJECT)_wordpress $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION)
@@ -125,6 +166,9 @@ image-push: repo-login # image-scan - TODO: Enable image-scan if we can get the 
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
     	docker push $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION)
 
+#
+# Attempt to pull (download) the plugin specific Docker images for the test/development environment
+#
 image-pull: repo-login
 	@echo "Pulling image from Docker repo"
 	@if docker manifest inspect $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION) > /dev/null; then \
@@ -133,6 +177,9 @@ image-pull: repo-login
         	docker pull $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION); \
      fi
 
+#
+# Clean up Composer and WP/E20R dependencies as well as the Docker container(s) used for testing/development
+#
 real-clean: stop-stack clean clean-inc clean-wp-deps
 	@echo "Make sure docker-compose stack for $(PROJECT) isn't running"
 	@echo "Stack is running: $(STACK_RUNNING)"
@@ -143,23 +190,36 @@ real-clean: stop-stack clean clean-inc clean-wp-deps
 	echo "Removing docker images" && \
 	docker image remove $(PROJECT)_wordpress --force
 
+#
+# Install the composer.phar file to the local directory
+#
 php-composer:
-	@if [[ -z "$(PHP_BIN)" ]]; then \
-		echo "Install the PHP Composer component" && \
-		$(which php) -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-		$(which php) -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
-        $(which php) composer-setup.php --install-dir=/usr/local/bin && \
-        $(which php) -r "unlink('composer-setup.php');" ; \
+	@if [[ -n "$(PHP_BIN)" ]]; then \
+	    echo "Install the PHP Composer component" && \
+	    $(PHP_BIN) -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+	    $(PHP_BIN) -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+            $(PHP_BIN) composer-setup.php --install-dir=$(BASE_PATH)/ && \
+            $(PHP_BIN) -r "unlink('composer-setup.php');" ; \
     fi
 
-composer-prod: real-clean clean-inc php-composer
+#
+# Install the Composer packages required by this plugin when it is released
+#
+composer-prod: composer.json real-clean clean-inc php-composer
 	@echo "Install/Update the Production composer dependencies"
 	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
 
-composer-dev: php-composer
+#
+# Install the required Composer packages to develop/test this plugin
+#
+composer-dev: composer.json php-composer
 	@echo "Use composer to install/update the PHP test dependencies"
 	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
 
+#
+# Install docker-compose for use
+# FIXME: At some point soon, we should be able to use `docker compose ...` rather than `docker-compose ...`
+#
 docker-compose:
 	@if [[ -z "$(DC_BIN)" && ! -f /usr/local/bin/docker-compose ]]; then \
 		echo "Installing docker-compose" && \
@@ -168,168 +228,293 @@ docker-compose:
 		sudo chmod +x /usr/local/bin/docker-compose ; \
 	fi
 
+#
+# Remove any WP or E20R custom plugins from inc/wp_plugins/*
+#
 clean-wp-deps:
 	@rm -rf $(COMPOSER_DIR)/wp_plugins/*
 
-# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main && \
+# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main &&
 
+#
+# Install custom plugins from Eighty/20 Results (hosted on eighty20results.com) or in the local filesystem
+# Test whether there is a local presence for the specified custom plugin and build it if present.
+# If not present on the local filesystem, then we'll download it and install it to inc/wp_plugins
+#
 e20r-deps:
-	@echo "Loading E20R custom plugin dependencies"
-	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-  		NEW_LICENSING="$$( [[ 0 -eq `grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php` ]] ; echo $? )" ; \
-  		echo "Checking for presence of $${e20r_plugin}..." && \
-  		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
-			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			if [[ "00-e20r-utilities" -ne "${e20r_plugin}" || ( "0" -ne "${NEW_LICENSING}" && "00-e20r-utilities" -ne "${e20r_plugin}" ) ]]; then \
-				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
-			elif [[ "00-e20r-utilities" -eq "${e20r_plugin}" && "0" -eq "${NEW_LICENSING}" ]]; then \
+	@echo "Loading defined E20R custom plugin dependencies"
+	@mkdir -p $(COMPOSER_DIR)/wp_plugins
+	@DOWNLOAD_MODULE=${DOWNLOAD_MODULE} ; \
+	for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
+		echo "Checking for presence of $${e20r_plugin}..." ; \
+		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
+			echo "Download or build $${e20r_plugin}.zip dependency?" && \
+			if [[ "0" -eq "$${DOWNLOAD_MODULE}" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				cd $(E20R_UTILITIES_PATH) && \
-				make new-release && \
-				make stop-stack && \
-				echo "Copy $${e20r_plugin}.zip to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
-				cp "$$(ls -art build/kits/* | tail -1)" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cd ${E20R_UTILITIES_PATH} && \
+				make build && \
+				new_kit="$$(ls -art build/kits/$${e20r_plugin}* | tail -1)" && \
+				echo "Copy $${new_kit} to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cp "$${new_kit}" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
 				cd $(BASE_PATH) ; \
+			else \
+				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 			fi ; \
-			echo "'Installing' the $${e20r_plugin}.zip plugin" && \
+			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+			echo "Installing the $${e20r_plugin}.zip plugin" && \
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
-  	done
+	done
 
+#
+# Check if Docker is running. If not, exit the make operation
+#
 is-docker-running:
 	@if [[ "0" -eq $(DOCKER_IS_RUNNING) ]]; then \
 		echo "Error: Docker is not running on this system!" && \
 		exit 1; \
 	fi
 
-docker-deps: is-docker-running docker-compose deps
+#
+# Install docker-compose and the WordPress plugins or E20R plugin dependencies listed
+#
+docker-deps: is-docker-running docker-compose wp-deps
 
-deps: clean composer-dev e20r-deps
+#
+# Install any composer dependencies (test & development) plus
+# WordPress plugins (using the WP.org plugin slug) that are listed as dependencies in the WP_DEPENDENCIES, and
+# triggers the e20r-deps target, which installs any Eighty20Results.com custom plugins we need (normally the
+# E20R Utilities module).
+#
+wp-deps: clean composer-dev e20r-deps
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to $(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
-  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" -s && \
+  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" && \
   		  $(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
   		  rm -f "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" ; \
   		fi ; \
   	done
 
-start-stack: docker-deps image-pull
+#
+# Install all required docker dependencies (docker-compose)
+# NOTE: This target assumes the main docker binaries are installed on the system where this Makefile runs!)
+#
+start-stack: docker-deps image-pull image-build
 	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
-	@echo "Current directory: $(shell pwd)"
-	@if [[ 2 -ne "$(STACK_RUNNING)" ]]; then \
+	@if [[ "2" -ne $(STACK_RUNNING) ]]; then \
   		echo "Building and starting the WordPress stack for testing purposes" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-			docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach ; \
+		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach --remove-orphans ; \
 	fi
+	@echo "Started the $(PROJECT) docker environment..."
 
+#
+# Start the docker-compose stack for this plugin _and_ import the .sql file (data) stored as
+# ./tests/_data/{PLUGIN_NAME}.sql
+#
 db-import: start-stack
 	@echo "Maybe load WordPress data...?"
-	@bin/wait-for-db.sh '$(MYSQL_USER)' '$(MYSQL_PASSWORD)' '$(WORDPRESS_DB_HOST)' '$(E20R_PLUGIN_NAME)'
-	@if [[ -f "$(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql" ]]; then \
-  		echo "Loading WordPress data to use for testing $(E20R_PLUGIN_NAME)"; \
-  		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
-			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-	  		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-        		exec -T database \
-        		/usr/bin/mysql -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) < $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql; \
+	@bin/wait-for-db.sh "$(MYSQL_USER)" "$(MYSQL_PASSWORD)" "$(WORDPRESS_DB_HOST)" "$(E20R_PLUGIN_NAME)"
+	@if [[ -f $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql ]]; then \
+  		echo "Loading WordPress data to use for testing $(E20R_PLUGIN_NAME)" && \
+  		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec -T database \
+        	mysql \
+        		--user=$(MYSQL_USER) \
+        		--password="$(MYSQL_PASSWORD)" \
+        		--host=$(WORDPRESS_DB_HOST) \
+        		$(MYSQL_DATABASE) < $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql ; \
   	fi
 
+#
+# Stop the docker-compose stack for this plugin
+#
 stop-stack:
 	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
 	@if [[ 0 -lt "$(STACK_RUNNING)" ]]; then \
   		echo "Stopping the $(PROJECT) WordPress stack" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
-        		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-        		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) down 2>/dev/null ; \
+			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+			docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) down 2>/dev/null ; \
 	fi
 
 
-restart: stop-stack start-stack db-import
+#
+# Restart the docker-compose stack and re-import the database
+#
+restart: stop-stack db-import
 
+#
+# Open a shell against the Docker container for the WordPress instance
+#
 wp-shell:
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec wordpress /bin/bash
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+    		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+    		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec wordpress /bin/bash
 
+#
+# Show the Docker logs for the WordPress instance
+# (likely containing debug logging from the plugin - if it uses the error_log() function)
+#
 wp-log:
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) logs -f wordpress
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) logs -f wordpress
 
-db-shell:
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database /bin/bash
+#
+# Open a shell against the Docker container for the MariaDB instance
+#
+db-shell: start-stack
+	@echo "Launching the docker shell for the user"
+	APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database /bin/bash
 
+#
+# Saves the MySQL Database content to the designated (local) path.
+# NOTE: You will need to commit/update the .sql file
+#
 db-backup:
-	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database \
- 		/usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database \
+ 			/usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
-phpstan-test: start-stack db-import
-	@echo "Loading the WordPress test stack"
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress php -d display_errors=on $(COMPOSER_DIR)/bin/phpstan.phar analyse -c ./phpstan.dist.neon --memory-limit 128M
+#
+# Using the local environment to execute the PHPStan tests (code analysis)
+#
+phpstan-test: composer-dev
+	@echo "Loading the PHP-Stan tests for $(PROJECT)"
+	@inc/bin/phpstan analyze \
+		--ansi \
+		--debug \
+		-v \
+		--configuration=./phpstan.dist.neon \
+		--no-interaction \
+		--memory-limit=-1
 
-code-standard-test:
-	@echo "Running WP Code Standards testing"
+#
+# Using the local environment to execute the PHP Code Standards tests (using WPCS-Extra ruleset)
+#
+code-standard-test: wp-deps
+	@echo "Running WP Code Standards testing for $(PROJECT)"
 	@$(COMPOSER_DIR)/bin/phpcs \
 		--runtime-set ignore_warnings_on_exit true \
 		--report=full \
 		--colors \
 		-p \
 		--standard=WordPress-Extra \
-		--ignore='$(COMPOSER_DIR)/*,node_modules/*,src/utilities/*' \
+		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
-		*.php src/*/*.php
+		$(PHP_CODE_PATHS)
 
-unit-test: deps
-	@$(COMPOSER_DIR)/bin/codecept run -v --debug unit
+#
+# Using codeception to execute standard Unit Tests for this plugin
+#
+unit-test: wp-deps
+	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
+		echo "Running Unit tests for $(PROJECT)"; \
+		$(COMPOSER_DIR)/bin/codecept run -v --debug unit ; \
+	fi
+# TODO: Add coverage support to the unit-test target
 
+#
+# Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
+#
 wp-unit-test: docker-deps start-stack db-import
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress $(COMPOSER_DIR)/bin/codecept run -v wpunit
-		# --coverage --coverage-html
+	@if [[ -n "$(FOUND_WP_UNIT_TESTS)" ]]; then \
+  		echo "Running WP Unit tests for $(PROJECT)"; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+			docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+				exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+				wordpress $(COMPOSER_DIR)/bin/codecept run -v wpunit ; \
+	fi
+# TODO: Add coverage support to the wp-unit-test target
 
+#
+# Using codeception to execute the Plugin Acceptance tests
+#
 acceptance-test: docker-deps start-stack db-import
-	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
-	 wordpress $(COMPOSER_DIR)/bin/codecept run -v acceptance
-
+	@if [[ -n "$(FOUND_WP_ACCEPTANCE_TESTS)" ]]; then \
+  		echo "Running WP Acceptance tests for $(PROJECT)"; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ wordpress \
+	 		$(COMPOSER_DIR)/bin/codecept run -v acceptance ; \
+	fi
+#
+# Using codeception to build the plugin
+#
 build-test: docker-deps start-stack db-import
-	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
-	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
+	@@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
+	 		wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean deps code-standard-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
+#
+# Using codeception to execute all defined tests for the plugin
+#
+test: clean wp-deps code-standard-test phpstan-test unit-test db-import wp-unit-test acceptance-test stop-stack
 
+#
+# Generate a GIT commit log in build_readmes/current.txt
+#
 git-log:
 	@./bin/create_log.sh
 
+#
+# Generate (and update) the custom WP Plugin Updater metadata.json file
+#
 metadata:
-	@./bin/metadata.sh
+	@./bin/metadata.sh "pmpro-import-members"
 
+#
+# Generate the CHANGELOG.md file for the plugin based on the git commit log
+#
 changelog: build_readmes/current.txt
-	@./bin/changelog.sh
+	@./bin/changelog.sh "pmpro-import-members"
 
+#
+# Generate and update the README.txt plus README.md files for the plugin
+#
 readme: changelog # metadata
-	@./bin/readme.sh
+	@./bin/readme.sh "pmpro-import-members"
 
-build: test clean-inc composer-prod
-	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) && \
-	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
+#
+# Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
+# Saves the built plugin .zip archive to build/kits
+#
+$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
+	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "pmpro-import-members"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
+
+#
+# Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
+# Saves the built plugin .zip archive to build/kits
+#
+build: $(E20R_PLUGIN_BASE_FILE)
+	@echo "Built kit for $(E20R_PLUGIN_NAME)"
 
 #new-release: test composer-prod
 #	@./build_env/get_version.sh && \
 #		git tag $${VERSION} && \
 #		./build_env/create_release.sh
 
+#
+# Generate the README.*, CHANGELOG.md and metadata.json files for the plugin (all current docs)
+#
 docs: git-log readme

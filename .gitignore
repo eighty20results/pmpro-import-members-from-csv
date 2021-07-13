@@ -57,5 +57,4 @@ fabric.properties
 /composer.phar
 /composer.lock
 # /inc
-/docker-env/pmpro-import-members-from-csv.sql
 /docker.hub.key

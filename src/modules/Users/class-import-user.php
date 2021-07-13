@@ -352,6 +352,7 @@ class Import_User {
 
 		} else {
 			$update = false;
+			$id     = null;
 			// Here we're supposed to hash the password
 			// $user_pass = wp_hash_password( $userdata['user_pass'] );
 		}
@@ -554,7 +555,7 @@ class Import_User {
 		$data = wp_unslash( $compacted );
 
 		if ( true === $update ) {
-			$wpdb->update( $wpdb->users, $data, compact( 'ID' ) );
+			$wpdb->update( $wpdb->users, $data, compact( 'id' ) );
 			$user_id = (int) $id;
 		} else {
 			$wpdb->insert( $wpdb->users, $data + compact( 'user_login' ) );

@@ -73,7 +73,17 @@ class Import_Sponsors {
 	 * Load licensed module(s) if license is active
 	 */
 	public function load_sponsor_import() {
-		if ( true === Licensing::is_licensed( 'import_sponsors' ) ) {
+		$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
+
+		if ( false === $check->isPrivate() ) {
+			$licensing   = new Licensing( Import_Members::E20R_LICENSE_SKU );
+			$is_licensed = $licensing->is_licensed( Import_Members::E20R_LICENSE_SKU, false );
+		} else {
+			// @phpstan-ignore-next-line
+			$is_licensed = Licensing::is_licensed( Import_Members::E20R_LICENSE_SKU, false );
+		}
+
+		if ( true === $is_licensed ) {
 			add_action( 'e20r_after_user_import', array( $this, 'maybe_add_sponsor_info' ), 100, 3 );
 		}
 	}
@@ -168,7 +178,7 @@ class Import_Sponsors {
 	 * Attempt to save the user ID's sponsor info
 	 *
 	 * @param int     $sponsored_user_id
-	 * @param Sponsor $sponsor
+	 * @param Sponsor|\WP_User $sponsor
 	 * @param bool    $last_try
 	 *
 	 * @return WP_Error|bool
@@ -195,7 +205,9 @@ class Import_Sponsors {
 		}
 
 		// Get user info and ensure they have a current membership level
-		$sponsored_user                   = get_userdata( $sponsored_user_id );
+		$sponsored_user = get_userdata( $sponsored_user_id );
+
+		// @phpstan-ignore-next-line
 		$sponsored_user->membership_level = pmpro_getMembershipLevelForUser( $sponsored_user_id, true );
 		$delayed_sponsor_link             = $this->variables->get( 'delayed_sponsor_link' );
 		$status                           = true;
@@ -234,7 +246,7 @@ class Import_Sponsors {
 		}
 
 		//Make sure the sponsor has a discount code
-		$code_id = pmprosm_getCodeByUserID( $sponsor_id );
+		$code_id = pmprosm_getCodeByUserID( $sponsor_id ); // @phpstan-ignore-line
 
 		$this->error_log->debug( "Got sponsor code {$code_id} for sponsor {$sponsor_id}" );
 
@@ -294,6 +306,7 @@ class Import_Sponsors {
 		if ( empty( $code_id ) ) {
 			$this->error_log->debug( "Have to create a sponsor code for {$sponsor_id}" );
 
+			// @phpstan-ignore-next-line
 			$code_id = pmprosm_createSponsorCode( $sponsor_id, $sponsor_level_id, $uses );
 		}
 
@@ -316,7 +329,7 @@ class Import_Sponsors {
 		$update = array(
 			'code_id'       => $code_id,
 			'user_id'       => $sponsored_user_id,
-			'membership_id' => $sponsored_user->membership_level->id,
+			'membership_id' => $sponsored_user->membership_level->id, // @phpstan-ignore-line
 			'status'        => 'active',
 		);
 
@@ -341,19 +354,20 @@ class Import_Sponsors {
 
 		$this->error_log->debug( "Updated member record for {$sponsored_user_id} with sponsor info" );
 
+		// @phpstan-ignore-next-line
 		pmprosm_addDiscountCodeUse( $sponsored_user_id, $sponsored_user->membership_level->ID, $code_id );
 
 		$this->error_log->debug( "Updated the usage of {$code_id}" );
 
-		if ( empty( $error ) ) {
+		if ( empty( $e20r_import_err ) ) {
 			$status = true;
 
 			// Clear the user meta
 			delete_user_meta( $sponsored_user_id, 'pmprosm_sponsor' );
 
 		} else {
-			$error->log_errors(
-				array( $error ),
+			$this->error_log->log_errors(
+				$e20r_import_err,
 				$this->variables->get( 'log_file_path' ),
 				$this->variables->get( 'log_file_url' )
 			);
@@ -397,6 +411,7 @@ class Import_Sponsors {
 				continue;
 			}
 
+			// @phpstan-ignore-next-line
 			$sponsor->membership_level = pmpro_getMembershipLevelForUser( $sponsor_id, true );
 
 			if ( empty( $sponsor->membership_level ) ) {

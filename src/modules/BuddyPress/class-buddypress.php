@@ -71,7 +71,7 @@ class BuddyPress {
 	 *
 	 * @access private
 	 */
-	private function __construct() {
+	public function __construct() {
 		$this->data      = new Data();
 		$this->error_log = new Error_Log(); // phpcs:ignore
 
@@ -83,18 +83,6 @@ class BuddyPress {
 			)
 		);
 	}
-
-	/**
-	 * Get or instantiate and return this class (BuddyPress)
-	 *
-	 * @return BuddyPress|null
-	 */
-//	public static function get_instance() {
-//		if ( null === self::$instance ) {
-//			self::$instance = new self();
-//		}
-//		return self::$instance;
-//	}
 
 	/**
 	 * Load BuddyPress specific functionality
@@ -147,14 +135,5 @@ class BuddyPress {
 		}
 
 		return $field_list + $this->field_list;
-	}
-
-	/**
-	 * Clone the class (Singleton)
-	 *
-	 * @access private
-	 */
-	private function __clone() {
-		// TODO: Implement __clone() method.
 	}
 }

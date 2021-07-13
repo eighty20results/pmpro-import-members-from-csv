@@ -29,3 +29,4 @@ coverage:
         - "*.php"
     exclude:
         - tests/*
+        - inc/*

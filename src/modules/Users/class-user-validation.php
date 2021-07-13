@@ -19,13 +19,49 @@
 
 namespace E20R\Import_Members\Validate;
 
-
 use E20R\Import_Members\Import_Members;
 use E20R\Import_Members\Status;
 
 class User_Validation extends Validate {
-	
-	
+
+	/**
+	 * Return the User_Validation class instance
+	 *
+	 * @return Base_Validation|User_Validation|null
+	 */
+	public static function get_instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Return list of validation errors we'll ignore (only warn for)
+	 *
+	 * @param array $ignored_error_list
+	 * @param string $module_name
+	 *
+	 * @return array
+	 */
+	public function load_ignored_module_errors( $ignored_error_list, $module_name = 'users' ) {
+		return $ignored_error_list;
+	}
+
+	/**
+	 * Load action and filter handlers for PMPro validation
+	 */
+	public function load_actions() {
+
+		add_filter(
+			'e20r_import_users_validate_field_data',
+			array( $this, 'validate' ),
+			1,
+			3
+		);
+	}
+
 	/**
 	 * Process the status for user validations and set a status message
 	 *
@@ -35,10 +71,10 @@ class User_Validation extends Validate {
 	 * @return bool
 	 */
 	public static function status_msg( $status, $allow_update ) {
-		
+
 		global $e20r_import_err;
 		global $active_line_number;
-		
+
 		$should_exit = false;
 
 		switch ( $status ) {
@@ -50,7 +86,7 @@ class User_Validation extends Validate {
 				break;
 
 			case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
-				$msg = __(
+				$msg         = __(
 					'User ID specified and user record exists but the "Update User Record" option is not selected',
 					'pmpro-import-members-from-csv'
 				);
@@ -66,23 +102,22 @@ class User_Validation extends Validate {
 				$should_exit = true;
 				break;
 			default:
-				
-				$msg = null;
+				$msg         = null;
 				$should_exit = false;
 		}
-		
+
 		// Process the resulting error/warning message
 		if ( ! empty( $msg ) ) {
-			
+
 			// Save the error message (based on the supplied status)
-			$e20r_import_err["user_check_{$active_line_number}"] = $msg;
-			
+			$e20r_import_err[ "user_check_{$active_line_number}" ] = $msg;
+
 			return $should_exit;
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Validate the User information in the record
 	 *
@@ -92,7 +127,8 @@ class User_Validation extends Validate {
 	 * @return bool|int
 	 */
 	public static function validate( $record, $allow_update ) {
-		
-		return false;
+
+		// TODO: Implement validation logic for User record(s)
+		return ! empty( $record );
 	}
 }

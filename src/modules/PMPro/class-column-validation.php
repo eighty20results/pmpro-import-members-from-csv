@@ -31,16 +31,16 @@ class Column_Validation extends Base_Validation {
 	/**
 	 * Instance of the PMPro Column_Validation class
 	 *
-	 * @var null|Column_Validation $instance
+	 * @var null|Column_Validation|Base_Validation $instance
 	 */
 	protected static $instance = null;
 
 	/**
 	 * Get or instantiate and get the current class
 	 *
-	 * @return Column_Validation|null
+	 * @return Column_Validation|Base_Validation|null
 	 */
-	public static function get_instance() : \E20R\Import_Members\Modules\PMPro\Column_Validation {
+	public static function get_instance() {
 
 		if ( true === is_null( self::$instance ) ) {
 			self::$instance = new self();
@@ -164,7 +164,7 @@ class Column_Validation extends Base_Validation {
 
 		$e20r_import_err['invalid_membership_id'] = new WP_Error( 'e20r_im_member', $msg );
 
-		$has_error = true && ( ! $this->ignore_validation_error( 'invalid_membership_id' ) );
+		$has_error = ( ! $this->ignore_validation_error( 'invalid_membership_id' ) );
 
 		return $has_error;
 	}
@@ -172,9 +172,9 @@ class Column_Validation extends Base_Validation {
 	/**
 	 * Can't import membership data when user has incorrect start date format
 	 *
-	 * @param $has_error
-	 * @param $user_id
-	 * @param $fields
+	 * @param bool $has_error
+	 * @param int $user_id
+	 * @param array $fields
 	 *
 	 * @return bool
 	 */
@@ -227,7 +227,7 @@ class Column_Validation extends Base_Validation {
 				$user_id
 			);
 
-			$has_error = true && ( ! $this->ignore_validation_error( 'startdate_format' ) );
+			$has_error = ( ! $this->ignore_validation_error( 'startdate_format' ) );
 		}
 
 		return $has_error;
@@ -236,9 +236,9 @@ class Column_Validation extends Base_Validation {
 	/**
 	 * Can't import membership data when user has incorrect start date format or value
 	 *
-	 * @param $has_error
-	 * @param $user_id
-	 * @param $fields
+	 * @param bool $has_error
+	 * @param int $user_id
+	 * @param array $fields
 	 *
 	 * @return bool
 	 */
@@ -288,7 +288,7 @@ class Column_Validation extends Base_Validation {
 			);
 
 			$e20r_import_err['no_startdate'] = new WP_Error( 'e20r_im_member', $msg );
-			$has_error                       = true && ( ! $this->ignore_validation_error( 'no_startdate' ) );
+			$has_error                       = ( ! $this->ignore_validation_error( 'no_startdate' ) );
 		}
 		return $has_error;
 	}
@@ -296,9 +296,9 @@ class Column_Validation extends Base_Validation {
 	/**
 	 * Possible problem for membership data when user has incorrect end date format or value
 	 *
-	 * @param $has_error
-	 * @param $user_id
-	 * @param $fields
+	 * @param bool $has_error
+	 * @param int $user_id
+	 * @param array $fields
 	 *
 	 * @return bool
 	 */
@@ -334,7 +334,7 @@ class Column_Validation extends Base_Validation {
 			);
 
 			$e20r_import_err['bad_format_enddate'] = new WP_Error( 'e20r_im_member', $msg );
-			$has_error                             = true && ( ! $this->ignore_validation_error( 'bad_format_enddate' ) );
+			$has_error                             = ( ! $this->ignore_validation_error( 'bad_format_enddate' ) );
 
 			$should_be = Time::convert( $fields['membership_enddate'] );
 			$should_be = ( false === $should_be ? time() : $should_be );
@@ -377,7 +377,8 @@ class Column_Validation extends Base_Validation {
 
 		if (
 			! empty( $fields['membership_enddate'] ) &&
-			isset( $fields['membership_status'] ) && 'inactive' === $fields['membership_status'] &&
+			! empty( $fields['membership_status'] ) &&
+			'inactive' === $fields['membership_status'] &&
 			( time() < strtotime( $fields['membership_enddate'], time() ) )
 		) {
 
@@ -394,7 +395,7 @@ class Column_Validation extends Base_Validation {
 			);
 
 			$e20r_import_err['inactive_and_enddate'] = new WP_Error( 'e20r_im_member', $msg );
-			$has_error                               = true && ( ! $this->ignore_validation_error( 'inactive_and_enddate' ) );
+			$has_error                               = ( ! $this->ignore_validation_error( 'inactive_and_enddate' ) );
 		}
 
 		return $has_error;
@@ -449,7 +450,7 @@ class Column_Validation extends Base_Validation {
 			);
 
 			$e20r_import_err['valid_status'] = new WP_Error( 'e20r_im_member', $msg );
-			$has_error                       = true && ( ! $this->ignore_validation_error( 'valid_status' ) );
+			$has_error                       = ( ! $this->ignore_validation_error( 'valid_status' ) );
 		}
 
 		return $has_error;
@@ -504,7 +505,7 @@ class Column_Validation extends Base_Validation {
 			);
 
 			$e20r_import_err['link_subscription'] = new WP_Error( 'e20r_im_member', $msg );
-			$has_error                            = true && ( ! $this->ignore_validation_error( 'link_subscription' ) );
+			$has_error                            = ( ! $this->ignore_validation_error( 'link_subscription' ) );
 		}
 
 		return $has_error;
@@ -551,7 +552,7 @@ class Column_Validation extends Base_Validation {
 			);
 
 			$e20r_import_err['invalid_recurring_config'] = new WP_Error( 'e20r_im_member', $msg );
-			$has_error                                   = true && ( ! $this->ignore_validation_error( 'invalid_recurring_config' ) );
+			$has_error                                   = ( ! $this->ignore_validation_error( 'invalid_recurring_config' ) );
 		}
 
 		return $has_error;
@@ -593,6 +594,7 @@ class Column_Validation extends Base_Validation {
 				$user_id
 			);
 			$e20r_import_err['sub_id_no_paym_id'] = new WP_Error( 'e20r_im_member', $msg );
+			$has_error                            = ( ! $this->ignore_validation_error( 'sub_id_no_paym_id' ) );
 		}
 
 		return $has_error;
@@ -673,7 +675,7 @@ class Column_Validation extends Base_Validation {
 
 			$e20r_import_err[ "no_membership_id_column_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-			$has_error = true && ( ! $this->ignore_validation_error( 'no_membership_id_column' ) );
+			$has_error = ( ! $this->ignore_validation_error( 'no_membership_id_column' ) );
 		}
 
 		if ( false === $has_error && false === is_numeric( $fields['membership_id'] ) ) {
@@ -689,7 +691,7 @@ class Column_Validation extends Base_Validation {
 
 			$e20r_import_err[ "no_membership_id_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-			$has_error = true && ( ! $this->ignore_validation_error( 'no_membership_id' ) );
+			$has_error = ( ! $this->ignore_validation_error( 'no_membership_id' ) );
 		}
 
 		// Allow cancelling memberships, but trigger a warning!
@@ -706,7 +708,7 @@ class Column_Validation extends Base_Validation {
 
 			$e20r_import_err[ "cancelling_membership_level_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-			$has_error = false;
+			$has_error = ( ! $this->ignore_validation_error( 'cancelling_membership_level' ) );
 		}
 
 		return $has_error;
@@ -751,7 +753,7 @@ class Column_Validation extends Base_Validation {
 
 			$e20r_import_err[ "level_exists_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-			$has_error = true && ( ! $this->ignore_validation_error( 'level_exists' ) );
+			$has_error = ( ! $this->ignore_validation_error( 'level_exists' ) );
 		}
 		return $has_error;
 	}
@@ -798,7 +800,7 @@ class Column_Validation extends Base_Validation {
 
 			$e20r_import_err[ "recurring_w_enddate_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-			$has_error = true && ( ! $this->ignore_validation_error( 'recurring_w_enddate' ) );
+			$has_error = ( ! $this->ignore_validation_error( 'recurring_w_enddate' ) );
 		}
 		return $has_error;
 	}
@@ -844,7 +846,7 @@ class Column_Validation extends Base_Validation {
 
 			$e20r_import_err[ "correct_gw_env_variable_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-			$has_error = true && ( ! $this->ignore_validation_error( 'correct_gw_env_variable' ) );
+			$has_error = ( ! $this->ignore_validation_error( 'correct_gw_env_variable' ) );
 		}
 
 		return $has_error;
@@ -892,7 +894,7 @@ class Column_Validation extends Base_Validation {
 
 				$e20r_import_err[ "supported_gateway_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
-				$has_error = true && ( ! $this->ignore_validation_error( 'supported_gateway' ) );
+				$has_error = ( ! $this->ignore_validation_error( 'supported_gateway' ) );
 			}
 		}
 		return $has_error;

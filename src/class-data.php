@@ -81,12 +81,14 @@ class Data {
 
 		// Add PMPro info as applicable
 		if ( ! empty( $user ) ) {
+			// @phpstan-ignore-next-line
 			$user->membership_level = (
 			function_exists( 'pmpro_getMembershipLevelForUser' ) ?
 				pmpro_getMembershipLevelForUser( $user->ID, true ) :
 				false
 			);
 
+			// @phpstan-ignore-next-line
 			$user->membership_levels = (
 			function_exists( 'pmpro_getMembershipLevelsForUser' ) ?
 				pmpro_getMembershipLevelsForUser( $user->ID, true ) :
@@ -331,7 +333,7 @@ class Data {
 		$billing_fields = apply_filters( 'pmpro_import_members_billing_field_map', $billing_fields );
 
 		if ( ! in_array( $billing_field_name, array_keys( $billing_fields ), true ) ) {
-			return null;
+			return false;
 		}
 
 		return $billing_fields[ $billing_field_name ];

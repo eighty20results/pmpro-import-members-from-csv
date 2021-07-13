@@ -1,5 +1,9 @@
 name: Test of "Release to wordpress.org" workflows
 
+defaults:
+  run:
+    shell: bash
+
 on:
   push:
     tags:
@@ -24,14 +28,18 @@ jobs:
         with:
           repository: eighty20results/pmpro-import-members-from-csv
           ref: test_workflow_updates
-      - name: Run the unit tests
-        run: |
-          ln -s $(which composer) ./composer.phar
-          make unit-test
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+      - name: Run the plugin tests
+        run: make test
       - name: Test of "WordPress Plugin Deploy" for ${{ github.ref }}
         uses: eighty20results/pmpro-import-members-from-csv@test_workflow_updates
         env:
           SLUG: pmpro-import-members-from-csv
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB }}

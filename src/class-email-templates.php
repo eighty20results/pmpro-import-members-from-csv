@@ -75,9 +75,11 @@ class Email_Templates {
 		$fields     = $this->variables->get( 'fields' );
 
 		// Email 'your membership account is active' to member if they were imported with an active member status
-		if ( true === (bool) $send_email &&
-			 isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
-			 1 === version_compare( PMPRO_VERSION, '1.9.5' )
+		if (
+			true === (bool) $send_email &&
+			isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
+			// @phpstan-ignore-next-line
+			1 === version_compare( PMPRO_VERSION, '1.9.5' )
 		) {
 			$subject = null;
 			$body    = null;
@@ -102,19 +104,23 @@ class Email_Templates {
 
 			$this->error_log->debug( "Using {$template_name} template for '{$subject}' message" );
 
+			// PMPro is not good at defining properties in classes (badly reliant on the historically dynamic nature of PHP)
+			// so will have PHPStan ignore these lines until PMPro cleans up their stuff
+			// (i.e. TODO when PMPro takes better advantage of PHP)
 			$email           = new \PMProEmail();
-			$email->email    = $user->user_email;
-			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() );
-			$email->subject  = $subject;
-			$email->template = $template_name;
+			$email->email    = $user->user_email; // @phpstan-ignore-line
+			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
+			$email->subject  = $subject; // @phpstan-ignore-line
+			$email->template = $template_name; // @phpstan-ignore-line
 
 			if ( ! empty( $body ) ) {
-				$email->body = $body;
+				$email->body = $body; // @phpstan-ignore-line
 			} else {
-				$email->body = $this->load_email_body( null, $email->template );
+				$email->body = $this->load_email_body( null, $email->template ); // @phpstan-ignore-line
 			}
 
 			$email->body = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
+			$email->body = apply_filters( 'e20r_import_member_message_body', $email->body );
 
 			// Process and send email
 			$email->sendEmail();
@@ -227,7 +233,7 @@ class Email_Templates {
 			// Try to locate the template file in the file system
 			foreach ( $locations as $path ) {
 				if ( true === file_exists( $path ) ) {
-					$body = file_get_contents( $path );
+					$body = file_get_contents( $path ); // phpcs:ignore
 					break;
 				}
 			}
@@ -264,6 +270,7 @@ class Email_Templates {
 		$pmproet_email_defaults['imported_member'] = array(
 			'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
 			'description' => __( 'Import: Welcome Member', 'pmpro-import-members-from-csv' ),
+			// phpcs:ignore
 			'body'        => file_get_contents( Import_Members::$plugin_path . '/emails/imported_member.html' ),
 		);
 	}

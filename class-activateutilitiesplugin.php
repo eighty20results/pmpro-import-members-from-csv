@@ -82,7 +82,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				}
 
 				ob_start();
-				include WP_PLUGIN_DIR . '/' . $plugin;
+				include plugin_dir_path( __DIR__ ) . "/{$plugin}";
 				do_action( 'activate_plugin', trim( $plugin ) );
 
 				if ( $network_wide ) {
@@ -114,7 +114,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		/**
 		 * Error message to show when the E20R Utilities Module plugin is not installed and active
 		 *
-		 * @param $dependent_plugin_name
+		 * @param string $dependent_plugin_name
 		 */
 		public static function plugin_not_installed( $dependent_plugin_name ) {
 
@@ -142,7 +142,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		public static function attempt_activation( $path = null ) {
 
 			if ( empty( $path ) ) {
-				$path = trailingslashit( WP_PLUGIN_DIR ) . self::$plugin_slug;
+				$path = trailingslashit( plugin_dir_path( __DIR__ ) ) . self::$plugin_slug;
 			}
 
 			$path = trim( $path );
