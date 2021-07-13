@@ -570,7 +570,7 @@ class Page {
 							</fieldset>
 						</td>
 					</tr>
-					<!-- send_welcomeesc_attr_email -->
+					<!-- send_welcome_email -->
 					<tr valign="top">
 						<th scope="row"><?php esc_attr_e( 'Send WordPress notification to admin', 'pmpro-import-members-from-csv' ); ?></th>
 						<td>
@@ -594,8 +594,8 @@ class Page {
 								<legend class="screen-reader-text">
 									<span><?php esc_attr_e( 'Send the imported_member.html welcome email to the imported user', 'pmpro-import-members-from-csv' ); ?></span>
 								</legend>
-								<label for="send_welcomeesc_attr_email">
-									<input id="send_welcomeesc_attr_email" name="send_welcomeesc_attr_email" type="checkbox" value="1"/>
+								<label for="send_welcome_email">
+									<input id="send_welcome_email" name="send_welcome_email" type="checkbox" value="1"/>
 									<?php
 									esc_attr_e( 'Send the imported_member.html welcome email to the imported user', 'pmpro-import-members-from-csv' );
 									?>
