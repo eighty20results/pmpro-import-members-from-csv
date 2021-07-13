@@ -520,8 +520,8 @@ class CSV {
 		// Let's log the errors
 		$this->error_log->log_errors(
 			array_merge( $e20r_import_err, $warnings ),
-			$this->variables->get( 'log_file_path' ),
-			$this->variables->get( 'log_file_url' )
+			$this->variables->get( 'logfile_path' ),
+			$this->variables->get( 'logfile_url' )
 		);
 
 		// Return to the active (pre import) site

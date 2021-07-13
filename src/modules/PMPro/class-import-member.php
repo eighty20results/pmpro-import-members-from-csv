@@ -503,8 +503,8 @@ class Import_Member {
 		if ( ! empty( $e20r_import_err ) ) {
 			$this->error_log->log_errors(
 				$e20r_import_err,
-				$this->variables->get( 'log_file_path' ),
-				$this->variables->get( 'log_file_url' )
+				$this->variables->get( 'logfile_path' ),
+				$this->variables->get( 'logfile_url' )
 			);
 		}
 
