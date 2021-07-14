@@ -199,10 +199,17 @@ class Import_Members {
 
 		$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
 
+		// In case the ReflectionMethod doesn't return anything if the class doesn't exist
+		if ( empty( $check ) ) {
+			return;
+		}
+
+		$is_licensed = false;
+
 		if ( false === $check->isPrivate() ) {
 			$licensing   = new Licensing( self::E20R_LICENSE_SKU );
 			$is_licensed = $licensing->is_licensed( self::E20R_LICENSE_SKU, false );
-		} else {
+		} elseif ( true === $check->isPrivate() ) {
 			// @phpstan-ignore-next-line
 			$is_licensed = Licensing::is_licensed( self::E20R_LICENSE_SKU, false );
 		}
