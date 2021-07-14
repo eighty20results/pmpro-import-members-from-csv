@@ -491,24 +491,25 @@ class Import_Member {
 			}
 		}
 
-		$order_status = $this->maybe_add_order( $user_id, $user_data, $membership_in_the_past );
+		$add_status = $this->maybe_add_order( $user_id, $user_meta, $membership_in_the_past );
 
-		if ( false === $order_status ) {
+		if ( false === $add_status ) {
 			// Add error message for failing to add order for $user_id
-			$e20r_import_err[ "member_order_{$user_id}_{$active_line_number}" ] = new WP_Error(
-				'e20r_im_member',
-				sprintf(
-					// translators: %2$d user id
-					__(
-						'Unable to add order record for user (user/order id: %1$d)',
-						'pmpro-import-members-from-csv'
-					),
-					$user_id
-				)
+			$msg = sprintf(
+			// translators: %2$d user id
+				__(
+					'Cannot create order data for user (user id: %1$d, CSV file line #: %2$s)',
+					'pmpro-import-members-from-csv'
+				),
+				$user_id,
+				$active_line_number
 			);
+
+			$e20r_import_err[ "member_order_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
+			$this->error_log->debug( $msg );
 		}
 
-		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data );
+		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data, $user_meta );
 
 		$this->error_log->debug( "Should we send welcome email ({$send_email})? " . ( $send_email ? 'Yes' : 'No' ) );
 		$emails->maybe_send_email( $user, $user_meta );
@@ -556,23 +557,39 @@ class Import_Member {
 		}
 
 		if ( ! isset( $record['membership_id'] ) ) {
+			$msg = sprintf(
+			// translators: %1$d - User ID
+				__( 'No membership ID header found for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
+				$user_id
+			);
+
+			$e20r_import_err[ "membership_id_missing_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 			return false;
 		}
 
 		if ( isset( $record['membership_id'] ) && empty( $record['membership_id'] ) ) {
+			$msg = sprintf(
+			// translators: %1$d - User ID
+				__( 'Membership ID header found, but no ID value for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
+				$user_id
+			);
+
+			$e20r_import_err[ "membership_id_missing_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 			return false;
 		}
 
 		$pmpro_dc_uses_table = "{$wpdb->base_prefix}pmpro_discount_codes_uses";
 
 		if ( false === $this->data->does_table_exist( 'pmpro_membership_orders' ) ) {
-			$this->error_log->add_error_msg(
-				sprintf(
-				// translators: %s PMPro table name (order table)
-					__( 'Error: table %s does not exists in the database!', 'pmpro-import-members-from-csv' ),
-					'pmpro_membership_orders'
-				)
+			$msg = sprintf(
+			// translators: %s PMPro table name (order table)
+				__( 'Error: table \'%1$s\' does not exists in the database!', 'pmpro-import-members-from-csv' ),
+				$pmpro_dc_uses_table
 			);
+
+			$this->error_log->add_error_msg( $msg );
+			$this->error_log->debug( $msg );
+
 			return false;
 		}
 			// BUG: If we don't have a membership_subscription_transaction_id _and_ a membership_gateway defined then
