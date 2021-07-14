@@ -227,12 +227,21 @@ class Variables {
 
 		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
 		$this->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
-		$this->fields       = apply_filters( 'e20r_import_supported_field_list', array() );
+		$this->add_fields( array() );
 
 		/**
 		 * @since v2.60 - ENHANCEMENT: Trigger attempted link of sponsor info after everything is done
 		 */
 		$this->delayed_sponsor_link = get_option( 'e20r_link_for_sponsor', array() );
+	}
+
+	public function add_fields( $field_list ) {
+
+		$this->fields = array_merge_recursive(
+			$this->fields,
+			$field_list
+		);
+		$this->fields = apply_filters( 'e20r_import_supported_fields', $this->fields );
 	}
 
 	/**
@@ -429,6 +438,7 @@ class Variables {
 	 * @return mixed|null
 	 */
 	public function get( $variable_name = null ) {
+
 		if ( empty( $variable_name ) ) {
 			$this->error_log->debug( 'Returning all variables' );
 			return $this->get_current_vars();
