@@ -128,10 +128,11 @@ class Error_Log {
 			return false;
 		}
 
-		$from = $this->who_called_me();
-		// phpcs:ignore
-		$tid  = sprintf( '%08x', abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
-		$time = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
+		$from        = $this->who_called_me();
+		$server_addr = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+		$req_time    = $_SERVER['REQUEST_TIME'] ?? time();
+		$tid         = sprintf( '%08x', abs( crc32( "{$server_addr}{$req_time}" ) ) );
+		$time        = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
 
 		// Save to the HTTP server error log as a Notice (not a warning/error)
 		// phpcs:ignore
