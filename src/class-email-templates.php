@@ -72,6 +72,7 @@ class Email_Templates {
 	public function maybe_send_email( $user, $fields ) {
 		$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
+		// @phpstan-ignore-next-line
 		if ( 1 !== version_compare( PMPRO_VERSION, '1.9.5' ) ) {
 			return false;
 		}
@@ -116,7 +117,7 @@ class Email_Templates {
 		$email           = new \PMProEmail();
 		$email->email    = $user->user_email; // @phpstan-ignore-line
 		$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
-		$email->data     = apply_filters( 'e20r_import_message_data', $email->data ); // @phpstan-ignore-line
+		$email->data     = apply_filters( 'e20r_import_message_data', $email->data );
 		$email->subject  = $subject; // @phpstan-ignore-line
 		$email->template = $template_name; // @phpstan-ignore-line
 
@@ -145,7 +146,7 @@ class Email_Templates {
 	 *
 	 * @since v2.50 - ENHANCEMENT: Include imported_member template in the  Email Template Admin add-on
 	 */
-	public function load_email_body( $body = null, $template_name ) {
+	public function load_email_body( $body, $template_name ) {
 		$this->error_log->debug( "Loading template text for {$template_name}" );
 
 		if ( ! empty( $body ) ) {
