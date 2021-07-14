@@ -48,9 +48,9 @@ class Variables {
 	/**
 	 * List of Import fields (all supported modules)
 	 *
-	 * @var array|null $fields
+	 * @var array $fields
 	 */
-	private $fields = null;
+	private $fields = array();
 
 	/**
 	 * Name/path of CSV import file
@@ -222,7 +222,6 @@ class Variables {
 
 		if ( empty( $upload_dir ) ) {
 			$this->error_log->debug( 'Error: Cannot find the WP_UPLOAD_DIR location!!' );
-			die();
 		}
 
 		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
@@ -235,7 +234,7 @@ class Variables {
 		$this->delayed_sponsor_link = get_option( 'e20r_link_for_sponsor', array() );
 	}
 
-	public function add_fields( $field_list ) {
+	public function add_fields( $field_list = array() ) {
 
 		$this->fields = array_merge_recursive(
 			$this->fields,
