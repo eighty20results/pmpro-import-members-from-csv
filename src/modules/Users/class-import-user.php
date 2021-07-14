@@ -81,7 +81,6 @@ class Import_User {
 		}
 
 		$display_errors = $this->variables->get( 'display_errors' );
-		$user_ids       = array();
 		$msg_target     = 'admin';
 		$site_id        = $this->variables->get( 'site_id' );
 
@@ -94,7 +93,7 @@ class Import_User {
 		do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
 		do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
-		$user_id      = false;
+		$user_id      = 0;
 		$user         = $user_id;
 		$allow_update = (bool) $this->variables->get( 'update_users' );
 
