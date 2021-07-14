@@ -401,6 +401,18 @@ class Import_Members {
 					__( 'View the documentation', 'pmpro-import-members-from-csv' ),
 					__( 'Docs', 'pmpro-import-members-from-csv' )
 				),
+				'filters'       => sprintf(
+					'<a href="%1$s" title="%2$s">%3$s</a>',
+					esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/FILTERS.md' ),
+					__( 'View the Filter documentation', 'pmpro-import-members-from-csv' ),
+					__( 'Filters', 'pmpro-import-members-from-csv' )
+				),
+				'actions'       => sprintf(
+					'<a href="%1$s" title="%2$s">%3$s</a>',
+					esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/ACTIONS.md' ),
+					__( 'View the Actions documentation', 'pmpro-import-members-from-csv' ),
+					__( 'Actions', 'pmpro-import-members-from-csv' )
+				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',
 					esc_url_raw( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
