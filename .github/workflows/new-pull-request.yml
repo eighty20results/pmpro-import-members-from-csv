@@ -3,6 +3,7 @@ name: Run Unit Tests when creating a PR
 # Run Unit Test when new PR is created
 on:
   pull_request:
+    types: [created, edited]
     branches:
       - main
 
