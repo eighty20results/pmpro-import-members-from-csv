@@ -251,7 +251,6 @@ class Import_Member {
 		// Proceed to import member data if the data is correct
 		if ( false === $import_member_data ) {
 			$this->error_log->debug( "Not going to import member data for {$user_id}!!!" );
-
 			return;
 		}
 
@@ -492,19 +491,35 @@ class Import_Member {
 			}
 		}
 
-		$this->maybe_add_order( $user_id, $user_data, $membership_in_the_past );
+		$add_status = $this->maybe_add_order( $user_id, $user_meta, $membership_in_the_past );
 
-		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data );
+		if ( false === $add_status ) {
+			// Add error message for failing to add order for $user_id
+			$msg = sprintf(
+			// translators: %2$d user id
+				__(
+					'Cannot create order data for user (user id: %1$d, CSV file line #: %2$s)',
+					'pmpro-import-members-from-csv'
+				),
+				$user_id,
+				$active_line_number
+			);
+
+			$e20r_import_err[ "member_order_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
+			$this->error_log->debug( $msg );
+		}
+
+		do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data, $user_meta );
 
 		$this->error_log->debug( "Should we send welcome email ({$send_email})? " . ( $send_email ? 'Yes' : 'No' ) );
-		$emails->maybe_send_email( $user );
+		$emails->maybe_send_email( $user, $user_meta );
 
 		// Log errors to log file
 		if ( ! empty( $e20r_import_err ) ) {
 			$this->error_log->log_errors(
 				$e20r_import_err,
-				$this->variables->get( 'log_file_path' ),
-				$this->variables->get( 'log_file_url' )
+				$this->variables->get( 'logfile_path' ),
+				$this->variables->get( 'logfile_url' )
 			);
 		}
 
@@ -535,185 +550,88 @@ class Import_Member {
 			$e20r_import_err = array();
 		}
 
-		$validate = Validate_Data::get_instance();
-		$user     = get_user_by( 'ID', $user_id );
-		$order    = null;
-
 		// If we don't need to create the order record, we'll exit here.
 		if ( false === (bool) $this->variables->get( 'create_order' ) ) {
+			$this->error_log->debug( "Will not attempt to add order for {$user_id}" );
 			return true;
+		}
+
+		if ( ! isset( $record['membership_id'] ) ) {
+			$msg = sprintf(
+			// translators: %1$d - User ID
+				__( 'No membership ID header found for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
+				$user_id
+			);
+
+			$e20r_import_err[ "membership_id_missing_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
+			return false;
+		}
+
+		if ( isset( $record['membership_id'] ) && empty( $record['membership_id'] ) ) {
+			$msg = sprintf(
+			// translators: %1$d - User ID
+				__( 'Membership ID header found, but no ID value for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
+				$user_id
+			);
+
+			$e20r_import_err[ "membership_id_missing_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
+			return false;
 		}
 
 		$pmpro_dc_uses_table = "{$wpdb->base_prefix}pmpro_discount_codes_uses";
 
-		// Add a PMPro order record so integration with gateway doesn't cause surprises
-		if ( ! empty( $record['membership_subscription_transaction_id'] ) && ! empty( $record['membership_gateway'] ) ) {
+		if ( false === $this->data->does_table_exist( 'pmpro_membership_orders' ) ) {
+			$msg = sprintf(
+			// translators: %s PMPro table name (order table)
+				__( 'Error: table \'%1$s\' does not exists in the database!', 'pmpro-import-members-from-csv' ),
+				$pmpro_dc_uses_table
+			);
 
-			$this->error_log->debug( "Adding PMPro order for {$user_id}..?" );
+			$this->error_log->add_error_msg( $msg );
+			$this->error_log->debug( $msg );
 
-			$default_gateway     = Import_Members::is_pmpro_active() ? pmpro_getGateway() : $record['membership_gateway'];
-			$default_environment = Import_Members::is_pmpro_active() ? pmpro_getOption( 'gateway_environment' ) : $record['membership_gateway_environment'];
+			return false;
+		}
+			// BUG: If we don't have a membership_subscription_transaction_id _and_ a membership_gateway defined then
+		// we won't add a payment record (that's just not right!)
 
-			if ( false === $this->data->does_table_exist( 'pmpro_membership_orders' ) ) {
-				$this->error_log->add_error_msg(
-					sprintf(
-						// translators: %s PMPro table name (order table)
-						__( 'Error: table %s does not exists in the database!', 'pmpro-import-members-from-csv' ),
-						'pmpro_membership_orders'
-					)
-				);
+		$this->error_log->debug( "Adding PMPro order for {$user_id}..?" );
+		$default_level = pmpro_getLevel( $record['membership_id'] );
 
-				return false;
-			}
+		foreach ( $default_level as $property => $value ) {
+			$header_name = "membership_${property}";
 
-			/**
-			 * Load order table columns for processing
-			 */
-			$order_fields = $this->data->get_table_info( 'pmpro_membership_orders' );
-
-			if ( empty( $record['membership_initial_payment'] ) && empty( $record['membership_billing_amount'] ) && ! empty( $record['membership_id'] ) ) {
-
-				$default_level = pmpro_getLevel( $record['membership_id'] );
-
-				if ( ! empty( $default_level ) ) {
-					$record['membership_initial_payment'] = $default_level->initial_payment;
-					$record['membership_billing_amount']  = $default_level->billing_amount;
-					$record['membership_billing_limit']   = $default_level->billing_limit;
-					$record['membership_cycle_number']    = $default_level->cycle_number;
-					$record['membership_cycle_period']    = $default_level->cycle_period;
-				}
-			}
-
-			$order                = new \MemberOrder();
-			$order->user_id       = $user_id; // @phpstan-ignore-line
-			$order->membership_id = isset( $record['membership_id'] ) ?? $record['membership_id']; // @phpstan-ignore-line
-
-			// phpcs:ignore
-			$order->InitialPayment = ! empty( $record['membership_initial_payment'] ) ? $record['membership_initial_payment'] : null; // @phpstan-ignore-line
-
-			/**
-			 * Dynamically provide data for all configured Order fields...
-			 */
-			foreach ( $order_fields as $full_field_name => $default_value ) {
-
-				$process_billing_info = false;
-
-				if ( 'membership_id' !== strtolower( $full_field_name ) && 'user_id' !== strtolower( $full_field_name ) ) {
-					$field_name = preg_replace( '/membership_/', '', strtolower( $full_field_name ) );
-				} else {
-					$field_name = strtolower( $full_field_name );
-				}
-
-				/**
-				 * Add billing info (if/when we can)
-				 */
-				if ( 1 === preg_match( '/billing_(.*)/', $field_name, $matches ) ) {
-
-					if ( ! isset( $order->billing ) ) {
-						$order->billing = new \stdClass();  // @phpstan-ignore-line
-					}
-
-					if ( ! isset( $order->billing->{$matches[1]} ) ) {
-
-						$meta_key = $this->data->map_billing_field_to_meta( $field_name );
-
-						if ( ! empty( $meta_key ) ) {
-							$order->billing->{$matches[1]} = get_user_meta( $user_id, $meta_key, true );
-							$process_billing_info          = true;
-						}
-					}
-				}
-
-				if ( false === $process_billing_info && ( ! isset( $order->{$field_name} ) || ( isset( $order->{$field_name} ) && empty( $order->{$field_name} ) ) ) ) {
-
-					// Process payment (amount)
-					if ( 'total' === $field_name && ! empty( $record['membership_initial_payment'] ) ) {
-
-						$order->total = $record['membership_initial_payment']; // @phpstan-ignore-line
-
-					} elseif ( 'total' === $field_name && (
-							empty( $record['membership_initial_payment'] ) &&
-							! empty( $record['membership_billing_amount'] )
-						) ) {
-
-						$order->total = $record['membership_billing_amount']; // @phpstan-ignore-line
-
-					} elseif ( 'total' !== $field_name ) {
-
-						if ( 'status' === $field_name ) {
-							// @phpstan-ignore-next-line
-							$order->{$field_name} = ( isset( $record[ $full_field_name ] ) && 'active' === $record[ $full_field_name ] ? 'success' : 'cancelled' );
-						} else {
-							$order->{$field_name} = ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null;
-						}
-					} else {
-
-						$this->error_log->debug( "Warning: {$field_name} will not be processed!!" );
-					}
-				}
-			}
-
-			if ( isset( $record['membership_gateway'] ) && strtolower( $default_gateway ) !== strtolower( $record['membership_gateway'] ) ) {
-				$order->setGateway( $record['membership_gateway'] );
-			}
-
-			if ( isset( $record['membership_gateway_environment'] ) && strtolower( $default_environment ) !== strtolower( $record['membership_gateway_environment'] ) ) {
-				$order->gateway_environment = strtolower( $record['membership_gateway_environment'] ); // @phpstan-ignore-line
-			}
-
-			if ( true === $membership_in_the_past ) {
-				$order->status = 'cancelled'; // @phpstan-ignore-line
-			}
-
-			/**
-			 * Add MemberOrder billing info if possible
-			 */
-			if ( ! empty( $order->billing ) ) {
-				$order->billing->name = "{$user->first_name} {$user->last_name}";
-			}
-
-			if ( false === $order->saveOrder() ) {
-				$msg = sprintf(
-				// translators: %d - User ID
-					__( 'Unable to save order object for user (ID: %d).', 'pmpro-import-members-from-csv' ),
-					$user_id
-				);
-
-				$e20r_import_err[ "order_save_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
-				$this->error_log->debug( $msg );
-
-			}
-
-			// Update order timestamp?
-			if ( ! empty( $record['membership_timestamp'] ) ) {
-
-				if ( true === $validate->date( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
-					$timestamp = strtotime( $record['membership_timestamp'], time() );
-				} else {
-					$timestamp = is_numeric( $record['membership_timestamp'] ) ? $record['membership_timestamp'] : null;
-
-					if ( is_null( $timestamp ) ) {
-						$e20r_import_err[ "timestamp_{$user_id}_{$active_line_number}" ] = new WP_Error(
-							'e20r_im_member',
-							sprintf(
-								// translators: %s PMPro Order timestamp value from CSV file
-								__( 'Could not decode timezone value (%s)', 'pmpro-import-members-from-csv' ),
-								$record['membership_timestamp']
-							)
-						);
-					}
-				}
-
-				$order->updateTimeStamp(
-					date_i18n( 'Y', $timestamp ),
-					date_i18n( 'm', $timestamp ),
-					date_i18n( 'd', $timestamp ),
-					date_i18n( 'H:i:s', $timestamp )
-				);
+			if (
+				! isset( $record[ $header_name ] ) ||
+				( isset( $record[ $header_name ] ) && empty( $record[ $header_name ] ) )
+			) {
+				$this->error_log->debug( "Saving default level value {$value} to {$header_name}" );
+				$record[ $header_name ] = $value;
 			}
 		}
 
-		// Add any Discount Code use for this user
+		// Add a PMPro order record so integration with gateway doesn't cause surprises
+		$order = $this->create_order( $user_id, $record, $membership_in_the_past );
+
+		if ( empty( $record['membership_subscription_transaction_id'] ) && ! empty( $record['membership_gateway'] ) ) {
+			$msg = sprintf(
+				// translators: %1$s - The supplied gateway name, %2$s - The header we'd expect, %3$d - User ID
+				__(
+					'FYI: This record has a payment gateway (%1$s) but no subscription identifier to link (\'%2$s\') for %3$d (User ID).',
+					'pmpro-import-members-from-csv'
+				),
+				$record['membership_gateway'],
+				'membership_subscription_transaction_id',
+				$user_id
+			);
+
+			$e20r_import_err[ "transaction_link_{$user_id}_{$active_line_number}" ] = new WP_Error(
+				'e20r_im_member',
+				$msg
+			);
+		}
+
+		// Add any provided Discount Code use for this user
 		if ( ! empty( $record['membership_code_id'] ) && ! empty( $order ) && ! empty( $order->id ) ) {
 
 			if ( false === $wpdb->insert(
@@ -745,6 +663,176 @@ class Import_Member {
 		return true;
 	}
 
+	/**
+	 * Create the order object and save the record
+	 *
+	 * @param int $user_id
+	 * @param array $record
+	 * @param bool $membership_in_the_past
+	 *
+	 * @return \MemberOrder
+	 */
+	public function create_order( $user_id, $record, $membership_in_the_past ) {
+
+		global $active_line_number;
+		global $e20r_import_err;
+
+		$gw_env  = null;
+		$gw_name = null;
+
+		if ( Import_Members::is_pmpro_active() ) {
+			$gw_name = pmpro_getGateway();
+			$gw_env  = pmpro_getOption( 'gateway_environment' );
+		}
+
+		$gateway_name   = $record['membership_gateway'] ?? $gw_name;
+		$gw_environment = $record['membership_gateway_environment'] ?? $gw_env;
+		$user           = get_user_by( 'ID', $user_id );
+		$validate       = Validate_Data::get_instance();
+
+		/**
+		 * Load order table columns for processing
+		 */
+		$order_fields = $this->data->get_table_info( 'pmpro_membership_orders' );
+
+		$order                = new \MemberOrder();
+		$order->user_id       = $user_id; // @phpstan-ignore-line
+		$order->membership_id = $record['membership_id'] ?? null; // @phpstan-ignore-line
+
+		// phpcs:ignore
+		$order->InitialPayment = $record['membership_initial_payment'] ?? null; // @phpstan-ignore-line
+
+		/**
+		 * Dynamically provide data for all configured Order fields...
+		 */
+		foreach ( $order_fields as $full_field_name => $default_value ) {
+
+			$process_billing_info = false;
+
+			if ( 'membership_id' !== strtolower( $full_field_name ) && 'user_id' !== strtolower( $full_field_name ) ) {
+				$field_name = preg_replace( '/membership_/', '', strtolower( $full_field_name ) );
+			} else {
+				$field_name = strtolower( $full_field_name );
+			}
+
+			/**
+			 * Add billing info (if/when we can)
+			 */
+			if ( 1 === preg_match( '/billing_(.*)/', $field_name, $matches ) ) {
+
+				if ( ! isset( $order->billing ) ) {
+					$order->billing = new \stdClass();  // @phpstan-ignore-line
+				}
+
+				if ( ! isset( $order->billing->{$matches[1]} ) ) {
+
+					$meta_key = $this->data->map_billing_field_to_meta( $field_name );
+
+					if ( ! empty( $meta_key ) ) {
+						$order->billing->{$matches[1]} = get_user_meta( $user_id, $meta_key, true );
+						$process_billing_info          = true;
+					}
+				}
+			}
+
+			if ( false === $process_billing_info && ( ! isset( $order->{$field_name} ) || ( isset( $order->{$field_name} ) && empty( $order->{$field_name} ) ) ) ) {
+
+				// Process payment (amount)
+				if ( 'total' === $field_name && ! empty( $record['membership_initial_payment'] ) ) {
+					$order->total = $record['membership_initial_payment']; // @phpstan-ignore-line
+				} elseif ( 'total' === $field_name && (
+						empty( $record['membership_initial_payment'] ) &&
+						! empty( $record['membership_billing_amount'] )
+					) ) {
+
+					$order->total = $record['membership_billing_amount']; // @phpstan-ignore-line
+
+				} elseif ( 'total' !== $field_name ) {
+					if ( 'status' === $field_name ) {
+						// @phpstan-ignore-next-line
+						$order->{$field_name} = ( isset( $record[ $full_field_name ] ) && 'active' === $record[ $full_field_name ] ? 'success' : 'cancelled' );
+					} else {
+						$order->{$field_name} = ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null;
+					}
+				} else {
+
+					$this->error_log->debug( "Warning: {$field_name} will not be processed!!" );
+				}
+			}
+		}
+
+		// TODO BUG: Have to set the membership_gateway and membership_gateway_environment variables!
+		if ( isset( $record['membership_gateway'] ) && strtolower( $gateway_name ) !== strtolower( $record['membership_gateway'] ) ) {
+			$order->setGateway( $record['membership_gateway'] );
+		}
+
+		if (
+			! isset( $record['membership_gateway'] ) ||
+			( isset( $record['membership_gateway'] ) && empty( isset( $record['membership_gateway'] ) ) )
+		) {
+			$order->setGateway( $gateway_name );
+		}
+
+		if ( isset( $record['membership_gateway_environment'] ) && strtolower( $gw_environment ) !== strtolower( $record['membership_gateway_environment'] ) ) {
+			$order->gateway_environment = strtolower( $record['membership_gateway_environment'] ); // @phpstan-ignore-line
+		}
+
+		if (
+			! isset( $record['membership_gateway_environment'] ) ||
+			( isset( $record['membership_gateway_environment'] ) && empty( isset( $record['membership_gateway_environment'] ) ) )
+		) {
+			$order->gateway_environment = $gw_environment; // @phpstan-ignore-line
+		}
+		if ( true === $membership_in_the_past ) {
+			$order->status = 'cancelled'; // @phpstan-ignore-line
+		}
+
+		/**
+		 * Add MemberOrder billing info if possible
+		 */
+		if ( ! empty( $order->billing ) ) {
+			$order->billing->name = "{$user->first_name} {$user->last_name}";
+		}
+
+		if ( false === $order->saveOrder() ) {
+			$msg = sprintf(
+				// translators: %d - User ID
+				__( 'Unable to save order object for user (ID: %d).', 'pmpro-import-members-from-csv' ),
+				$user_id
+			);
+
+			$e20r_import_err[ "order_save_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
+			$this->error_log->debug( $msg );
+		}
+
+		// Update order timestamp?
+		if ( ! empty( $record['membership_timestamp'] ) ) {
+			if ( true === $validate->date( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
+				$timestamp = strtotime( $record['membership_timestamp'], time() );
+			} else {
+				$timestamp = is_numeric( $record['membership_timestamp'] ) ? $record['membership_timestamp'] : null;
+				if ( is_null( $timestamp ) ) {
+					$e20r_import_err[ "timestamp_{$user_id}_{$active_line_number}" ] = new WP_Error(
+						'e20r_im_member',
+						sprintf(
+						// translators: %s PMPro Order timestamp value from CSV file
+							__( 'Could not decode timezone value (%s)', 'pmpro-import-members-from-csv' ),
+							$record['membership_timestamp']
+						)
+					);
+				}
+			}
+
+			$order->updateTimeStamp(
+				date_i18n( 'Y', $timestamp ),
+				date_i18n( 'm', $timestamp ),
+				date_i18n( 'd', $timestamp ),
+				date_i18n( 'H:i:s', $timestamp )
+			);
+		}
+
+		return $order;
+	}
 	/**
 	 * Hide/protect the __clone() magic method for this class (singleton pattern)
 	 *

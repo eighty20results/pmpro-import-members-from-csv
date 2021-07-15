@@ -67,64 +67,73 @@ class Email_Templates {
 	 * Maybe send the import 'welcome imported user' email message
 	 *
 	 * @param \WP_User $user
+	 * @param array $fields
 	 */
-	public function maybe_send_email( $user ) {
-		global $pmproiufcsv_email;
+	public function maybe_send_email( $user, $fields ) {
+		$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
-		$send_email = $this->variables->get( 'send_welcome_email' );
-		$fields     = $this->variables->get( 'fields' );
-
-		// Email 'your membership account is active' to member if they were imported with an active member status
-		if (
-			true === (bool) $send_email &&
-			isset( $fields['membership_status'] ) && 'active' === $fields['membership_status'] &&
-			// @phpstan-ignore-next-line
-			1 === version_compare( PMPRO_VERSION, '1.9.5' )
-		) {
-			$subject = null;
-			$body    = null;
-
-			if ( ! empty( $pmproiufcsv_email ) ) {
-				$subject = apply_filters( 'pmp_im_imported_member_message_subject', $pmproiufcsv_email['subject'] );
-				$body    = apply_filters( 'pmp_im_imported_member_message_body', $pmproiufcsv_email['body'] );
-			}
-
-			global $pmproet_email_defaults;
-
-			$template_name = 'imported_member';
-
-			// Apply the saved
-			if ( empty( $subject ) ) {
-				$subject = pmpro_getOption( "email_{$template_name}_subject" );
-
-				if ( empty( $subject ) ) {
-					$subject = $pmproet_email_defaults[ $template_name ]['subject'] ?? __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
-				}
-			}
-
-			$this->error_log->debug( "Using {$template_name} template for '{$subject}' message" );
-
-			// PMPro is not good at defining properties in classes (badly reliant on the historically dynamic nature of PHP)
-			// so will have PHPStan ignore these lines until PMPro cleans up their stuff
-			// (i.e. TODO when PMPro takes better advantage of PHP)
-			$email           = new \PMProEmail();
-			$email->email    = $user->user_email; // @phpstan-ignore-line
-			$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
-			$email->subject  = $subject; // @phpstan-ignore-line
-			$email->template = $template_name; // @phpstan-ignore-line
-
-			if ( ! empty( $body ) ) {
-				$email->body = $body; // @phpstan-ignore-line
-			} else {
-				$email->body = $this->load_email_body( null, $email->template ); // @phpstan-ignore-line
-			}
-
-			$email->body = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
-			$email->body = apply_filters( 'e20r_import_member_message_body', $email->body );
-
-			// Process and send email
-			$email->sendEmail();
+		// @phpstan-ignore-next-line
+		if ( 1 !== version_compare( PMPRO_VERSION, '1.9.5' ) ) {
+			return false;
 		}
+
+		if ( false === $send_email ) {
+			return false;
+		}
+
+		if ( ! isset( $fields['membership_status'] ) || ( isset( $fields['membership_status'] ) && 'active' !== $fields['membership_status'] ) ) {
+			return false;
+		}
+
+		// Email 'your membership account is active' to the member if they were imported with an active member status
+
+		$subject = null;
+		$body    = null;
+
+		global $pmproiufcsv_email;
+		global $pmproet_email_defaults;
+
+		if ( ! empty( $pmproiufcsv_email ) ) {
+			$subject = $pmproiufcsv_email['subject'];
+			$body    = $pmproiufcsv_email['body'];
+		}
+
+		$template_name = apply_filters( 'e20r_import_welcome_email_template', 'imported_member' );
+
+		// Apply the saved
+		if ( empty( $subject ) ) {
+			$subject = pmpro_getOption( "email_{$template_name}_subject" );
+
+			if ( empty( $subject ) ) {
+				$subject = $pmproet_email_defaults[ $template_name ]['subject'] ?? __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
+			}
+		}
+
+		$this->error_log->debug( "Using {$template_name} template for '{$subject}' message" );
+
+		// The authors of PMPro are not good at defining properties in classes (badly reliant on the historically dynamic nature of PHP)
+		// so will have PHPStan ignore these lines until PMPro cleans up their stuff
+		// (i.e. TODO when PMPro takes better advantage of PHP)
+		$email           = new \PMProEmail();
+		$email->email    = $user->user_email; // @phpstan-ignore-line
+		$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
+		$email->data     = apply_filters( 'e20r_import_message_data', $email->data );
+		$email->subject  = $subject; // @phpstan-ignore-line
+		$email->template = $template_name; // @phpstan-ignore-line
+
+		if ( ! empty( $body ) ) {
+			$email->body = $body; // @phpstan-ignore-line
+		} else {
+			$email->body = $this->load_email_body( null, $email->template ); // @phpstan-ignore-line
+		}
+
+		$email->body    = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
+		$email->body    = apply_filters( 'e20r_import_message_body', $email->body );
+		$email->subject = apply_filters( 'pmp_im_imported_member_message_subject', $email->subject );
+		$email->subject = apply_filters( 'e20r_import_message_subject', $email->subject );
+
+		// Process and send email
+		$email->sendEmail();
 	}
 
 	/**
@@ -137,7 +146,7 @@ class Email_Templates {
 	 *
 	 * @since v2.50 - ENHANCEMENT: Include imported_member template in the  Email Template Admin add-on
 	 */
-	public function load_email_body( $body = null, $template_name ) {
+	public function load_email_body( $body, $template_name ) {
 		$this->error_log->debug( "Loading template text for {$template_name}" );
 
 		if ( ! empty( $body ) ) {

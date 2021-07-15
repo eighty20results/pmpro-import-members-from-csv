@@ -484,7 +484,7 @@ class CSV {
 			// Try to import user record and trigger other import modules
 			$user_id = $import_user->import( $user_data, $user_meta, $headers );
 
-			if ( ! $user_ids ) {
+			if ( ! $user_id ) {
 
 				$msg = sprintf(
 					// translators: %d - Line number in the CSV file being imported
@@ -520,8 +520,8 @@ class CSV {
 		// Let's log the errors
 		$this->error_log->log_errors(
 			array_merge( $e20r_import_err, $warnings ),
-			$this->variables->get( 'log_file_path' ),
-			$this->variables->get( 'log_file_url' )
+			$this->variables->get( 'logfile_path' ),
+			$this->variables->get( 'logfile_url' )
 		);
 
 		// Return to the active (pre import) site

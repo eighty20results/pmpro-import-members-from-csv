@@ -33,18 +33,36 @@ class Create_Password {
 	 * Should we create a new password? (Based on the import data & settings)
 	 *
 	 * @param array $record
-	 * @param bool $allow_update
+	 * @param bool|null $update_user - The received setting for 'update_users"
+	 * @param null|\WP_User $user - The User record (if we're potentially updating the user)
 	 *
 	 * @return bool
 	 */
-	public static function validate( $record, $allow_update = false ) {
+	public static function validate( $record, $update_user = false, $user = null ) {
 
-		$variables = new Variables();
-		$update    = (bool) $variables->get( 'update_user' );
+		// We set a dummy password when...
+		$set_password = false;
 
-		return ( false === $update && (
-				! isset( $record['user_pass'] ) || ( isset( $record['user_pass'] ) && empty( $record['user_pass'] ) )
-			)
-		);
+		// A password record exists in the import file, and 'update_user' is true
+		if ( isset( $record['user_pass'] ) && true === $update_user ) {
+			$set_password = true;
+		}
+
+		// A password record exists in the import file _and_ it's empty and the $user doesn't exist
+		if ( isset( $record['user_pass'] ) && empty( $record['user_pass'] ) && empty( $user ) ) {
+			$set_password = true;
+		}
+
+		// When we're not supposed to update the user and the user doesn't exist
+		if ( false === $update_user && empty( $user ) ) {
+			$set_password = true;
+		}
+
+		// No user_pass record is included in the import file _and_ the user doesn't exist
+		if ( ! isset( $record['user_pass'] ) && empty( $user ) ) {
+			$set_password = true;
+		}
+
+		return $set_password;
 	}
 }

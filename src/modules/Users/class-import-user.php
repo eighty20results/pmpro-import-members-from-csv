@@ -57,7 +57,7 @@ class Import_User {
 	 * Load action and filter hooks for import
 	 */
 	public function load_actions() {
-		add_action( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), - 1, 3 );
+		add_filter( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), - 1, 3 );
 	}
 
 	/**
@@ -69,7 +69,7 @@ class Import_User {
 	 *
 	 * @throws \Exception
 	 *
-	 * @return int[]
+	 * @return int
 	 */
 	public function import( $user_data, $user_meta, $headers ) {
 
@@ -81,7 +81,6 @@ class Import_User {
 		}
 
 		$display_errors = $this->variables->get( 'display_errors' );
-		$user_ids       = array();
 		$msg_target     = 'admin';
 		$site_id        = $this->variables->get( 'site_id' );
 
@@ -94,7 +93,7 @@ class Import_User {
 		do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
 		do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
-		$user_id      = false;
+		$user_id      = 0;
 		$user         = $user_id;
 		$allow_update = (bool) $this->variables->get( 'update_users' );
 
@@ -167,7 +166,7 @@ class Import_User {
 				$user_data['user_email'] ?? null
 			);
 
-			return $user_ids;
+			return $user_id;
 		}
 
 		$error_column = User_Update::validate( $user_data, $allow_update );
@@ -186,15 +185,15 @@ class Import_User {
 
 			$e20r_import_err[ "user_update_not_allowed_{$active_line_number}" ] = new WP_Error( 'e20r_im_login', $msg );
 
-			return $user_ids;
-		}
-
-		// If creating a new user and no password was set, let auto-generate one!
-		if ( true === Create_Password::validate( $user_data, $allow_update ) ) {
-			$user_data['user_pass'] = wp_generate_password( 12, false );
+			return $user_id;
 		}
 
 		$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
+
+		// If creating a new user and no password was set, let auto-generate one!
+		if ( true === Create_Password::validate( $user_data, $allow_update, ( $user_id_exists ? $user : null ) ) ) {
+			$user_data['user_pass'] = wp_generate_password( 12, false );
+		}
 
 		// Insert, Update or insert without (re) hashing the password
 		if ( true === $needs_update && false === $password_hashing_disabled ) {
@@ -216,7 +215,7 @@ class Import_User {
 					)
 				);
 
-			return $user_ids;
+			return $user_id;
 		}
 
 		$default_role = apply_filters( 'pmp_im_import_default_user_role', 'subscriber', $user_id, $site_id );
@@ -309,13 +308,11 @@ class Import_User {
 			do_action( 'is_iu_post_user_import', $user_id, $settings );
 			do_action( 'pmp_im_post_member_import', $user_id, $settings );
 			do_action( 'e20r_after_user_import', $user_id, $user_data, $user_meta );
-
-			$user_ids[] = $user_id;
 		}
 
 		$this->variables->set( 'display_errors', $display_errors );
 
-		return $user_ids;
+		return $user_id;
 	}
 
 	/**
@@ -607,14 +604,16 @@ class Import_User {
 	 *
 	 * @param array $user_meta
 	 * @param array $user_data
+	 * @param array $headers
 	 *
 	 * @return array
 	 */
-	public function import_usermeta( $user_meta, $user_data ) {
+	public function import_usermeta( $user_meta, $user_data, $headers ) {
+
+		$meta_keys = $this->variables->get( 'fields' );
 
 		foreach ( $user_meta as $key => $value ) {
-
-			if ( in_array( $key, array_keys( $this->variables->get( 'fields' ) ), true ) ) {
+			if ( in_array( $key, array_keys( $meta_keys ), true ) ) {
 				$key = "imported_{$key}";
 			}
 

@@ -23,7 +23,7 @@
 
     $(document).ready(function () {
 
-        var pmp_import = {
+        var e20r_import = {
             init: function () {
                 this.status = $('#importstatus');
                 this.error_msgs = $('#e20r-status');
@@ -323,7 +323,7 @@
             }
         };
 
-        pmp_import.init();
+		e20r_import.init();
 
     });
 

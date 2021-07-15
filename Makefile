@@ -246,8 +246,8 @@ e20r-deps:
 	@mkdir -p $(COMPOSER_DIR)/wp_plugins
 	@DOWNLOAD_MODULE=${DOWNLOAD_MODULE} ; \
 	for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-		echo "Checking for presence of $${e20r_plugin}..." ; \
-		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
+		echo "Checking for presence of $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}..." ; \
+		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
 			echo "Download or build $${e20r_plugin}.zip dependency?" && \
 			if [[ "0" -eq "$${DOWNLOAD_MODULE}" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
@@ -494,11 +494,12 @@ readme: changelog # metadata
 #
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "pmpro-import-members"; \
+  		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)" "$(E20R_DEPLOYMENT_SERVER)"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "loader") \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 

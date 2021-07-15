@@ -24,6 +24,7 @@ use E20R\Import_Members\Import\Page;
 use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BuddyPress_Validation;
 use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
+use E20R\Import_Members\Modules\PMPro\PMPro;
 use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Validate\Validate;
@@ -93,9 +94,16 @@ class Import_Members {
 	private $validations = array();
 
 	/**
+	 * Instance of the PMPro import logic
+	 *
+	 * @var PMPro|null $pmpro
+	 */
+	private $pmpro = null;
+	/**
 	 * Import_Members constructor.
 	 */
 	private function __construct() {
+		$this->pmpro       = PMPro::get_instance();
 		$this->data        = new Data();
 		$this->import_user = new Import_User();
 		$this->variables   = new Variables();
@@ -145,6 +153,8 @@ class Import_Members {
 		if ( false === apply_filters( 'e20r_utilities_module_installed', false ) ) {
 			add_action( 'init', '\E20R\Import\Loader::is_utilities_module_active', 10, 0 );
 		}
+		add_action( 'plugins_loaded', array( $this->pmpro, 'load_hooks' ), 11, 0 );
+		add_action( 'plugins_loaded', array( $this->import_user, 'load_actions' ), 11, 0 );
 		add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99, 0 );
 		add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99, 0 );
 		add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99, 0 );
@@ -162,7 +172,7 @@ class Import_Members {
 		// PMPro specific capabilities
 		// We do this in the CSV() class as it's a clean-up operation
 		// add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 ); // phpcs:ignore
-		add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 2 );
+		// add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 3 );
 		add_action(
 			'e20r_after_user_import',
 			array(
@@ -189,10 +199,17 @@ class Import_Members {
 
 		$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
 
+		// In case the ReflectionMethod doesn't return anything if the class doesn't exist
+		if ( empty( $check ) ) {
+			return;
+		}
+
+		$is_licensed = false;
+
 		if ( false === $check->isPrivate() ) {
 			$licensing   = new Licensing( self::E20R_LICENSE_SKU );
 			$is_licensed = $licensing->is_licensed( self::E20R_LICENSE_SKU, false );
-		} else {
+		} elseif ( true === $check->isPrivate() ) {
 			// @phpstan-ignore-next-line
 			$is_licensed = Licensing::is_licensed( self::E20R_LICENSE_SKU, false );
 		}
@@ -239,13 +256,11 @@ class Import_Members {
 	}
 
 	/**
-	 * Add admin JS
-	 *
-	 * @param string $hook
+	 * Load JavaScript and styles for wp-admin page
 	 *
 	 * @since 1.0
 	 **/
-	public function admin_enqueue_scripts( $hook ) {
+	public function admin_enqueue_scripts() {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_REQUEST['page'] ) || 'pmpro-import-members-from-csv' !== $_REQUEST['page'] ) {
@@ -385,6 +400,18 @@ class Import_Members {
 					esc_url_raw( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
 					__( 'View the documentation', 'pmpro-import-members-from-csv' ),
 					__( 'Docs', 'pmpro-import-members-from-csv' )
+				),
+				'filters'       => sprintf(
+					'<a href="%1$s" title="%2$s">%3$s</a>',
+					esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/FILTERS.md' ),
+					__( 'View the Filter documentation', 'pmpro-import-members-from-csv' ),
+					__( 'Filters', 'pmpro-import-members-from-csv' )
+				),
+				'actions'       => sprintf(
+					'<a href="%1$s" title="%2$s">%3$s</a>',
+					esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/ACTIONS.md' ),
+					__( 'View the Actions documentation', 'pmpro-import-members-from-csv' ),
+					__( 'Actions', 'pmpro-import-members-from-csv' )
 				),
 				'help'          => sprintf(
 					'<a href="%1$s" title="%2$s">%3$s</a>',

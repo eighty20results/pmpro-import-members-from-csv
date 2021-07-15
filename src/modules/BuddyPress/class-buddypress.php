@@ -20,7 +20,6 @@ namespace E20R\Import_Members\Modules\BuddyPress;
 
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Import_Members;
 
 class BuddyPress {
 
@@ -88,7 +87,7 @@ class BuddyPress {
 	 * Load BuddyPress specific functionality
 	 */
 	public function load_hooks() {
-		add_filter( 'e20r_import_supported_field_list', array( $this, 'load_fields' ), 2, 1 );
+		add_filter( 'e20r_import_supported_fields', array( $this, 'load_fields' ), 2, 1 );
 	}
 
 	/**
@@ -137,3 +136,5 @@ class BuddyPress {
 		return $field_list + $this->field_list;
 	}
 }
+
+add_action( 'e20r_import_load_licensed_modules', array( new Import_BuddyPress(), 'load_actions' ) );

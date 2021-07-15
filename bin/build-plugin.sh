@@ -4,7 +4,7 @@
 # Used by the custom plugin framework to build installable plugin archives
 #
 short_name="${E20R_PLUGIN_NAME}"
-remote_server="eighty20results.com"
+remote_server="${2}"
 declare -a include=( \
 	"css" \
 	"docs" \
@@ -29,23 +29,15 @@ declare -a exclude=( \
 declare -a build=( \
 	"inc/yahnis-elsts" \
 )
+src_path="$(pwd)"
 plugin_path="${short_name}"
-version=$(./get_plugin_version.sh class.pmpro-import-members.php)
-metadata="../metadata.json"
-src_path="../"
-dst_path="../build/${plugin_path}"
-kit_path="../build/kits"
-kit_name="${kit_path}/${short_name}-${version}"
+version=$(./bin/get_plugin_version.sh "loader")
+dst_path="${src_path}/build/${plugin_path}"
+kit_path="${src_path}/build/kits"
+kit_name="${kit_path}/${short_name}-${version}.zip"
+metadata="${src_path}/metadata.json"
 remote_path="./www/eighty20results.com/public_html/protected-content/"
 echo "Building ${short_name} kit for version ${version}"
-
-mkdir -p "${kit_path}"
-mkdir -p "${dst_path}"
-
-if [[ -f "${dst_path}/composer.json" ]]; then
-	echo "Loading all composer packages"
-	composer --no-dev install
-fi
 
 if [[ -f "${kit_name}" ]]
 then
@@ -54,18 +46,19 @@ then
     rm -f "${kit_name}"
 fi
 
-# Add all files for the .zip archive
+mkdir -p "${kit_path}"
+mkdir -p "${dst_path}"
+
 for p in "${include[@]}"; do
-  echo "Processing ${src_path}${p}"
-  if ls "${src_path}${p}" > /dev/null 2>&1; then
-    echo "Copying ${src_path}${p} to ${dst_path}"
-	  cp -R "${src_path}${p}" "${dst_path}"
+  echo "Processing ${src_path}/${p}"
+  if ls "${src_path}/${p}" > /dev/null 2>&1; then
+    echo "Copying ${src_path}/${p} to ${dst_path}"
+	  cp -R "${src_path}/${p}" "${dst_path}"
   fi
 done
 
-# Remove files we do not want in the .zip archive
 for e in "${exclude[@]}"; do
-  if ls "${src_path}${e}" 1> /dev/null 2>&1; then
+  if ls "${src_path}/${e}" 1> /dev/null 2>&1; then
   	if [[ "${e}" =~ '/' ]]; then
 			e=$(awk -F/ '{ print $NF }' <<< "${e}")
 		fi
@@ -74,21 +67,20 @@ for e in "${exclude[@]}"; do
   fi
 done
 
-# Remove any file(s) that are part of the custom plugin update (non .org)
 for b in "${build[@]}"; do
-  if ls "${src_path}${b}" 1> /dev/null 2>&1; then
-      cp -R "${src_path}${b}" "${dst_path}"
+  if ls "${src_path}/${b}" 1> /dev/null 2>&1; then
+      cp -R "${src_path}/${b}" "${dst_path}"
   fi
 done
 
 cd "${dst_path}/.." || exit 1
-zip -r "${kit_name}.zip" "${plugin_path}"
+zip -r "${kit_name}" "${plugin_path}"
 # We _want_ to expand the variables on the client side
 # shellcheck disable=SC2029
 ssh "${remote_server}" "cd ${remote_path}; mkdir -p \"${short_name}\""
 
-echo "Copying ${kit_name}.zip to ${remote_server}:${remote_path}/${short_name}/"
-scp "${kit_name}.zip" "${remote_server}:${remote_path}/${short_name}/"
+echo "Copying ${kit_name} to ${remote_server}:${remote_path}/${short_name}/"
+scp "${kit_name}" "${remote_server}:${remote_path}/${short_name}/"
 
 echo "Copying ${metadata} to ${remote_server}:${remote_path}/${short_name}/"
 scp "${metadata}" "${remote_server}:${remote_path}/${short_name}/"
