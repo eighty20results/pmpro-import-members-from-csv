@@ -388,7 +388,7 @@ db-backup:
 #
 # Using the local environment to execute the PHPStan tests (code analysis)
 #
-phpstan-test: composer-dev
+phpstan-test: composer-dev wp-deps
 	@echo "Loading the PHP-Stan tests for $(PROJECT)"
 	@inc/bin/phpstan analyze \
 		--ansi \
