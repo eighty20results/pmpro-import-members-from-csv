@@ -11,7 +11,7 @@ version="$(./bin/get_plugin_version.sh class.pmpro-import-members.php)"
 if [[ -f ./README.txt ]]; then
 	echo "Updating the README.txt file"
 	"${sed}" -r -e "s/Stable tag: ([0-9]+\.[0-9].*)/Stable\ tag:\ ${version}/g" \
-	 	 -e "s/^Tested up to: ([0-9]+\.[0-9].*)/Tested up to: ${wordpress_version}/g"\
+	 	 -e "s/^Tested up to: ([0-9]+\.[0-9].*)/Tested up to: ${wordpress_version}/g" \
 	 	 ./README.txt > ./NEW_README.txt
 	mv ./NEW_README.txt ./README.txt
 	cp ./README.txt ./README.md
