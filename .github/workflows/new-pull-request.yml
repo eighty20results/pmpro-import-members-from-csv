@@ -24,7 +24,9 @@ jobs:
         with:
           repository: eighty20results/pmpro-import-members-from-csv
           ref: test_workflow_updates
+      - name: Run Code Standard Tests
+        run: make code-standard-test
+      - name: Run PHP Stan Tests
+        run: make phpstan-test
       - name: Run the unit tests
-        run: |
-          ln -s $(which composer) ./composer.phar
-          make unit-test
+        run: make unit-test
