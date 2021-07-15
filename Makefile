@@ -486,7 +486,7 @@ changelog: build_readmes/current.txt
 # Generate and update the README.txt plus README.md files for the plugin
 #
 readme: changelog # metadata
-	@./bin/readme.sh "pmpro-import-members"
+	@./bin/readme.sh "class.pmpro-import-members.php"
 
 #
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
