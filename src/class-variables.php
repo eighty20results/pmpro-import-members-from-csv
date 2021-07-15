@@ -223,9 +223,10 @@ class Variables {
 		if ( empty( $upload_dir ) ) {
 			$this->error_log->debug( 'Error: Cannot find the WP_UPLOAD_DIR location!!' );
 		}
-
-		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_im_errors.log';
-		$this->logfile_url  = trailingslashit( $upload_dir['baseurl'] ) . 'e20r_im_errors.log';
+		
+		$logfile_url        = $upload_dir['baseurl'] ?? 'https://localhost/';
+		$this->logfile_path = trailingslashit( $upload_dir['basedir'] ?? './' ) . 'e20r_im_errors.log';
+		$this->logfile_url  = esc_url_raw( $logfile_url ) . 'e20r_im_errors.log';
 		$this->add_fields( array() );
 
 		/**
