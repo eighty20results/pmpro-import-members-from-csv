@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v3.1.1 - 2021-07-15
+- BUG FIX: Old approach to getting the version number (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v3.1.1 for WP 5.7.2) (Thomas Sjolshagen)
 - BUG FIX: Version constant was wrong (Thomas Sjolshagen)
-- BUG FIX: Ensure PHPStan tests handle WP not being installed (Thomas Sjolshagen)
-- BUG FIX: Make sure WP dependencies are installed (Thomas Sjolshagen)
+- Ensure PHPStan tests handle WP not being installed (Thomas Sjolshagen)
+- Make sure WP dependencies are installed (Thomas Sjolshagen)
 
 ## v3.1.0 - 2021-07-15
 - BUG FIX: PHPStan knows how to deal with certain types of constants (Thomas Sjolshagen)
