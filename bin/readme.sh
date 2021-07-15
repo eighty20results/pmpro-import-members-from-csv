@@ -12,17 +12,17 @@ version=$(./bin/get_plugin_version.sh "class.pmpro-import-members.php")
 if [[ -f ./README.txt ]]; then
 	echo "Updating the README.txt file"
 	"${sed}" -r -e "s/Stable tag: ([0-9]+\.[0-9].*)/Stable\ tag:\ ${version}/g" \
-	 				 -e "s/^Tested up to: ([0-9]+\.[0-9].*)/Tested up to: ${wordpress_version}/g"\
-	 				 ./README.txt > ./NEW_README.txt
+	 	 -e "s/^Tested up to: ([0-9]+\.[0-9].*)/Tested up to: ${wordpress_version}/g"\
+	 	 ./README.txt > ./NEW_README.txt
 	mv ./NEW_README.txt ./README.txt
 	cp ./README.txt ./README.md
 	echo "Generating the README.md file"
 	"${sed}" -r -e "s/^\= (.*) \=/## \1/g" \
-					 -e "s/^\=\= (.*) \=\=/### \1/g" \
-					 -e "s/^\=\=\= (.*) \=\=\=/### \1/g" \
-					 -e "s/^\* (.*)$/- \1/g" \
-					 -e "s/^([A-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: ]*)/\`\1\: \2\` <br \/>/g" \
-					 ./README.md > NEW_README.md
+		 -e "s/^\=\= (.*) \=\=/### \1/g" \
+		 -e "s/^\=\=\= (.*) \=\=\=/### \1/g" \
+		 -e "s/^\* (.*)$/- \1/g" \
+		 -e "s/^([A-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: ]*)/\`\1\: \2\` <br \/>/g" \
+		 ./README.md > NEW_README.md
 	mv ./NEW_README.md ./README.md
 fi
 
