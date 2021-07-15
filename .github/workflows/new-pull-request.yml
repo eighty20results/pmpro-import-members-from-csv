@@ -2,8 +2,11 @@ name: Run Unit Tests when creating a PR
 
 # Run Unit Test when new PR is created
 on:
+  push:
+    branches:
+      - '!releases/**'
+      - '!main'
   pull_request:
-    types: [created, edited]
     branches:
       - main
 
