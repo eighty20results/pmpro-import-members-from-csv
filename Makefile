@@ -485,14 +485,14 @@ changelog: build_readmes/current.txt
 #
 # Generate and update the README.txt plus README.md files for the plugin
 #
-readme: changelog # metadata
+readme:
 	@./bin/readme.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
 # Saves the built plugin .zip archive to build/kits
 #
-$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
+$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod changelog readme # metadata
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
