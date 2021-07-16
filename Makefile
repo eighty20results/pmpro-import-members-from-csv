@@ -499,7 +499,7 @@ $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "loader") \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "$(E20R_PLUGIN_BASE_FILE)") \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 

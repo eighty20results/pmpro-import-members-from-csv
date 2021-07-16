@@ -1,37 +1,13 @@
 #!/usr/bin/env bash
 # Build script: Copyright 2016 - 2021 Eighty/20 Results by Wicked Strong Chicks, LLC
+
 #
 # Used by the custom plugin framework to build installable plugin archives
 #
-short_name="${E20R_PLUGIN_NAME}"
-remote_server="${2}"
-declare -a include=( \
-	"css" \
-	"docs" \
-	"emails" \
-	"examples" \
-	"inc" \
-	"javascript" \
-	"languages" \
-	"src" \
-	"class.pmpro-import-members.php" \
-	"README.txt" \
-	"README.md" \
-	"CHANGELOG.md"
-	)
-declare -a exclude=( \
-	"*.yml" \
-	"*.phar" \
-	"composer.*" \
-	"vendor" \
-	"tests" \
-	)
-declare -a build=( \
-	"inc/yahnis-elsts" \
-)
+source build_conf/helper_config "${@}"
+
 src_path="$(pwd)"
 plugin_path="${short_name}"
-version=$(./bin/get_plugin_version.sh "loader")
 dst_path="${src_path}/build/${plugin_path}"
 kit_path="${src_path}/build/kits"
 kit_name="${kit_path}/${short_name}-${version}.zip"

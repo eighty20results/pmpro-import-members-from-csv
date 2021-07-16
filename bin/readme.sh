@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-sed="$(which sed)"
-readme_path="./build_readmes/"
-wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')
-version="$(./bin/get_plugin_version.sh ${1})"
+#
+# Import the configuration information for this plugin
+#
+source build_config/helper_config "${@}"
 
 ###########
 #
@@ -23,6 +23,15 @@ if [[ -f ./README.txt ]]; then
 		 -e "s/^([A-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: ]*)/\`\1\: \2\` <br \/>/g" \
 		 ./README.md > NEW_README.md
 	mv ./NEW_README.md ./README.md
+fi
+
+# Add the file to the git repo if it doesn't already exist
+if ! git ls-files --error-unmatch README.txt; then
+  git add README.txt
+fi
+
+if ! git ls-files --error-unmatch README.md; then
+  git add README.md
 fi
 
 git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" ./README.{txt,md}
