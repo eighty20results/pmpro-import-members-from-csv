@@ -290,7 +290,7 @@ docker-deps: is-docker-running docker-compose wp-deps
 #
 wp-deps: clean composer-dev e20r-deps
 	@echo "Loading WordPress plugin dependencies"
-	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
+	@for dep_plugin in ${WP_DEPENDENCIES} ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to $(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
@@ -492,7 +492,7 @@ readme:
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
 # Saves the built plugin .zip archive to build/kits
 #
-$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod changelog readme # metadata
+$(E20R_PLUGIN_BASE_FILE): changelog readme test stop-stack clean-inc composer-prod # TODO: Insert metadata target between readme and test targets
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
