@@ -474,19 +474,19 @@ git-log:
 # Generate (and update) the custom WP Plugin Updater metadata.json file
 #
 metadata:
-	@./bin/metadata.sh "pmpro-import-members"
+	@./bin/metadata.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Generate the CHANGELOG.md file for the plugin based on the git commit log
 #
 changelog: build_readmes/current.txt
-	@./bin/changelog.sh "pmpro-import-members"
+	@./bin/changelog.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Generate and update the README.txt plus README.md files for the plugin
 #
 readme: changelog # metadata
-	@./bin/readme.sh "class.pmpro-import-members.php"
+	@./bin/readme.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
@@ -495,7 +495,7 @@ readme: changelog # metadata
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)" "$(E20R_DEPLOYMENT_SERVER)"; \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
