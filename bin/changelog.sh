@@ -4,7 +4,15 @@
 #
 source build_config/helper_config "${@}"
 
-sed="$(which sed)"
+# Need to declare and assign the sed utility
+declare sed
+sed=$(which sed)
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
+
 readme_path="./build_readmes/"
 changelog_source=${readme_path}current.txt
 changelog_out_new="CHANGELOG.new.md"

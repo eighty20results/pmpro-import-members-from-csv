@@ -4,6 +4,14 @@
 #
 source build_config/helper_config "${@}"
 
+# Need to declare and assign the sed utility
+declare sed
+sed=$(which sed)
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
 ###########
 #
 # Update plugin and wordpress version info in README.txt
@@ -11,7 +19,7 @@ source build_config/helper_config "${@}"
 if [[ -f ./README.txt ]]; then
 	echo "Updating the README.txt file"
 	"${sed}" -r -e "s/Stable tag: ([0-9]+\.[0-9]+)|Stable tag: ([0-9]+\.[0-9]+\.[0-9]+)/Stable tag: ${version}/g" \
-		-e "s/^Tested up to: ([0-9]+\.[0-9]+)|Tested up to: ([0-9]+\.[0-9]+\.[0-9]+)/Tested up to: ${wordpress_version}/g" \
+		-e "s/Tested up to: ([0-9]+\.[0-9]+)|Tested up to: ([0-9]+\.[0-9]+\.[0-9]+)/Tested up to: ${wordpress_version}/g" \
 	 	 ./README.txt > ./NEW_README.txt
 	mv ./NEW_README.txt ./README.txt
 	cp ./README.txt ./README.md
