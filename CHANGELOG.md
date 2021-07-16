@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v - 2021-07-16
+- BUG FIX: Strip real email address from test data (Thomas Sjolshagen)
+- BUG FIX: Add fixtures and inc directories for codeception tests (Thomas Sjolshagen)
+- BUG FIX: Refactor the make helper scripts and use plugin specific config file (helper_config) (Thomas Sjolshagen)
+
 ## v3.1.1 - 2021-07-15
 - BUG FIX: Old approach to getting the version number (Thomas Sjolshagen)
 - BUG FIX: Updated CHANGELOG (v3.1.1 for WP 5.7.2) (Thomas Sjolshagen)
