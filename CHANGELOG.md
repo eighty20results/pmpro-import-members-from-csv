@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## v - 2021-07-16
+## v3.1.1 - 2021-07-16
 - BUG FIX: Strip real email address from test data (Thomas Sjolshagen)
 - BUG FIX: Add fixtures and inc directories for codeception tests (Thomas Sjolshagen)
 - BUG FIX: Refactor the make helper scripts and use plugin specific config file (helper_config) (Thomas Sjolshagen)
