@@ -21,6 +21,7 @@ declare -x short_description
 declare -x short_name
 declare -x version
 declare -x remote_server
+declare -x wordpress_version
 
 short_description="Import Members from CSV for Paid Memberships Pro"
 plugin_description_text="Import and create user + PMPro member records from a CSV file on your WordPress with Paid Memberships Pro website. The plugin will import the membership information, user meta data, PMPro order data, Sponsored Members information and can even link pre-existing recurring payment records for your payment gateway integration."
