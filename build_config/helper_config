@@ -64,3 +64,6 @@ declare -x -a exclude=( \
 )
 declare -x -a build=( \
 )
+
+# Not a plugin specific variable, but expensive to populate
+wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')
