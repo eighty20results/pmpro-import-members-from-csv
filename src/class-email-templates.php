@@ -72,16 +72,18 @@ class Email_Templates {
 	public function maybe_send_email( $user, $fields ) {
 		$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
-		// @phpstan-ignore-next-line
-		if ( 1 === version_compare( PMPRO_VERSION, '1.9.5' ) ) {
+		if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) { // @phpstan-ignore-line
+			$this->error_log->debug( 'Unable to send email due to the specified PMPro version: ' . PMPRO_VERSION );
 			return false;
 		}
 
 		if ( false === $send_email ) {
+			$this->error_log->debug( 'Not sending email because you asked me not to!' );
 			return false;
 		}
 
 		if ( ! isset( $fields['membership_status'] ) || ( isset( $fields['membership_status'] ) && 'active' !== $fields['membership_status'] ) ) {
+			$this->error_log->debug( "The membership_status field wasn't set to active: {$fields['membership_status']}" );
 			return false;
 		}
 
