@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v3.1.4 - 2021-07-20
 - BUG FIX: Shouldn't prepare() the SHOW COLUMNS SQL in get_table_info() (Thomas Sjolshagen)
 - BUG FIX: Wrong handling of PMPro version info when attempting to send welcome email (Thomas Sjolshagen)
+- BUG FIX: PHPStan test failed due to missing PMPRO_VERSION constant (Thomas Sjolshagen)
 
 ## v3.1.3 - 2021-07-20
 - BUG FIX: Various fixes to support the new Makefile (Thomas Sjolshagen)

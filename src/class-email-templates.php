@@ -72,8 +72,7 @@ class Email_Templates {
 	public function maybe_send_email( $user, $fields ) {
 		$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
-		// @phpstan-ignore-next-line
-		if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) {
+		if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) { // @phpstan-ignore-line
 			$this->error_log->debug( 'Unable to send email due to the specified PMPro version: ' . PMPRO_VERSION );
 			return false;
 		}
