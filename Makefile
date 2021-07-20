@@ -526,7 +526,7 @@ deploy:
 #
 # Generate the README.*, CHANGELOG.md and metadata.json files for the plugin (all current docs)
 #
-docs: changelog readme metadata
+docs: changelog readme
 	@if ! git commit -m "Updated the changelog source file" build_readmes/current.txt; then \
     	echo "No need to commit build_readmes/current.txt (no changes recorded)" ; \
     	exit 0 ; \
