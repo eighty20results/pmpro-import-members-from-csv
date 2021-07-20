@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v3.1.3 - 2021-07-20
+- BUG FIX: Various fixes to support the new Makefile (Thomas Sjolshagen)
+- BUG FIX: This plugin doesn't need the metadata.json file (Thomas Sjolshagen)
+- BUG FIX: Didn't include the deploy target as well as the fixes from the Utilities module (Thomas Sjolshagen)
+- BUG FIX: Didn't execute email handler code due to bad version check and added e20r_import_message_subject filter to let developer set Subject text for import_email templates (Thomas Sjolshagen)
+- BUG FIX: Typo in git message - metadata.sh (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v3.1.2 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Wrong path to helper_config file in build-plugin.sh (Thomas Sjolshagen)
+- BUG FIX: Poor git error handling when files haven't changed (Thomas Sjolshagen)
+- BUG FIX: Wrong order of variables to set correct links, etc. (Thomas Sjolshagen)
+- BUG FIX: Invalid JSON string for changelog links in metadata.sh template (Thomas Sjolshagen)
+- BUG FIX: Consume WP_DEPENDENCIES variable as an environment var in wp-deps target (Thomas Sjolshagen)
+- BUG FIX: Didn't export the wordpress_version variable (Thomas Sjolshagen)
+- BUG FIX: Missing WordPress version fetch operation from API server (Thomas Sjolshagen)
+- BUG FIX: Didn't check whether sed was found/assigned (Thomas Sjolshagen)
+- BUG FIX: Refactor so build target adds documentation as well (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v3.1.2 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Updated Makefile in support of new helper scripts (Thomas Sjolshagen)
+- BUG FIX: Strip real email address from test data (Thomas Sjolshagen)
+- BUG FIX: Add fixtures and inc directories for codeception tests (Thomas Sjolshagen)
+- BUG FIX: Refactor the make helper scripts and use plugin specific config file (helper_config) (Thomas Sjolshagen)
+
 ## v3.1.2 - 2021-07-16
 - BUG FIX: Updated Makefile in support of new helper scripts (Thomas Sjolshagen)
 - BUG FIX: Strip real email address from test data (Thomas Sjolshagen)
