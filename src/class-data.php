@@ -261,13 +261,8 @@ class Data {
 	public function get_table_info( $table_name = 'pmpro_memberships_users' ) {
 
 		global $wpdb;
-
-		$columns    = $wpdb->get_results(
-			$wpdb->prepare(
-				'SHOW COLUMNS FROM %s',
-				sprintf( '%1$s%2$s', $wpdb->get_blog_prefix(), $table_name )
-			)
-		);
+		$prefix     = $wpdb->get_blog_prefix();
+		$columns    = $wpdb->get_results( "SHOW COLUMNS FROM {$prefix}{$table_name}" ); // phpcs:ignore
 		$db_columns = array();
 
 		if ( empty( $columns ) ) {
@@ -275,9 +270,7 @@ class Data {
 		}
 
 		foreach ( $columns as $col ) {
-
 			$prefix = null;
-
 			switch ( $col->Field ) { // phpcs:ignore
 				// Ignore/skip these.
 				case 'id':
