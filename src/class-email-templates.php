@@ -73,7 +73,7 @@ class Email_Templates {
 		$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
 		// @phpstan-ignore-next-line
-		if ( 1 !== version_compare( PMPRO_VERSION, '1.9.5' ) ) {
+		if ( 1 === version_compare( PMPRO_VERSION, '1.9.5' ) ) {
 			return false;
 		}
 
@@ -86,9 +86,9 @@ class Email_Templates {
 		}
 
 		// Email 'your membership account is active' to the member if they were imported with an active member status
-
-		$subject = null;
-		$body    = null;
+		$template_name = apply_filters( 'e20r_import_welcome_email_template', 'imported_member' );
+		$subject       = pmpro_getOption( "email_{$template_name}_subject" );
+		$body          = pmpro_getOption( "email_{$template_name}_body" );
 
 		global $pmproiufcsv_email;
 		global $pmproet_email_defaults;
@@ -97,8 +97,6 @@ class Email_Templates {
 			$subject = $pmproiufcsv_email['subject'];
 			$body    = $pmproiufcsv_email['body'];
 		}
-
-		$template_name = apply_filters( 'e20r_import_welcome_email_template', 'imported_member' );
 
 		// Apply the saved
 		if ( empty( $subject ) ) {
@@ -118,7 +116,7 @@ class Email_Templates {
 		$email->email    = $user->user_email; // @phpstan-ignore-line
 		$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
 		$email->data     = apply_filters( 'e20r_import_message_data', $email->data );
-		$email->subject  = $subject; // @phpstan-ignore-line
+		$email->subject  = apply_filters( 'e20r_import_message_subject', $subject, $email->data ); // @phpstan-ignore-line
 		$email->template = $template_name; // @phpstan-ignore-line
 
 		if ( ! empty( $body ) ) {
@@ -278,7 +276,7 @@ class Email_Templates {
 
 		$pmproet_email_defaults['imported_member'] = array(
 			'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
-			'description' => __( 'Import: Welcome Member', 'pmpro-import-members-from-csv' ),
+			'description' => __( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
 			// phpcs:ignore
 			'body'        => file_get_contents( Import_Members::$plugin_path . '/emails/imported_member.html' ),
 		);

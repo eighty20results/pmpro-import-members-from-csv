@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
+#
+# Import the configuration information for this plugin
+#
+source build_config/helper_config "${@}"
+
+declare sed
 sed="$(which sed)"
-readme_path="./build_readmes/"
-wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')
-version="$(./bin/get_plugin_version.sh ${1})"
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
 
 ###########
 #
@@ -25,4 +33,17 @@ if [[ -f ./README.txt ]]; then
 	mv ./NEW_README.md ./README.md
 fi
 
-git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" ./README.{txt,md}
+# Add the file to the git repo if it doesn't already exist
+if ! git ls-files --error-unmatch README.txt; then
+  git add README.txt
+fi
+
+if ! git ls-files --error-unmatch README.md; then
+  git add README.md
+fi
+
+if ! git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" ./README.{txt,md}; then
+  echo "No need to commit README.md/README.txt (no changes recorded)"
+  exit 0
+fi
+

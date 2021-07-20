@@ -1,42 +1,16 @@
 #!/usr/bin/env bash
 # Build script: Copyright 2016 - 2021 Eighty/20 Results by Wicked Strong Chicks, LLC
+
 #
 # Used by the custom plugin framework to build installable plugin archives
 #
-short_name="${E20R_PLUGIN_NAME}"
-remote_server="${2}"
-declare -a include=( \
-	"css" \
-	"docs" \
-	"emails" \
-	"examples" \
-	"inc" \
-	"javascript" \
-	"languages" \
-	"src" \
-	"class.pmpro-import-members.php" \
-	"README.txt" \
-	"README.md" \
-	"CHANGELOG.md"
-	)
-declare -a exclude=( \
-	"*.yml" \
-	"*.phar" \
-	"composer.*" \
-	"vendor" \
-	"tests" \
-	)
-declare -a build=( \
-	"inc/yahnis-elsts" \
-)
+source build_config/helper_config "${@}"
+
 src_path="$(pwd)"
 plugin_path="${short_name}"
-version=$(./bin/get_plugin_version.sh "loader")
 dst_path="${src_path}/build/${plugin_path}"
 kit_path="${src_path}/build/kits"
 kit_name="${kit_path}/${short_name}-${version}.zip"
-metadata="${src_path}/metadata.json"
-remote_path="./www/eighty20results.com/public_html/protected-content/"
 echo "Building ${short_name} kit for version ${version}"
 
 if [[ -f "${kit_name}" ]]
@@ -75,24 +49,4 @@ done
 
 cd "${dst_path}/.." || exit 1
 zip -r "${kit_name}" "${plugin_path}"
-# We _want_ to expand the variables on the client side
-# shellcheck disable=SC2029
-ssh "${remote_server}" "cd ${remote_path}; mkdir -p \"${short_name}\""
 
-echo "Copying ${kit_name} to ${remote_server}:${remote_path}/${short_name}/"
-scp "${kit_name}" "${remote_server}:${remote_path}/${short_name}/"
-
-echo "Copying ${metadata} to ${remote_server}:${remote_path}/${short_name}/"
-scp "${metadata}" "${remote_server}:${remote_path}/${short_name}/"
-
-echo "Linking ${short_name}/${short_name}-${version}.zip to ${short_name}.zip on remote server"
-# We _want_ to expand the variables on the client side
-# shellcheck disable=SC2029
-ssh "${remote_server}" \
-	"cd ${remote_path}/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip"
-
-# Return to the root directory
-cd "${src_path}" || die 1
-
-# And clean up
-rm -rf "${dst_path}"

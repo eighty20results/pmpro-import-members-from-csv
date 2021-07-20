@@ -1,12 +1,15 @@
 E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
 E20R_PLUGIN_BASE_FILE ?= class.pmpro-import-members.php
-E20R_DEPLOYMENT_SERVER ?= wordpress.org
-WP_DEPENDENCIES ?= paid-memberships-pro
 
+ifeq ($(E20R_DEPLOYMENT_SERVER),"")
+E20R_DEPLOYMENT_SERVER ?= eighty20results.com
+endif
+
+WP_DEPENDENCIES ?= paid-memberships-pro
 E20R_DEPENDENCIES ?= 00-e20r-utilities
 E20R_UTILITIES_PATH ?= ~/PhpStormProjects/Utilities
 
-DOCKER_USER ?= eighty20results
+DOCKER_HUB_USER ?= eighty20results
 DOCKER_ENV ?= Docker.app
 DOCKER_IS_RUNNING := $(shell ps -ef | grep $(DOCKER_ENV) | wc -l | xargs)
 

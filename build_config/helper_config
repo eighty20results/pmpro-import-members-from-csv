@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# Configure/set plugin specific variables (used by all Make helper scripts)
+# Copyright 2021 Eighty/20 Results by Wicked Strong Chicks, LLC (Thomas Sjolshagen <thomas@eighty20results.com>)
+#
+
+# Local command
+declare sed
+sed="$(which sed)"
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
+
+# Plugin specific variables (declared global)
+declare -x github_url
+declare -x plugin_description_text
+declare -x plugin_homepage
+declare -x short_description
+declare -x short_name
+declare -x version
+declare -x remote_server
+declare -x wordpress_version
+
+short_description="Import Members from CSV for Paid Memberships Pro"
+plugin_description_text="Import and create user + PMPro member records from a CSV file on your WordPress with Paid Memberships Pro website. The plugin will import the membership information, user meta data, PMPro order data, Sponsored Members information and can even link pre-existing recurring payment records for your payment gateway integration."
+remote_server="${2}"
+
+sed="$(which sed)"
+short_name="$(${sed} -e 's/\.php//g' -e 's/class[\.-]//g' <<< "${1}")"
+plugin_homepage="https://${remote_server}/plugins/${short_name}/"
+version="$(./bin/get_plugin_version.sh "${1}")"
+github_url="https://github.com/eighty20results/${short_name}/"
+
+# Plugin specific files to include/exclude and move if necessary during build
+declare -x -a include=( \
+		"css" \
+		"docs" \
+		"emails" \
+		"examples" \
+		"inc" \
+		"javascript" \
+		"languages" \
+		"src" \
+		"class.pmpro-import-members.php" \
+		"README.txt" \
+		"README.md" \
+		"CHANGELOG.md"
+		)
+declare -x -a exclude=( \
+	".editorconfig" \
+	".env.testing" \
+	".gitignore" \
+	".phpcs.xml.dist"
+	"*.yml" \
+	"*.phar" \
+	"*.json" \
+	"composer.*" \
+	"Makefile" \
+	"*.neon" \
+	"*.xml" \
+	"vendor" \
+	"tests" \
+)
+declare -x -a build=( \
+)
+
+# Not a plugin specific variable, but expensive to populate
+wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')

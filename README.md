@@ -3,7 +3,7 @@
 `Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro` <br />
 `Requires at least: 5.0` <br />
 `Tested up to: 5.7.2` <br />
-`Stable tag: 3.1.1` <br />
+`Stable tag: 3.1.3` <br />
 `License: GPLv2` <br />
 `License URI: http://www.gnu.org/licenses/gpl` <br />
 
