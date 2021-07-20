@@ -4,7 +4,14 @@
 #
 source build_config/helper_config "${@}"
 
+declare sed
 sed="$(which sed)"
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
+
 readme_path="./build_readmes/"
 changelog_source=${readme_path}current.txt
 changelog_out_new="CHANGELOG.new.md"
@@ -64,4 +71,7 @@ if ! git ls-files --error-unmatch ./CHANGELOG.md; then
   git add CHANGELOG.md
 fi
 
-git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md
+if ! git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md; then
+  echo "No need to commit CHANGELOG.md (no changes recorded)"
+  exit 0
+fi

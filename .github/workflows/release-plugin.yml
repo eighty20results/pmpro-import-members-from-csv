@@ -26,18 +26,27 @@ jobs:
           tools: composer:v2
           ini-values: xdebug.mode=coverage
           coverage: pcov
+
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           repository: eighty20results/pmpro-import-members-from-csv
           ref: main
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
       - name: Run the plugin tests
         run: make test
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+
       - name: WordPress Plugin Deployment for ${{ github.ref }}
         uses: eighty20results/pmpro-import-members-from-csv@main
         env:

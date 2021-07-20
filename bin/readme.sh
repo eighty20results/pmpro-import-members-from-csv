@@ -4,6 +4,14 @@
 #
 source build_config/helper_config "${@}"
 
+declare sed
+sed="$(which sed)"
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
+
 ###########
 #
 # Update plugin and wordpress version info in README.txt
@@ -34,4 +42,8 @@ if ! git ls-files --error-unmatch README.md; then
   git add README.md
 fi
 
-git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" ./README.{txt,md}
+if ! git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress_version})" ./README.{txt,md}; then
+  echo "No need to commit README.md/README.txt (no changes recorded)"
+  exit 0
+fi
+
