@@ -10,9 +10,9 @@ services:
     container_name: ${E20R_PLUGIN_NAME}_wordpress
     build:
       context: .
-      dockerfile: tests/docker/Dockerfile.unittest
+      dockerfile: tests/_docker/Dockerfile.unittest
       args:
-        WP_TAG: wordpress:${WP_RELEASE}
+        WP_RELEASE: ${WP_RELEASE}
         APACHE_RUN_USER: ${APACHE_RUN_USER}
         APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}
     restart: always
