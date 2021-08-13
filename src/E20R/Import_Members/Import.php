@@ -31,12 +31,12 @@ use E20R\Import_Members\Validate\Validate;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Licensing\License;
 
-if ( ! class_exists( '\E20R\Import_Members\Import_Members' ) ) {
+if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 	/**
 	 * Class Import_Members
 	 * @package E20R\Import_Members
 	 */
-	class Import_Members {
+	class Import {
 
 		const E20R_LICENSE_SKU = 'E20R_IMPORT_MEMBERS';
 		/**
@@ -49,7 +49,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import_Members' ) ) {
 		/**
 		 * Instance of this class
 		 *
-		 * @var null|Import_Members $instance
+		 * @var null|Import $instance
 		 */
 		private static $instance = null;
 
@@ -225,7 +225,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import_Members' ) ) {
 		/**
 		 * Return or instantiate class for use
 		 *
-		 * @return Import_Members
+		 * @return Import
 		 */
 		public static function get_instance() {
 
