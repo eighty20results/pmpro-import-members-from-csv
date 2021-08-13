@@ -14,7 +14,7 @@ services:
     - /Volumes/Development/www/clean.local/wp-content/plugins/paid-memberships-pro:/var/www/html/wp-content/plugins/paid-memberships-pro:ro
     - /Volumes/Development/www/clean.local/wp-content/plugins/e20r-members-list:/var/www/html/wp-content/plugins/e20r-members-list:ro
     - /Volumes/Development/www/clean.local/wp-content/plugins/00-e20r-utilities:/var/www/html/wp-content/plugins/00-e20r-utilities:ro
-    - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv:ro
+    - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv
     - /Volumes/Development/www/clean.local/wp-content/plugins/wp-action-trace.php:/var/www/html/wp-content/plugins/wp-action-trace.php
     ports:
     - target: 80 # Web server
@@ -50,7 +50,7 @@ services:
       - /Volumes/Development/www/clean.local/wp-content/plugins/paid-memberships-pro:/var/www/html/wp-content/plugins/paid-memberships-pro:ro
       - /Volumes/Development/www/clean.local/wp-content/plugins/e20r-members-list:/var/www/html/wp-content/plugins/e20r-members-list:ro
       - /Volumes/Development/www/clean.local/wp-content/plugins/00-e20r-utilities:/var/www/html/wp-content/plugins/00-e20r-utilities:ro
-      - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv:ro
+      - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv
       - /Volumes/Development/www/clean.local/wp-content/plugins/wp-action-trace.php:/var/www/html/wp-content/plugins/wp-action-trace.php:ro
     labels:
     - "traefik.enable=true"
