@@ -20,6 +20,7 @@
 namespace E20R\Import_Members\Email;
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import;
 use E20R\Import_Members\Variables;
 
 if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
@@ -171,7 +172,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			}
 
 			// Substitute WP_User information from the user's WP_User data
-			foreach ( $user as $user_key => $user_value ) {
+			foreach ( (array) $user as $user_key => $user_value ) {
 				$this->error_log->debug( "Fpr User data: Try to substitute !!{$user_key}!! with {$user_value}" );
 				$substitution_text = str_replace( "!!{$user_key}!!", $user_value, $substitution_text );
 			}
@@ -327,7 +328,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
 				'description' => __( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
 				// phpcs:ignore
-				'body'        => file_get_contents( Import_Members::$plugin_path . '/emails/imported_member.html' ),
+				'body'        => file_get_contents( Import::$plugin_path . '/emails/imported_member.html' ),
 			);
 		}
 
