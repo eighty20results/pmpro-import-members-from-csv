@@ -14,7 +14,7 @@ CURL := $(shell which curl)
 UNZIP := $(shell which unzip)
 PHP_BIN := $(shell which php)
 DC_BIN := $(shell which docker-compose)
-SQL_BACKUP_FILE ?= $(BASE_PATH)/tests/_data
+SQL_BACKUP_FILE ?= tests/_data
 MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
@@ -25,9 +25,20 @@ E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 
-FOUND_WP_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/wpunit/testcases/*.php)
-FOUND_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/unit/testcases/*.php)
-FOUND_WP_ACCEPTANCE_TESTS ?= $(wildcard $(BASE_PATH)/tests/acceptance/testcases/*.php)
+FOUND_WP_UNIT_TESTS ?= $(wildcard tests/wpunit/testcases/*.php)
+FOUND_UNIT_TESTS ?= $(wildcard tests/unit/testcases/*.php)
+FOUND_WP_ACCEPTANCE_TESTS ?= $(wildcard /tests/acceptance/testcases/*.php)
+FOUND_FUNCTIONAL_TESTS ?= $(wildcard tests/functional/testcases/*.php)
+
+UNIT_TEST_CASE_PATH := tests/unit/testcases/
+WPUNIT_TEST_CASE_PATH := tests/wpunit/testcases/
+FUNCTIONAL_TEST_CASE_PATH := tests/functional/testcases/
+ACCEPTANCE_TEST_CASE_PATH := tests/acceptance/testcases/
+
+ifneq ($(wildcard ./tests/docker/docker.hub.key),)
+$(info Path to key for docker hub exists)
+CONTAINER_ACCESS_TOKEN := $(shell cat ./tests/docker/docker.hub.key)
+endif
 
 ifneq ($(wildcard ./docker.hub.key),)
 $(info Path to key for docker hub exists)
@@ -147,8 +158,8 @@ docker-hub-login:
 image-build: docker-deps
 	@echo "Building the docker container stack for $(PROJECT)"
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
-  		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-    	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty
+  DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+  docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty
 
 #
 # Trigger the security scan of the docker image(s)
@@ -185,12 +196,6 @@ image-pull: docker-hub-login
 # Clean up Composer and WP/E20R dependencies as well as the Docker container(s) used for testing/development
 #
 real-clean: stop-stack clean clean-inc clean-wp-deps
-	@echo "Make sure docker-compose stack for $(PROJECT) isn't running"
-	@echo "Stack is running: $(STACK_RUNNING)"
-	@if [[ 2 -ne "$(STACK_RUNNING)" ]]; then \
-		echo "Stopping docker-compose stack" ; \
-		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) rm --stop --force -v ; \
-	fi ; \
 	echo "Removing docker images" && \
 	docker image remove $(PROJECT)_wordpress --force
 
@@ -375,7 +380,7 @@ wp-log:
 #
 db-shell: start-stack
 	@echo "Launching the docker shell for the user"
-	APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database /bin/bash
 
@@ -412,7 +417,8 @@ code-standard-test: wp-deps
 		--report=full \
 		--colors \
 		-p \
-		--standard=WordPress-Extra \
+		-s \
+		--standard=phpcs.xml.dist \
 		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
 		$(PHP_CODE_PATHS)
@@ -423,23 +429,42 @@ code-standard-test: wp-deps
 unit-test: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)"; \
-		$(COMPOSER_DIR)/bin/codecept run -v --debug unit ; \
+		$(COMPOSER_DIR)/bin/codecept run unit --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH); \
 	fi
 # TODO: Add coverage support to the unit-test target
 
+coverage: wp-deps
+	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
+		echo "Running Unit tests for $(PROJECT)"; \
+		$(COMPOSER_DIR)/bin/codecept run unit --coverage --verbose --debug $(UNIT_TEST_CASE_PATH); \
+	fi
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
 #
 wp-unit-test: docker-deps start-stack db-import
 	@if [[ -n "$(FOUND_WP_UNIT_TESTS)" ]]; then \
+  		echo "Running WP Unit/Functional tests for $(PROJECT)"; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+  		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+  		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+  			exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+  			wordpress $(COMPOSER_DIR)/bin/codecept run wpunit --coverage-html ./coverage/wp-unit --verbose --debug $(WPUNIT_TEST_CASE_PATH); \
+	fi
+# TODO: Add coverage support to the wp-unit-test target
+
+#
+# Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
+#
+functional-test: docker-deps start-stack db-import
+	@if [[ -n "$(FOUND_FUNCTIONAL_TESTS)" ]]; then \
   		echo "Running WP Unit tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 			docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 				exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-				wordpress $(COMPOSER_DIR)/bin/codecept run -v wpunit ; \
+				wordpress $(COMPOSER_DIR)/bin/codecept run --coverage-html ./coverage/functional --verbose --debug functional $(FUNCTIONAL_TEST_CASE_PATH); \
 	fi
-# TODO: Add coverage support to the wp-unit-test target
+# TODO: Add coverage support to the functional-test target
 
 #
 # Using codeception to execute the Plugin Acceptance tests
@@ -451,13 +476,13 @@ acceptance-test: docker-deps start-stack db-import
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ wordpress \
-	 		$(COMPOSER_DIR)/bin/codecept run -v acceptance ; \
+	 		$(COMPOSER_DIR)/bin/codecept run acceptance --debug --verbose --coverage-html ./coverage/acceptance $(ACCEPTANCE_TEST_CASE_PATH); \
 	fi
 #
 # Using codeception to build the plugin
 #
 build-test: docker-deps start-stack db-import
-	@@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
@@ -496,7 +521,7 @@ readme:
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
 # Saves the built plugin .zip archive to build/kits
 #
-$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
+$(E20R_PLUGIN_BASE_FILE): stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
@@ -526,7 +551,7 @@ deploy:
 #
 # Generate the README.*, CHANGELOG.md and metadata.json files for the plugin (all current docs)
 #
-docs: changelog readme
+docs: changelog readme metadata
 	@if ! git commit -m "Updated the changelog source file" build_readmes/current.txt; then \
     	echo "No need to commit build_readmes/current.txt (no changes recorded)" ; \
     	exit 0 ; \
