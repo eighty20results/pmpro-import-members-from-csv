@@ -18,8 +18,9 @@ parameters:
     scanDirectories:
     	- inc/
     paths:
-        - *.php
-        - src/
+        - class.pmpro-import-members.php
+        - ActivateUtilitiesPlugin.php
+        - src/E20R/Import_Members/
     bootstrapFiles:
     	- class.pmpro-import-members.php
     excludePaths:
