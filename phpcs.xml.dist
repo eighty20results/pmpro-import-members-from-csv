@@ -18,62 +18,28 @@
   ~
   ~  You can contact us at mailto:info@eighty20results.com
   -->
+<ruleset name="Eighty/20 Results Coding Standards">
+    <!-- See https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml -->
+    <!-- See https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards/blob/develop/WordPress-Core/ruleset.xml -->
+    <description>A custom ruleset for Eighty/20 Results projects based on the WordPress Coding Standards and PHPCompatibility.</description>
 
-<ruleset name="WordPress Project">
-    <description>A custom set of rules to check for a WPized WordPress project</description>
+    <!-- Only check PHP files. -->
+    <arg name="extensions" value="php"/>
 
-    <config name="installed_paths" value="inc/wp-coding-standards/wpcs"/>
+    <!-- Show progress, show the error codes for each message (source). -->
+    <arg value="sp"/>
 
-    <!-- Exclude the Composer Vendor directory. -->
-    <exclude-pattern>/inc/*</exclude-pattern>
+    <!-- Strip the filepaths down to the relevant bit. -->
+    <arg name="basepath" value="."/>
 
-    <!-- Exclude the Javascript directory. -->
-    <exclude-pattern>/javascript/*</exclude-pattern>
+    <file>.</file>
 
-    <!-- Exclude the CSV Example directory. -->
-    <exclude-pattern>/examples/*</exclude-pattern>
+	<config name="installed_paths" value="inc/wp-coding-standards/wpcs" />
+	<config name="testVersion" value="5.6-" />
 
-    <!-- Exclude the Emails directory. -->
-    <exclude-pattern>/emails/*</exclude-pattern>
-
-    <!-- Exclude the docs directory. -->
-    <exclude-pattern>/docs/*</exclude-pattern>
-
-    <!-- Exclude the Node Modules directory. -->
-    <exclude-pattern>/node_modules/*</exclude-pattern>
-
-    <!-- Exclude minified Javascript files. -->
-    <exclude-pattern>*.min.js</exclude-pattern>
-
-    <!-- Include the WordPress-Extra standard. -->
+    <!-- Include the WordPress ruleset. -->
     <rule ref="WordPress-Extra">
-        <exclude name="WordPress.XSS.EscapeOutput"/>
-    </rule>
-
-
-    <!-- Add in some extra rules from other standards. -->
-    <ruleset name="WP-Neutron-Standard">
-    	<description>WP/Automattic Neutron</description>
-    	<rule ref="NeutronStandard"/>
-    </ruleset>
-    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
-    <rule ref="Generic.Commenting.Todo"/>
-
-    <rule ref="WordPress.WP.DeprecatedClasses">
-        <properties>
-            <property name="minimum_supported_version" value="4.5"/>
-        </properties>
-    </rule>
-
-    <rule ref="WordPress.WP.DeprecatedFunctions">
-        <properties>
-            <property name="minimum_supported_version" value="4.5"/>
-        </properties>
-    </rule>
-
-    <rule ref="WordPress.WP.DeprecatedParameters">
-        <properties>
-            <property name="minimum_supported_version" value="4.5"/>
-        </properties>
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
     </rule>
 </ruleset>
