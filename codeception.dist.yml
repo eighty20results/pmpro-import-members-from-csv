@@ -22,11 +22,13 @@ settings:
   lint: true
   colors: true
 coverage:
-    enabled: true
-    show_only_summary: true
-    include:
-        - src/*
-        - "*.php"
-    exclude:
-        - tests/*
-        - inc/*
+  work_dir: tests/_output/
+  remote: false
+  enabled: true
+  show_only_summary: true
+  include:
+      - src/*
+      - "*.php"
+  exclude:
+      - tests/*
+      - inc/*
