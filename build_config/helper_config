@@ -38,24 +38,28 @@ declare -x -a include=( \
 		"docs" \
 		"emails" \
 		"examples" \
-		"inc" \
+		"inc/composer" \
+		"inc/autoloader.php" \
 		"javascript" \
 		"languages" \
 		"src" \
+		"ActivateUtilitiesPlugin.php" \
 		"class.pmpro-import-members.php" \
-		"README.txt" \
-		"README.md" \
+		"composer.json" \
+		"composer.phar" \
 		"CHANGELOG.md"
+		"README.md" \
+		"README.txt" \
 		)
 declare -x -a exclude=( \
 	".editorconfig" \
 	".env.testing" \
 	".gitignore" \
-	".phpcs.xml.dist"
+	"phpcs.xml.dist"
 	"*.yml" \
 	"*.phar" \
 	"*.json" \
-	"composer.*" \
+	"composer.lock" \
 	"Makefile" \
 	"*.neon" \
 	"*.xml" \
