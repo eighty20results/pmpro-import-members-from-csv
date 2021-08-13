@@ -27,7 +27,7 @@ use Brain\Monkey;
 use Exception;
 use Mockery;
 
-// Functions to import from other namespaces
+// Functions to Import from other namespaces
 use function PHPUnit\Framework\assertEquals;
 
 class CSV_UnitTest extends Unit {
@@ -84,13 +84,11 @@ class CSV_UnitTest extends Unit {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../src/class-error-log.php';
-		require_once __DIR__ . '/../../../src/class-variables.php';
-		require_once __DIR__ . '/../../../src/import/class-csv.php';
+		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
 	/**
-	 * Test whether the correct path is returned for the import file specified
+	 * Test whether the correct path is returned for the Import file specified
 	 *
 	 * @dataProvider fixture_import_file_names
 	 */

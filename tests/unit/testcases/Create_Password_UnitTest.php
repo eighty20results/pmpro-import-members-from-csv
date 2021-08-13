@@ -28,10 +28,10 @@ use Brain\Monkey;
 use Exception;
 use Mockery;
 
-// Functions to import from other namespaces
+// Functions to Import from other namespaces
 use function PHPUnit\Framework\assertEquals;
 
-class Create_Password_Test extends Unit {
+class Create_Password_UnitTest extends Unit {
 
 	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
@@ -85,11 +85,11 @@ class Create_Password_Test extends Unit {
 	 * Load all needed source files for the unit test
 	 */
 	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../src/modules/Users/class-create-password.php';
+		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
 	/**
-	 * Test whether the correct path is returned for the import file specified
+	 * Test whether the correct path is returned for the Import file specified
 	 *
 	 * @dataProvider fixture_user_password_validation
 	 */

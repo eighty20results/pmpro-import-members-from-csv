@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-namespace E20R\Test\Unit;
+namespace E20R\Tests\Unit;
 
 if ( ! defined( 'E20R_UNITTEST_ROW_COUNT' ) ) {
 	define( 'E20R_UNITTEST_ROW_COUNT', 0 );
@@ -29,11 +29,11 @@ use E20R\Import_Members\Data;
 use E20R\Import_Members\Import_Members;
 use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
 
-// Functions to import from other namespaces
+// Functions to Import from other namespaces
 use function PHPUnit\Framework\assertEquals;
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
-class ImportMembers_UnitTest extends Unit {
+class Import_UnitTest extends Unit {
 
 
 	/**
@@ -87,7 +87,7 @@ class ImportMembers_UnitTest extends Unit {
 	 */
 	public function loadTestSources(): void {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/class-import-members.php';
+		require_once __DIR__ . '/../../../src/class-Import-members.php';
 	}
 
 	/**
