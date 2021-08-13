@@ -18,8 +18,7 @@ parameters:
     scanDirectories:
     	- inc/
     paths:
-        - class.pmpro-import-members.php
-        - class-activateutilitiesplugin.php
+        - *.php
         - src/
     bootstrapFiles:
     	- class.pmpro-import-members.php
