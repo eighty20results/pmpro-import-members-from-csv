@@ -66,16 +66,26 @@
         "psr-4": {
 		  "ProjectRoot\\" : "",
 		  "NamespaceInSourceDir\\": "",
-		  "E20R\\": "src/",
-		  "E20R\\Import_Members\\": "src/E20R"
-        }
+		  "E20R\\": "src/E20R",
+		  "E20R\\Import\\": "./",
+		  "E20R\\Import_Members\\": "src/E20R/Import_Members",
+		  "E20R\\Import_Members\\Email\\": "src/E20R/Import_Members/Email",
+		  "E20R\\Import_Members\\Import\\": "src/E20R/Import_Members/Import",
+		  "E20R\\Import_Members\\Modules\\": "src/E20R/Import_Members/Modules",
+		  "E20R\\Import_Members\\Modules\\BuddyPress\\": "src/E20R/Import_Members/Modules/BuddyPress",
+		  "E20R\\Import_Members\\Modules\\PMPro\\": "src/E20R/Import_Members/Modules/PMPro",
+		  "E20R\\Import_Members\\Modules\\Users\\": "src/E20R/Import_Members/Modules/Users",
+		  "E20R\\Import_Members\\Validate\\": "src/E20R/Import_Members/Validate"
+		}
     },
     "autoload-dev": {
         "psr-4": {
-            "E20R\\": "",
-            "E20R\\Tests\\": "tests/",
-            "E20R\\Tests\\Unit\\": "tests/unit/testcases",
-            "E20R\\Tests\\Unit\\Fixtures\\": "tests/unit/fixtures/"
+		  "E20R\\Tests\\": "tests",
+		  "E20R\\Tests\\Unit\\": "tests/unit/testcases",
+		  "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases",
+		  "E20R\\Tests\\Functional\\": "tests/functional/testcases",
+		  "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases",
+		  "E20R\\Tests\\Api\\": "tests/api/testcases"
         }
     }
 }
