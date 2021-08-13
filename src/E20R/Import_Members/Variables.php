@@ -19,7 +19,7 @@
 
 namespace E20R\Import_Members;
 
-use E20R\Import_Members\Import\CSV;
+use E20R\Import_Members\Process\CSV;
 
 if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 	/**

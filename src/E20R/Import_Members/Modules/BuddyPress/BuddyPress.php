@@ -133,7 +133,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 				// Process BuddyPress fields names and set default values as applicable
 				foreach ( $field_data as $field_name => $default ) {
 					if ( ! in_array( $field_name, $this->excluded_fields, true ) ) {
-						$this->field_list["${meta_key_prefix}_{$field_name}"] = $default;
+						$this->field_list[ "${meta_key_prefix}_{$field_name}" ] = $default;
 					}
 				}
 			}

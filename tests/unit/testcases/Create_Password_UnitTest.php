@@ -20,7 +20,7 @@ namespace E20R\Test\Unit;
 
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
-use E20R\Import_Members\Import\CSV;
+use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Create_Password;
 use E20R\Import_Members\Variables;

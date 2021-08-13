@@ -17,17 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members\Import;
+namespace E20R\Import_Members\Process;
 
+use Automattic\WooCommerce\Admin\API\Reports\Cache;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
-use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\PMPro\Import_Sponsors;
 
-if ( ! class_exists( '\E20R\Import_Members\Import\Ajax' ) ) {
+if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 	/**
 	 * Class Ajax
-	 * @package E20R\Import_Members
+	 * @package E20R\Import_Members\Process
 	 */
 	class Ajax {
 
@@ -63,12 +64,28 @@ if ( ! class_exists( '\E20R\Import_Members\Import\Ajax' ) ) {
 		private $variables = null;
 
 		/**
-		 * Ajax_Import constructor.
+		 * Ajax constructor.
+		 *
+		 * @param null|Variables $variables
+		 * @param null|CSV       $csv
+		 * @param null|Error_Log $error_log
 		 */
-		private function __construct() {
-			$this->error_log = new Error_Log(); // phpcs:ignore
-			$this->variables = new Variables();
-			$this->csv       = new CSV( $this->variables );
+		public function __construct( $variables = null, $csv = null, $error_log = null ) {
+			if ( empty( $error_log ) ) {
+				$error_log = new Error_Log(); // phpcs:ignore
+			}
+			$this->error_log = $error_log;
+
+			if ( empty( $variables ) ) {
+				$variables = new Variables();
+			}
+			$this->variables = $variables;
+
+			if ( empty( $csv ) ) {
+				$csv = new CSV( $this->variables );
+			}
+			$this->csv      = $csv;
+			self::$instance = $this;
 		}
 
 		/**
@@ -171,7 +188,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\Ajax' ) ) {
 		 */
 		public function wp_ajax_cleanup_csv() {
 
-			$sponsors = new Import_Sponsors();
+			$sponsors = new Import_Sponsors( $this->variables, null, $this->error_log );
 
 			$this->error_log->debug( 'Import is complete... ' );
 

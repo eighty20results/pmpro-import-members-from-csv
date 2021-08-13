@@ -45,7 +45,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 		 *
 		 * @access private
 		 */
-		private function __construct() {
+		public function __construct() {
+			self::$instance = $this;
 		}
 
 		/**
@@ -75,24 +76,24 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 			$fields = array_merge_recursive(
 				$fields,
 				array(
-					'membership_id'                          => null,
-					'membership_code_id'                     => null,
-					'membership_discount_code'               => null,
-					'membership_initial_payment'             => null,
-					'membership_billing_amount'              => null,
-					'membership_cycle_number'                => null,
-					'membership_cycle_period'                => null,
-					'membership_billing_limit'               => null,
-					'membership_trial_amount'                => null,
-					'membership_trial_limit'                 => null,
-					'membership_status'                      => null,
-					'membership_startdate'                   => null,
-					'membership_enddate'                     => null,
+					'membership_id'                     => null,
+					'membership_code_id'                => null,
+					'membership_discount_code'          => null,
+					'membership_initial_payment'        => null,
+					'membership_billing_amount'         => null,
+					'membership_cycle_number'           => null,
+					'membership_cycle_period'           => null,
+					'membership_billing_limit'          => null,
+					'membership_trial_amount'           => null,
+					'membership_trial_limit'            => null,
+					'membership_status'                 => null,
+					'membership_startdate'              => null,
+					'membership_enddate'                => null,
 					'membership_subscription_transaction_id' => null,
-					'membership_payment_transaction_id'      => null,
-					'membership_gateway'                     => null,
-					'membership_affiliate_id'                => null,
-					'membership_timestamp'                   => null,
+					'membership_payment_transaction_id' => null,
+					'membership_gateway'                => null,
+					'membership_affiliate_id'           => null,
+					'membership_timestamp'              => null,
 				)
 			);
 
@@ -138,27 +139,18 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 			$error     = new Error_Log(); // phpcs:ignore
 
 			if (
-				isset( $e20r_import_err["no_gw_environment_{$active_line_number}"] ) ||
-				isset( $e20r_import_err["correct_gw_env_variable_{$active_line_number}"] )
+				isset( $e20r_import_err[ "no_gw_environment_{$active_line_number}" ] ) ||
+				isset( $e20r_import_err[ "correct_gw_env_variable_{$active_line_number}" ] )
 			) {
 				$fields['membership_gateway_environment'] = pmpro_getOption( 'gateway_environment' );
 			}
 
 			// Doesn't have a supported gateway, so adding it!
-			if ( isset( $e20r_import_err["supported_gateway_{$active_line_number}"] ) ) {
+			if ( isset( $e20r_import_err[ "supported_gateway_{$active_line_number}" ] ) ) {
 				$fields['membership_gateway'] = pmpro_getOption( 'gateway' );
 			}
 
 			return $fields;
-		}
-
-		/**
-		 * Clone the class (Singleton)
-		 *
-		 * @access private
-		 */
-		private function __clone() {
-			// TODO: Implement __clone() method.
 		}
 	}
 }

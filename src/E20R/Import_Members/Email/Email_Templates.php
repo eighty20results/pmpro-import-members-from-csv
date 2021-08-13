@@ -207,7 +207,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 			$email_text = '';
 
-			global $pmproet_email_defaults;
+			global $pmpro_email_templates_defaults;
 
 			// Email disabled?
 			if ( true === (bool) pmpro_getOption( "email_{$template_name}_disabled}" ) ) {
@@ -215,7 +215,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			}
 
 			// Not in the list of templates?
-			if ( empty( $pmproet_email_defaults[ $template_name ] ) ) {
+			if ( empty( $pmpro_email_templates_defaults[ $template_name ] ) ) {
 				return null;
 			}
 
@@ -267,14 +267,17 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 */
 		private function load_template_part( $template ) {
 
-			global $pmproet_email_defaults;
+			global $pmpro_email_templates_defaults;
 
 			$locale = apply_filters( 'plugin_locale', get_locale(), 'pmpro-import-members-from-csv' );
 			$body   = null;
 
 			// Load template from PMPro Email Templates Admin add-on
-			if ( isset( $pmproet_email_defaults[ $template ]['body'] ) && ! empty( $pmproet_email_defaults[ $template ]['body'] ) ) {
-				$body = $pmproet_email_defaults[ $template ]['body'];
+			if (
+				isset( $pmpro_email_templates_defaults[ $template ]['body'] ) &&
+				! empty( $pmpro_email_templates_defaults[ $template ]['body'] )
+			) {
+				$body = $pmpro_email_templates_defaults[ $template ]['body'];
 			} else {
 				$locations = array(
 					get_stylesheet_directory() . "/pmpro-import-members-from-csv/{$locale}/{$template}.html",
@@ -320,11 +323,11 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 */
 		public function add_email_templates() {
 
-			global $pmproet_email_defaults;
+			global $pmpro_email_templates_defaults;
 
 			$this->error_log->debug( 'Attempting to load template for the Welcome Imported Member message' );
 
-			$pmproet_email_defaults['imported_member'] = array(
+			$pmpro_email_templates_defaults['imported_member'] = array(
 				'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
 				'description' => __( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
 				// phpcs:ignore

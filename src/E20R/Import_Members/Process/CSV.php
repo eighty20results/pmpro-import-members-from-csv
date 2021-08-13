@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members\Import;
+namespace E20R\Import_Members\Process;
 
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Import_User;
@@ -26,7 +26,11 @@ use E20R\Import_Members\Variables;
 use SplFileObject;
 use WP_Error;
 
-if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
+if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
+	/**
+	 * Class CSV
+	 * @package E20R\Import_Members\Process
+	 */
 	class CSV {
 		/**
 		 * Instance of this class (CSV)
@@ -367,11 +371,10 @@ if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
 				// If the first line is empty, abort
 				// If another line is empty, just skip it
 				if ( empty( $line ) ) {
-
 					if ( true === $first ) {
-						$msg = __( 'The expected header line in the Import file is missing?!?', 'pmpro-import-members-from-csv' );
+						$msg = esc_attr__( 'The expected header line in the Import file is missing?!?', 'pmpro-import-members-from-csv' );
 						$this->error_log->add_error_msg( $msg, 'error' );
-						$e20r_import_err["header_missing_$active_line_number"] = new WP_Error( 'e20r_im_header', $msg );
+						$e20r_import_err[ "header_missing_$active_line_number" ] = new WP_Error( 'e20r_im_header', $msg );
 						break;
 					} else {
 						continue;
@@ -438,9 +441,9 @@ if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
 
 				if ( Status::E20R_ERROR_USER_NOT_FOUND === $user_id_status ) {
 
-					$msg       = sprintf(
-					// translators: %1$d - User ID, %2$d - Current line number in the CSV file being imported
-						__(
+					$msg = sprintf(
+						// translators: %1$d - User ID, %2$d - Current line number in the CSV file being imported
+						esc_attr__(
 							'WP User ID %1$d not found in database (from CSV file line: %2$d)',
 							'pmpro-import-members-from-csv'
 						),
@@ -451,7 +454,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
 				}
 
 				if ( true !== $user_id_status && ! empty( $msg ) ) {
-					if ( ! empty( $error_key ) && ! empty( $msg ) ) {
+					if ( ! empty( $error_key ) ) {
 						$e20r_import_err[ $error_key ] = new WP_Error( 'e20r_im_missing_data', $msg );
 					}
 
@@ -480,7 +483,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
 						( $active_line_number + 1 )
 					);
 
-					$warnings["warning_userdata_{$active_line_number}"] = new WP_Error( 'e20r_im_nodata', $msg );
+					$warnings[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
 
 					$this->error_log->debug( $msg );
 					continue;
@@ -500,7 +503,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
 
 					$this->error_log->add_error_msg( $msg, 'error' );
 					$this->error_log->debug( $msg );
-					$e20r_import_err["user_data_missing_{$active_line_number}"] = new WP_Error( 'e20r_im_missing_data', $msg );
+					$e20r_import_err[ "user_data_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_missing_data', $msg );
 				}
 
 				/** BUG FIX: Didn't save the created user's ID */
@@ -615,11 +618,11 @@ if ( ! class_exists( '\E20R\Import_Members\Import\CSV' ) ) {
 				if ( ! isset( $headers[ $ckey ] ) ) {
 					$msg = sprintf(
 					// translators: %s - The column key (header)
-						__( 'Cannot find header (column) %s!', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Cannot find header (column) %s!', 'pmpro-import-members-from-csv' ),
 						$ckey
 					);
 					$this->error_log->add_error_msg( $msg, 'error' );
-					$e20r_import_err["column_{$ckey}_missing"] = new WP_Error( 'e20r_im_header', $msg );
+					$e20r_import_err[ "column_{$ckey}_missing" ] = new WP_Error( 'e20r_im_header', $msg );
 
 					$this->error_log->debug( $msg );
 					$active_line_number ++;

@@ -21,6 +21,7 @@ namespace E20R\Import_Members\Modules\PMPro;
 
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import;
 use E20R\Import_Members\Import_Members;
 use E20R\Import_Members\Variables;
 use E20R\Utilities\Licensing\Licensing;
@@ -57,14 +58,25 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 		/**
 		 * Import_Sponsors constructor.
 		 *
-		 * Hide/protect the constructor for this class (singleton pattern)
-		 *
-		 * @access private
+		 * @param null|Variables $variables
+		 * @param null|Data      $data
+		 * @param null|Error_Log $error_log
 		 */
-		public function __construct() {
-			$this->error_log = new Error_Log(); // phpcs:ignore
-			$this->data      = new Data();
-			$this->variables = new Variables();
+		public function __construct( $variables = null, $data = null, $error_log = null ) {
+			if ( empty( $error_log ) ) {
+				$error_log = new Error_Log(); // phpcs:ignore
+			}
+			$this->error_log = $error_log;
+
+			if ( empty( $data ) ) {
+				$data = new Data();
+			}
+			$this->data = $data;
+
+			if ( empty( $variables ) ) {
+				$variables = new Variables();
+			}
+			$this->variables = $variables;
 		}
 
 		/**
@@ -103,11 +115,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 			$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
 
 			if ( false === $check->isPrivate() ) {
-				$licensing   = new Licensing( Import_Members::E20R_LICENSE_SKU );
-				$is_licensed = $licensing->is_licensed( Import_Members::E20R_LICENSE_SKU, false );
+				$licensing   = new Licensing( Import::E20R_LICENSE_SKU );
+				$is_licensed = $licensing->is_licensed( Import::E20R_LICENSE_SKU, false );
 			} else {
 				// @phpstan-ignore-next-line
-				$is_licensed = Licensing::is_licensed( Import_Members::E20R_LICENSE_SKU, false );
+				$is_licensed = Licensing::is_licensed( Import::E20R_LICENSE_SKU, false );
 			}
 
 			if ( true === $is_licensed ) {
@@ -148,8 +160,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 				$sponsor = new Sponsor( $user_meta['pmprosm_sponsor'] );
 			} catch ( \Exception $e ) {
 
-				$delayed_sponsor_link[ $user_id ]                                      = $user_meta['pmprosm_sponsor'];
-				$e20r_import_err["sponsor_not_found_{$user_id}_{$active_line_number}"] = new WP_Error(
+				$delayed_sponsor_link[ $user_id ]                                        = $user_meta['pmprosm_sponsor'];
+				$e20r_import_err[ "sponsor_not_found_{$user_id}_{$active_line_number}" ] = new WP_Error(
 					'e20r_im_sponsor',
 					sprintf(
 						__(
@@ -175,7 +187,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 				$sponsors_level = $sponsor->get( null, 'membership_level' );
 
 				if ( empty( $sponsors_level ) ) {
-					$e20r_import_err["sponsor_not_member_{$user_id}_{$active_line_number}"] = new WP_Error(
+					$e20r_import_err[ "sponsor_not_member_{$user_id}_{$active_line_number}" ] = new WP_Error(
 						'e20r_im_sponsor',
 						sprintf(
 							__(
@@ -241,7 +253,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 
 			// Have a sponsor to process
 			if ( empty( $sponsor ) ) {
-				$e20r_import_err["sponsor_not_found_{$sponsored_user_id}"] = new WP_Error(
+				$e20r_import_err[ "sponsor_not_found_{$sponsored_user_id}" ] = new WP_Error(
 					'pmp_im_sponsor',
 					sprintf(
 					// translators: %1$d - ID of sponsored user
@@ -257,7 +269,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 			$this->error_log->debug( "Found sponsor {$sponsor_id} for user {$sponsored_user_id}" );
 
 			if ( empty( $sponsor_level_id ) ) {
-				$e20r_import_err["invalid_sponsor_level_{$sponsored_user_id}"] = new WP_Error(
+				$e20r_import_err[ "invalid_sponsor_level_{$sponsored_user_id}" ] = new WP_Error(
 					'pmp_im_sponsor',
 					sprintf(
 					// translators: %d - The user ID of the sponsored user
@@ -304,7 +316,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 
 					$sponsor_email = $sponsor->get( 'user', 'user_email' );
 
-					$e20r_import_err["unlimited_seats_{$sponsor_id}"] = new WP_Error(
+					$e20r_import_err[ "unlimited_seats_{$sponsor_id}" ] = new WP_Error(
 						'pmp_im_sponsor',
 						sprintf(
 						// translators: %s - the Email-address for the PMPro Sponsored members sponsor
@@ -341,7 +353,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 
 			if ( empty( $code_id ) ) {
 
-				$e20r_import_err["no_valid_sponsor_code_{$sponsor_id}"] = new WP_Error(
+				$e20r_import_err[ "no_valid_sponsor_code_{$sponsor_id}" ] = new WP_Error(
 					'pmp_im_sponsor',
 					sprintf(
 					// translators: %d - User ID of the sponsored user
@@ -364,12 +376,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 
 			//update code for sponsored user
 			if ( false === $wpdb->replace(
-					$wpdb->pmpro_memberships_users,
-					$update,
-					array( '%d', '%d', '%d', '%s' )
-				)
+				$wpdb->pmpro_memberships_users,
+				$update,
+				array( '%d', '%d', '%d', '%s' )
+			)
 			) {
-				$e20r_import_err["update_code_{$sponsored_user_id}"] = new WP_Error(
+				$e20r_import_err[ "update_code_{$sponsored_user_id}" ] = new WP_Error(
 					'pmp_im_sponsor',
 					sprintf(
 					// translators: %d - User ID of the sponsored user record
@@ -411,7 +423,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 
 			$error_loading_sponsor = false;
 
-			if ( false === Import_Members::is_pmpro_active() ) {
+			if ( false === Import::is_pmpro_active() ) {
 				$errors_loading_sponsor = true;
 				$this->error_log->add_error_msg( 'The PMPro plugin is inactive for this WordPress instance. Cannot Import sponsor info!' );
 

@@ -24,7 +24,7 @@ use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
-use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Import;
 use WP_Error;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
@@ -135,7 +135,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				}
 
 				if ( ! empty( $target ) ) {
-					$user = get_user_by( $target, $user_data["user_{$target}"] );
+					$user = get_user_by( $target, $user_data[ "user_{$target}" ] );
 				} else {
 					return; // Exit quietly
 				}
@@ -188,7 +188,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			$user = get_userdata( $user_id );
 
 			if ( empty( $user ) ) {
-				$e20r_import_err["no_user_found_$active_line_number"] = new WP_Error(
+				$e20r_import_err[ "no_user_found_$active_line_number" ] = new WP_Error(
 					'e20r_im_member',
 					sprintf(
 					// translators: %d the user id we're skipping
@@ -199,7 +199,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 						$user_id
 					)
 				);
-				$has_error                                            = true;
+				$has_error = true;
 			}
 
 			// Generate PMPro specific member value(s)
@@ -240,11 +240,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			if (
 				empty( $welcome_warning ) &&
 				true === $send_email &&
-				( ! isset( $user_data['membership_status'] ) ||
-				  ( isset( $user_data['membership_status'] ) && 'active' !== trim( $user_data['membership_status'] ) )
+				(
+					! isset( $user_data['membership_status'] ) ||
+					( isset( $user_data['membership_status'] ) && 'active' !== trim( $user_data['membership_status'] ) )
 				)
 			) {
-				$welcome_warning = __(
+				$welcome_warning = esc_attr__(
 					'Cannot send Welcome Email to members who did not get imported as \'active\' members!',
 					'pmpro-import-members-from-csv'
 				);
@@ -301,11 +302,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 					if ( false === $updated ) {
 
-						$e20r_import_err["old_membership_error_$active_line_number"] = new WP_Error(
+						$e20r_import_err[ "old_membership_error_$active_line_number" ] = new WP_Error(
 							'e20r_im_member',
 							sprintf(
 							// translators: %1$d Membership level id, %2$d User id
-								__(
+								esc_attr__(
 									'Unable to cancel old membership level (ID: %1$d) for user (ID: %2$d)',
 									'pmpro-import-members-from-csv'
 								),
@@ -356,7 +357,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					10
 				);
 
-				// Update the level
+				// User's level was defined as different in the import so update it in the system
 				$updated_level = pmpro_changeMembershipLevel( $custom_level, $user_id, 'cancelled' );
 
 				remove_filter( 'pmpro_deactivate_old_levels', '__return_false', 999 );
@@ -370,11 +371,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 				if ( false === $updated_level ) {
 
-					$e20r_import_err["user_level_{$active_line_number}"] = new WP_Error(
+					$e20r_import_err[ "user_level_{$active_line_number}" ] = new WP_Error(
 						'e20r_im_member',
 						sprintf(
 						// translators: %1$d PMPro membership level id, %2$d user id, %3$d line number in CSV file
-							__(
+							esc_attr__(
 								'Unable to configure membership level (ID: %1$d ) for user (user id: %2$d on line # %3$d)',
 								'pmpro-import-members-from-csv'
 							),
@@ -415,9 +416,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				// If membership ended in the past, make it inactive for now
 				if (
 					( 'inactive' === strtolower( $user_meta['membership_status'] ) && ! empty( $record_id ) ) ||
-					( ! empty( $user_meta['membership_enddate'] ) &&
-					  'NULL' !== strtoupper( $user_meta['membership_enddate'] ) &&
-					  strtotime( $user_meta['membership_enddate'], time() ) < time()
+					(
+						! empty( $user_meta['membership_enddate'] ) &&
+						'NULL' !== strtoupper( $user_meta['membership_enddate'] ) &&
+						strtotime( $user_meta['membership_enddate'], time() ) < time()
 					)
 				) {
 
@@ -429,27 +431,27 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					}
 
 					if ( false !== $wpdb->update(
-							"{$wpdb->prefix}pmpro_memberships_users",
-							array(
-								'status'  => 'inactive',
-								'enddate' => $user_meta['membership_enddate'],
-							),
-							array(
-								'id'            => $record_id,
-								'user_id'       => $user_id,
-								'membership_id' => $user_meta['membership_id'],
-							),
-							array( '%s', '%s' ),
-							array( '%d', '%d', '%d' )
-						)
+						"{$wpdb->prefix}pmpro_memberships_users",
+						array(
+							'status'  => 'inactive',
+							'enddate' => $user_meta['membership_enddate'],
+						),
+						array(
+							'id'            => $record_id,
+							'user_id'       => $user_id,
+							'membership_id' => $user_meta['membership_id'],
+						),
+						array( '%s', '%s' ),
+						array( '%d', '%d', '%d' )
+					)
 					) {
 						$membership_in_the_past = true;
 					} else {
-						$e20r_import_err["upd_error_status_{$active_line_number}"] = new WP_Error(
+						$e20r_import_err[ "upd_error_status_{$active_line_number}" ] = new WP_Error(
 							'e20r_im_member',
 							sprintf(
 							// translators: %1$d user id, %2$d PMPro membership level id
-								__(
+								esc_attr__(
 									'Unable to set \'inactive\' membership status/date for user (ID: %1$d) with membership level ID %2$d',
 									'pmpro-import-members-from-csv'
 								),
@@ -462,30 +464,32 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 				if (
 					'active' === strtolower( $user_meta['membership_status'] ) &&
-					( empty( $user_meta['membership_enddate'] ) ||
-					  'NULL' === strtoupper( $user_meta['membership_enddate'] ) ||
-					  strtotime( $user_meta['membership_enddate'], time() ) >= time() )
+					(
+						empty( $user_meta['membership_enddate'] ) ||
+						'NULL' === strtoupper( $user_meta['membership_enddate'] ) ||
+						strtotime( $user_meta['membership_enddate'], time() ) >= time()
+					)
 				) {
 
 					if ( false === $wpdb->update(
-							"{$wpdb->prefix}pmpro_memberships_users",
-							array(
-								'status'  => 'active',
-								'enddate' => $user_meta['membership_enddate'],
-							),
-							array(
-								'id'            => $record_id,
-								'user_id'       => $user_id,
-								'membership_id' => $user_meta['membership_id'],
-							),
-							array( '%s', '%s' ),
-							array( '%d', '%d', '%d' )
-						) ) {
-						$e20r_import_err["import_status_{$active_line_number}"] = new WP_Error(
+						"{$wpdb->prefix}pmpro_memberships_users",
+						array(
+							'status'  => 'active',
+							'enddate' => $user_meta['membership_enddate'],
+						),
+						array(
+							'id'            => $record_id,
+							'user_id'       => $user_id,
+							'membership_id' => $user_meta['membership_id'],
+						),
+						array( '%s', '%s' ),
+						array( '%d', '%d', '%d' )
+					) ) {
+						$e20r_import_err[ "import_status_{$active_line_number}" ] = new WP_Error(
 							'e20r_im_member',
 							sprintf(
 							// translators: %1$d user id, %2$d PMPro membership level id
-								__(
+								esc_attr__(
 									'Unable to activate membership for user (ID: %1$d) with membership level ID %2$d',
 									'pmpro-import-members-from-csv'
 								),
@@ -503,7 +507,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				// Add error message for failing to add order for $user_id
 				$msg = sprintf(
 				// translators: %2$d user id
-					__(
+					esc_attr__(
 						'Cannot create order data for user (user id: %1$d, CSV file line #: %2$s)',
 						'pmpro-import-members-from-csv'
 					),
@@ -511,7 +515,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					$active_line_number
 				);
 
-				$e20r_import_err["member_order_{$user_id}_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "member_order_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 				$this->error_log->debug( $msg );
 			}
 
@@ -570,7 +574,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					$user_id
 				);
 
-				$e20r_import_err["membership_id_missing_{$user_id}_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "membership_id_missing_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				return false;
 			}
@@ -578,11 +582,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			if ( isset( $record['membership_id'] ) && empty( $record['membership_id'] ) ) {
 				$msg = sprintf(
 				// translators: %1$d - User ID
-					__( 'Membership ID header found, but no ID value for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
+					esc_attr__( 'Membership ID header found, but no ID value for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
 					$user_id
 				);
 
-				$e20r_import_err["membership_id_missing_{$user_id}_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "membership_id_missing_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				return false;
 			}
@@ -625,7 +629,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			if ( empty( $record['membership_subscription_transaction_id'] ) && ! empty( $record['membership_gateway'] ) ) {
 				$msg = sprintf(
 				// translators: %1$s - The supplied gateway name, %2$s - The header we'd expect, %3$d - User ID
-					__(
+					esc_attr__(
 						'FYI: This record has a payment gateway (%1$s) but no subscription identifier to link (\'%2$s\') for %3$d (User ID).',
 						'pmpro-import-members-from-csv'
 					),
@@ -634,7 +638,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					$user_id
 				);
 
-				$e20r_import_err["transaction_link_{$user_id}_{$active_line_number}"] = new WP_Error(
+				$e20r_import_err[ "transaction_link_{$user_id}_{$active_line_number}" ] = new WP_Error(
 					'e20r_im_member',
 					$msg
 				);
@@ -644,16 +648,16 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			if ( ! empty( $record['membership_code_id'] ) && ! empty( $order ) && ! empty( $order->id ) ) {
 
 				if ( false === $wpdb->insert(
-						$pmpro_dc_uses_table,
-						array(
-							'code_id'   => $record['membership_code_id'],
-							'user_id'   => $user_id,
-							'order_id'  => $order->id,
-							'timestamp' => 'CURRENT_TIMESTAMP',
-						),
-						array( '%d', '%d', '%d', '%s' )
-					) ) {
-					$e20r_import_err["dc_usage_{$user_id}_{$active_line_number}"] = new WP_Error(
+					$pmpro_dc_uses_table,
+					array(
+						'code_id'   => $record['membership_code_id'],
+						'user_id'   => $user_id,
+						'order_id'  => $order->id,
+						'timestamp' => 'CURRENT_TIMESTAMP',
+					),
+					array( '%d', '%d', '%d', '%s' )
+				) ) {
+					$e20r_import_err[ "dc_usage_{$user_id}_{$active_line_number}" ] = new WP_Error(
 						'e20r_im_member',
 						sprintf(
 						// translators: %1$d membership discount code id, %2$d user id, %3$s order ID
@@ -689,7 +693,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			$gw_env  = null;
 			$gw_name = null;
 
-			if ( Import_Members::is_pmpro_active() ) {
+			if ( Import::is_pmpro_active() ) {
 				$gw_name = pmpro_getGateway();
 				$gw_env  = pmpro_getOption( 'gateway_environment' );
 			}
@@ -810,7 +814,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					$user_id
 				);
 
-				$e20r_import_err["order_save_{$user_id}_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "order_save_{$user_id}_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 				$this->error_log->debug( $msg );
 			}
 
@@ -821,7 +825,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				} else {
 					$timestamp = is_numeric( $record['membership_timestamp'] ) ? $record['membership_timestamp'] : null;
 					if ( is_null( $timestamp ) ) {
-						$e20r_import_err["timestamp_{$user_id}_{$active_line_number}"] = new WP_Error(
+						$e20r_import_err[ "timestamp_{$user_id}_{$active_line_number}" ] = new WP_Error(
 							'e20r_im_member',
 							sprintf(
 							// translators: %s PMPro Order timestamp value from CSV file
@@ -841,14 +845,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			}
 
 			return $order;
-		}
-
-		/**
-		 * Hide/protect the __clone() magic method for this class (singleton pattern)
-		 *
-		 * @access private
-		 */
-		private function __clone() {
 		}
 	}
 }

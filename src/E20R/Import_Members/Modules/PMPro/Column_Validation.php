@@ -22,7 +22,7 @@ namespace E20R\Import_Members\Modules\PMPro;
 use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Validate_Data;
-use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Import;
 use WP_Error;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
@@ -597,7 +597,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 			}
 
 			if ( ! empty( $fields['membership_subscription_transaction_id'] ) && empty( $fields['membership_payment_transaction_id'] ) ) {
-				$msg                                  = sprintf(
+				$msg = sprintf(
 				// translators: %1$s - CSV supplied value, %2$d - User ID
 					__(
 						'Notice: You have defined a subscription_transaction_id (%1$s) without also including a payment_transaction_id for user (ID: %2$d)',
@@ -680,14 +680,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 				$msg = sprintf(
 				// translators: %1$d - PMPro Membership Level ID
-					__(
+					esc_attr__(
 						'Error: The membership ID (membership_id) column is not present in the Import file (ID: %1$d). (Membership cannot be imported!)',
 						'pmpro-import-members-from-csv'
 					),
 					$user_id
 				);
 
-				$e20r_import_err["no_membership_id_column_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "no_membership_id_column_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				$has_error = ( ! $this->ignore_validation_error( 'no_membership_id_column' ) );
 			}
@@ -696,14 +696,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 				$msg = sprintf(
 				// translators: %1$d - User ID
-					__(
+					esc_attr__(
 						'Error: The membership ID (membership_id) column does not contain a numeric membership Level for user (ID: %1$d). (Membership data not imported!)',
 						'pmpro-import-members-from-csv'
 					),
 					$user_id
 				);
 
-				$e20r_import_err["no_membership_id_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "no_membership_id_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				$has_error = ( ! $this->ignore_validation_error( 'no_membership_id' ) );
 			}
@@ -713,14 +713,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 				$msg = sprintf(
 				// translators: %1$d - User ID
-					__(
+					esc_attr__(
 						'Warning: May cancel membership for user (ID: %1$d) since there is no membership ID assigned for them.',
 						'pmpro-import-members-from-csv'
 					),
 					$user_id
 				);
 
-				$e20r_import_err["cancelling_membership_level_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "cancelling_membership_level_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				$has_error = ( ! $this->ignore_validation_error( 'cancelling_membership_level' ) );
 			}
@@ -758,7 +758,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 				$msg = sprintf(
 				// translators: %1$d - PMPro Membership Level ID, %2$d - User ID
-					__(
+					esc_attr__(
 						'Error: The provided membership ID (%1$d) is not valid. (Membership data not imported for user (ID: %2$d)!)',
 						'pmpro-import-members-from-csv'
 					),
@@ -766,7 +766,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 					$user_id
 				);
 
-				$e20r_import_err["level_exists_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "level_exists_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				$has_error = ( ! $this->ignore_validation_error( 'level_exists' ) );
 			}
@@ -808,14 +808,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 				$msg = sprintf(
 				// translators: %1$d - User ID
-					__(
+					esc_attr__(
 						'Warning: You have an end date AND a recurring billing configuration (the membership_enddate, membership_billing_amount, membership_cycle_number and membership_cycle_period columns are not empty) user (ID: %1$d). Could result in an incorrectly configured membership for this user',
 						'pmpro-import-members-from-csv'
 					),
 					$user_id
 				);
 
-				$e20r_import_err["recurring_w_enddate_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "recurring_w_enddate_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				$has_error = ( ! $this->ignore_validation_error( 'recurring_w_enddate' ) );
 			}
@@ -855,7 +855,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 			) {
 				$msg = sprintf(
 				// translators: %1$s - CSV supplied value, %2$d - User ID
-					__(
+					esc_attr__(
 						'Error: You specified a payment gateway integration (membership_gateway) to use, but we do not recognize the gateway environment you have specified for this record (membership_gateway_environment: %1$s, User ID: %3$d). (Skipping!)',
 						'pmpro-import-members-from-csv'
 					),
@@ -863,7 +863,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 					$user_id
 				);
 
-				$e20r_import_err["correct_gw_env_variable_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+				$e20r_import_err[ "correct_gw_env_variable_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 				$has_error = ( ! $this->ignore_validation_error( 'correct_gw_env_variable' ) );
 			}
@@ -899,12 +899,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 			if ( ! empty( $fields['membership_gateway'] ) ) {
 
-				$gateways = Import_Members::is_pmpro_active() ? pmpro_gateways() : array();
+				$gateways = Import::is_pmpro_active() ? pmpro_gateways() : array();
 
 				if ( ! in_array( $fields['membership_gateway'], array_keys( $gateways ), true ) ) {
 					$msg = sprintf(
 					// translators: %1$s - CSV supplied value, %2$d - User ID
-						__(
+						esc_attr__(
 							'Warning: The payment gateway integration provided (membership_gateway: %1$s) is not one of the supported payment gateway integrations! (Changed and using the default value for user (ID: %2$d) )',
 							'pmpro-import-members-from-csv'
 						),
@@ -912,7 +912,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 						$user_id
 					);
 
-					$e20r_import_err["supported_gateway_{$active_line_number}"] = new WP_Error( 'e20r_im_member', $msg );
+					$e20r_import_err[ "supported_gateway_{$active_line_number}" ] = new WP_Error( 'e20r_im_member', $msg );
 
 					$has_error = ( ! $this->ignore_validation_error( 'supported_gateway' ) );
 				}

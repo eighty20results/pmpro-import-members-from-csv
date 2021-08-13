@@ -20,6 +20,7 @@
 namespace E20R\Import_Members\Email;
 
 use E20R\Import_Members\Error_Log;
+use \MemberOrder;
 
 if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 	/**
@@ -64,6 +65,13 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 		private $site_fields = array();
 
 		/**
+		 * Generated map of fields
+		 *
+		 * @var array $mapped_fields
+		 */
+		private $mapped_fields = array();
+
+		/**
 		 * Error_Log object
 		 *
 		 * @var Error_Log|null $error_log
@@ -80,32 +88,31 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 		/**
 		 * Configure the member variables
 		 *
-		 * @param \WP_User $user
+		 * @param \WP_User     $user
 		 * @param \MemberOrder $order
-		 * @param array $user_meta
+		 * @param array        $user_meta
 		 */
-		public function configure_objects( \WP_User $user, \MemberOrder $order, array $user_meta ) {
+		public function configure_objects( $user, $order, $user_meta ) {
 
 			// Save the received object(s)
-			$this->user  = $user;
-			$this->order = $order;
-			$this->meta  = $user_meta;
-
-			if ( null === $this->user && null === $user ) {
+			if ( empty( $user ) ) {
 				$this->error_log->debug( 'Warning: Using the logged in user\'s information' );
-				$this->user = get_current_user();
+				$user = wp_get_current_user();
 			}
+			$this->user = $user;
 
-			if ( null === $this->order && null === $order ) {
+			if ( empty( $order ) ) {
 				$this->error_log->debug( "Warning: Using the most recent order for user {$user->ID} (ID)" );
-				$this->order = new \MemberOrder();
-				$this->order->getLastMemberOrder( $user->ID );
+				$order = new MemberOrder();
+				$order->getLastMemberOrder( $user->ID );
 			}
+			$this->order = $order;
 
-			if ( null === $this->meta && null === $user_meta ) {
+			if ( empty( $user_meta ) ) {
 				$this->error_log->debug( "Warning: Loading all metadata recorded for user {$user->ID} (ID)" );
-				$this->meta = get_user_meta( $user->ID );
+				$user_meta = get_user_meta( $user->ID );
 			}
+			$this->meta = $user_meta;
 		}
 
 		/**
@@ -191,7 +198,7 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 
 			$this->mapped_fields += $fields;
 
-			/*
+			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			if ( 'membership_id' !== strtolower( $full_field_name ) && 'user_id' !== strtolower( $full_field_name ) ) {
 				$field_name = preg_replace( '/membership_/', '', strtolower( $full_field_name ) );
 			} else {

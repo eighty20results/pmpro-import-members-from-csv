@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,11 +37,8 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Date_Format' ) ) {
 		 * @credit Stack Overflow: User @glavić - https://stackoverflow.com/a/12323025
 		 */
 		public static function validate( $date, $format ) {
-
 			$check_date = \DateTime::createFromFormat( $format, $date );
-
 			return ( false !== $check_date ) && ( $check_date->format( $format ) === $date );
 		}
-
-}
+	}
 }

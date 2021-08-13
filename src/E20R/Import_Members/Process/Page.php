@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members\Import;
+namespace E20R\Import_Members\Process;
 
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
-use E20R\Import_Members\Import_Members;
-use E20R\Utilities\Utilities;
+use E20R\Import_Members\Import;
 
-if ( ! class_exists( '\E20R\Import_Members\Import\Page' ) ) {
+if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 	/**
 	 * Class Page
 	 * @package E20R\Import_Members\Import
@@ -150,7 +149,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\Page' ) ) {
 			if ( is_multisite() ) {
 				$current_blog_id = get_current_blog_id();
 
-				if ( 1 !== $current_blog_id && false === Import_Members::is_pmpro_active() ) {
+				if ( 1 !== $current_blog_id && false === Import::is_pmpro_active() ) {
 					?>
 					<div class="notice notice-error is-dismissable">
 						<?php
@@ -164,7 +163,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\Page' ) ) {
 				}
 			}
 
-			$all_levels = Import_Members::is_pmpro_active() ? pmpro_getAllLevels( true, true ) : array();
+			$all_levels = Import::is_pmpro_active() ? pmpro_getAllLevels( true, true ) : array();
 			$variables  = new Variables();
 			$error_log  = new Error_Log(); // phpcs:ignore
 
@@ -456,7 +455,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import\Page' ) ) {
 											sprintf(
 												'<a href="%1$s" target="_blank">',
 												esc_url_raw(
-													plugins_url( '/examples/Import.csv', Import_Members::$plugin_path . '/class.pmpro-Import-members.php' )
+													plugins_url( '/examples/Import.csv', Import::$plugin_path . '/class.pmpro-Import-members.php' )
 												)
 											),
 											'</a>'

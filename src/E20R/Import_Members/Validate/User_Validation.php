@@ -115,7 +115,7 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\User_Validation' ) ) {
 			if ( ! empty( $msg ) ) {
 
 				// Save the error message (based on the supplied status)
-				$e20r_import_err["user_check_{$active_line_number}"] = $msg;
+				$e20r_import_err[ "user_check_{$active_line_number}" ] = $msg;
 
 				return $should_exit;
 			}

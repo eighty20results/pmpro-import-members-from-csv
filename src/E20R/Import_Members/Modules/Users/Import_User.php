@@ -150,7 +150,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$login                   = preg_replace( '/@.*/', '', $user_data['user_email'] );
 				$user_data['user_login'] = preg_replace( '/-|\.|_|\+/', '', $login );
 
-				$e20r_import_err["warn_login_created_{$active_line_number}"] = new WP_Error( 'e20r_im_login', $msg );
+				$e20r_import_err[ "warn_login_created_{$active_line_number}" ] = new WP_Error( 'e20r_im_login', $msg );
 			}
 
 			if ( empty( $user_data['user_email'] ) || ( ! empty( $user_data['user_email'] ) && ! is_email( $user_data['user_email'] ) ) ) {
@@ -161,7 +161,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					( $active_line_number )
 				);
 
-				$e20r_import_err["warn_invalid_email_{$active_line_number}"] = new WP_Error(
+				$e20r_import_err[ "warn_invalid_email_{$active_line_number}" ] = new WP_Error(
 					'e20r_im_email',
 					$msg,
 					$user_data['user_email'] ?? null
@@ -184,7 +184,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$active_line_number ++
 				);
 
-				$e20r_import_err["user_update_not_allowed_{$active_line_number}"] = new WP_Error( 'e20r_im_login', $msg );
+				$e20r_import_err[ "user_update_not_allowed_{$active_line_number}" ] = new WP_Error( 'e20r_im_login', $msg );
 
 				return $user_id;
 			}
@@ -206,7 +206,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			} else {
 				$active_line_number ++;
 
-				$e20r_import_err["user_not_imported_{$active_line_number}"] =
+				$e20r_import_err[ "user_not_imported_{$active_line_number}" ] =
 					new WP_Error(
 						'e20r_im_account',
 						sprintf(

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,7 @@
 
 namespace E20R\Import_Members;
 
-use E20R\Import_Members\Import\CSV;
-use E20R\Import_Members\Import_Members;
+use E20R\Import_Members\Process\CSV;
 use Exception;
 
 if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
@@ -285,12 +284,6 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 					case 'accountnumber': // Don't risk it (in case users try to Import a full card #)
 					case 'code': // The order code (need to ignore)
 					case 'billing_name':
-						//case 'billing_street':
-						//case 'billing_city':
-						//case 'billing_state':
-						//case 'billing_zip':
-						//case 'billing_country':
-						//case 'billing_phone':
 						break; // Skip
 
 					case 'membership_id':

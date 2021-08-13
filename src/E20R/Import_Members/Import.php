@@ -18,9 +18,9 @@
  */
 namespace E20R\Import_Members;
 
-use E20R\Import_Members\Import\Ajax;
-use E20R\Import_Members\Import\CSV;
-use E20R\Import_Members\Import\Page;
+use E20R\Import_Members\Process\Ajax;
+use E20R\Import_Members\Process\CSV;
+use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BuddyPress_Validation;
 use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
@@ -30,6 +30,8 @@ use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Validate\Validate;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Licensing\License;
+use PHPStan\Rules\Cast\EchoRule;
+use PMPro\Tests\Includes\Functions;
 
 if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 	/**
@@ -103,16 +105,55 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 		private $pmpro = null;
 
 		/**
-		 * Import_Members constructor.
+		 * Instance of the Ajax Handler
+		 *
+		 * @var Ajax|null $ajax
 		 */
-		private function __construct() {
-			$this->pmpro       = PMPro::get_instance();
-			$this->data        = new Data();
-			$this->import_user = new Import_User();
-			$this->variables   = new Variables();
-			$this->csv         = new CSV( $this->variables );
-			$this->error_log   = new Error_Log(); // phpcs:ignore
-			self::$plugin_path = sprintf( '%1$s/..', plugin_dir_path( __FILE__ ) );
+		private $ajax = null;
+
+		/**
+		 * Import constructor.
+		 *
+		 * @param null|Variables $variables
+		 * @param null|PMPro $pmpro
+		 * @param null|Data $data
+		 * @param null|Import_User $import_user
+		 * @param null|CSV $csv
+		 * @param null|Error_Log $error_log
+		 */
+		private function __construct( $variables = null, $pmpro = null, $data = null, $import_user = null, $csv = null, $error_log = null ) {
+			if ( empty( $error_log ) ) {
+				$error_log = new Error_Log(); // phpcs:ignore
+			}
+			$this->error_log = $error_log;
+
+			if ( empty( $pmpro ) ) {
+				$pmpro = new PMPro();
+			}
+			$this->pmpro = $pmpro;
+
+			if ( empty( $data ) ) {
+				$data = new Data();
+			}
+			$this->data = $data;
+
+			if ( empty( $import_user ) ) {
+				$import_user = new Import_User();
+			}
+			$this->import_user = $import_user;
+
+			if ( empty( $variables ) ) {
+				$variables = new Variables();
+			}
+			$this->variables = $variables;
+
+			if ( empty( $csv ) ) {
+				$csv = new CSV( $this->variables );
+			}
+			$this->csv  = $csv;
+			$this->ajax = new Ajax( $variables, $csv, $error_log );
+
+			self::$plugin_path = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
 		}
 
 		/**
@@ -159,7 +200,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 			add_action( 'plugins_loaded', array( $this->pmpro, 'load_hooks' ), 11, 0 );
 			add_action( 'plugins_loaded', array( $this->import_user, 'load_actions' ), 11, 0 );
 			add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99, 0 );
-			add_action( 'plugins_loaded', array( Ajax::get_instance(), 'load_hooks' ), 99, 0 );
+			add_action( 'plugins_loaded', array( $this->ajax, 'load_hooks' ), 99, 0 );
 			add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99, 0 );
 
 			// Add validation logic for all Modules
@@ -325,25 +366,25 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 							'pmpro-import-members-from-csv',
 							admin_url( 'admin.php' )
 						),
-						'Import'                      => isset( $_REQUEST['Import'] ) ? sanitize_text_field( $_REQUEST['Import'] ) : null,
-						// phpcs:ignore
+						// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						'import'                      => isset( $_REQUEST['import'] ) ? sanitize_text_field( $_REQUEST['import'] ) : null,
 						'lang'                        => array(
-							'whitespace_in_filename' => __(
+							'whitespace_in_filename' => esc_attr__(
 								'Error: Your file name contains one or more whitespace characters. Please rename the file and remove any whitespace characters from the file name.',
 								'pmpro-import-members-from-csv'
 							),
-							'pausing'                => __(
+							'pausing'                => esc_attr__(
 								'Pausing. You may see one more update here as we clean up.',
 								'pmpro-import-members-from-csv'
 							),
-							'resuming'               => __( 'Resuming...', 'pmpro-import-members-from-csv' ),
-							'loaded'                 => __( 'JavaScript Loaded.', 'pmpro-import-members-from-csv' ),
-							'done'                   => __( 'Done!', 'pmpro-import-members-from-csv' ),
-							'alert_msg'              => __( 'Error with Import. Close to reload the admin page.', 'pmpro-import-members-from-csv' ),
-							'error'                  => __( 'Error with Import. Close to refresh the admin page.', 'pmpro-import-members-from-csv' ),
+							'resuming'               => esc_attr__( 'Resuming...', 'pmpro-import-members-from-csv' ),
+							'loaded'                 => esc_attr__( 'JavaScript Loaded.', 'pmpro-import-members-from-csv' ),
+							'done'                   => esc_attr__( 'Done!', 'pmpro-import-members-from-csv' ),
+							'alert_msg'              => esc_attr__( 'Error with Import. Close to reload the admin page.', 'pmpro-import-members-from-csv' ),
+							'error'                  => esc_attr__( 'Error with Import. Close to refresh the admin page.', 'pmpro-import-members-from-csv' ),
 							'excel_info'             => sprintf(
 							// translators: %1$s link html %2$s terminating link html
-								__(
+								esc_attr__(
 									'If you use Microsoft Excel(tm) to view/edit your .CSV files, may we suggest you %1$stry using Google Sheets instead%2$s? Using Google Sheets may reduce/eliminate issues with date formats!',
 									'pmpro-import-members-from-csv'
 								),
@@ -351,7 +392,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 								// translators: %s URL to google docs, %s description
 									'<a href="%1$s" target="_blank" title="%2$s">',
 									'https://docs.google.com/spreadsheets',
-									__( 'To Google Sheets', 'pmpro-import-members-from-csv' )
+									esc_attr__( 'To Google Sheets', 'pmpro-import-members-from-csv' )
 								),
 								'</a>'
 							),
@@ -393,41 +434,41 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 					'donate'        => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						esc_url_raw( 'https://www.paypal.me/eighty20results' ),
-						__(
+						esc_attr__(
 							'Donate to support updates, maintenance and tech support for this plugin',
 							'pmpro-import-members-from-csv'
 						),
-						__( 'Donate', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'Donate', 'pmpro-import-members-from-csv' )
 					),
 					'documentation' => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						esc_url_raw( 'https://wordpress.org/plugins/pmpro-import-members-from-csv/' ),
-						__( 'View the documentation', 'pmpro-import-members-from-csv' ),
-						__( 'Docs', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'View the documentation', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Docs', 'pmpro-import-members-from-csv' )
 					),
 					'filters'       => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/FILTERS.md' ),
-						__( 'View the Filter documentation', 'pmpro-import-members-from-csv' ),
-						__( 'Filters', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'View the Filter documentation', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Filters', 'pmpro-import-members-from-csv' )
 					),
 					'actions'       => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/ACTIONS.md' ),
-						__( 'View the Actions documentation', 'pmpro-import-members-from-csv' ),
-						__( 'Actions', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'View the Actions documentation', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Actions', 'pmpro-import-members-from-csv' )
 					),
 					'help'          => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
 						esc_url_raw( 'https://wordpress.org/support/plugin/pmpro-import-members-from-csv' ),
-						__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
-						__( 'Support', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'Visit the support forum', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Support', 'pmpro-import-members-from-csv' )
 					),
 					'issues'        => sprintf(
-						'<a href="%1$s" title="%2$s">%3$s</a>',
+						'<a href="%1$s" title="%2$s" target="_blank">%3$s</a>',
 						esc_url_raw( 'https://github.com/eighty20results/pmpro-import-members-from-csv/issues' ),
-						__( 'Report issues with this plugin', 'pmpro-import-members-from-csv' ),
-						__( 'Report Issues', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'Report issues with this plugin', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Report Issues', 'pmpro-import-members-from-csv' )
 					),
 				);
 
