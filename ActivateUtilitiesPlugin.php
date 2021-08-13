@@ -23,7 +23,10 @@ use function add_action;
 use function is_wp_error;
 
 if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
-
+	/**
+	 * Class ActivateUtilitiesPlugin
+	 * @package E20R\Utilities
+	 */
 	class ActivateUtilitiesPlugin {
 
 		private static $plugin_name = 'E20R Utilities Module';
