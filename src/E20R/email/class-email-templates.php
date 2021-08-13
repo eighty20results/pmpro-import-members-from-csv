@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Import_Members;
+namespace E20R\Import_Members\Email;
 
 /**
  * Class Email_Templates
@@ -61,6 +61,8 @@ class Email_Templates {
 
 		add_action( 'wp_loaded', array( $this, 'add_email_templates' ), 11 );
 		add_action( 'wp_mail_failed', array( $this, 'mail_failure_handler' ) );
+		add_filter( 'e20r_import_message_body', array( $this, 'substitute_data' ), -1, 3 );
+		add_filter( 'e20r_import_message_subject', array( $this, 'substitute_data' ), -1, 3 );
 	}
 
 	/**
@@ -116,8 +118,7 @@ class Email_Templates {
 		// (i.e. TODO when PMPro takes better advantage of PHP)
 		$email           = new \PMProEmail();
 		$email->email    = $user->user_email; // @phpstan-ignore-line
-		$email->data     = apply_filters( 'pmp_im_imported_member_message_data', array() ); // @phpstan-ignore-line
-		$email->data     = apply_filters( 'e20r_import_message_data', $email->data );
+		$email->data     = apply_filters( 'e20r_import_message_data', $user, $fields ); // @phpstan-ignore-line
 		$email->subject  = apply_filters( 'e20r_import_message_subject', $subject, $email->data ); // @phpstan-ignore-line
 		$email->template = $template_name; // @phpstan-ignore-line
 
@@ -128,14 +129,51 @@ class Email_Templates {
 		}
 
 		$email->body    = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
-		$email->body    = apply_filters( 'e20r_import_message_body', $email->body );
-		$email->subject = apply_filters( 'pmp_im_imported_member_message_subject', $email->subject );
+		$email->body    = apply_filters( 'e20r_import_message_body', $email->body, $user, $fields );
+		$email->subject = apply_filters( 'pmp_im_imported_member_message_subject', $email->subject, $user, $fields );
 		$email->subject = apply_filters( 'e20r_import_message_subject', $email->subject );
 
 		// Process and send email
 		$email->sendEmail();
 	}
 
+	/**
+	 * Substitute all in-message (body) !!something!! variables from the imported data
+	 *
+	 * @param string $substitution_text
+	 * @param \WP_User $user
+	 * @param array $fields
+	 *
+	 * @return string
+	 */
+	public function substitute_data( $substitution_text, $user, $fields ) {
+
+		// PMPro not active
+		if ( ! class_exists( '\MemberOrder' ) ) {
+			return $substitution_text;
+		}
+
+		if ( 1 !== preg_match( '/\!\![membership|user]_(.*)\!\!/', $substitution_text ) ) {
+			$this->error_log->debug( 'No Metadata substitution data found' );
+		}
+
+		// Substitute all membership information from the user's metadata
+		foreach ( $fields as $meta_key => $meta_value ) {
+			$this->error_log->debug( "For metadata: Try to substitute !!{$meta_key}!! with {$meta_value}" );
+			$substitution_text = str_replace( "!!{$meta_key}!!", $meta_value, $substitution_text );
+		}
+
+		// Substitute WP_User information from the user's WP_User data
+		foreach ( $user as $user_key => $user_value ) {
+			$this->error_log->debug( "Fpr User data: Try to substitute !!{$user_key}!! with {$user_value}" );
+			$substitution_text = str_replace( "!!{$user_key}!!", $user_value, $substitution_text );
+		}
+		return $substitution_text;
+	}
+
+	private function variable_reference( $list_of_variables ) {
+
+	}
 	/**
 	 * Load the body of the template
 	 *

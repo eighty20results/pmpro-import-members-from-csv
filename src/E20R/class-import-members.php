@@ -28,6 +28,7 @@ use E20R\Import_Members\Modules\PMPro\PMPro;
 use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Validate\Validate;
+use E20R\Import_Members\Email\Email_Templates;
 use E20R\Utilities\Licensing\Licensing;
 
 /**

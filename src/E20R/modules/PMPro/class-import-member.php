@@ -20,7 +20,7 @@
 namespace E20R\Import_Members\Modules\PMPro;
 
 use E20R\Import_Members\Data;
-use E20R\Import_Members\Email_Templates;
+use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
