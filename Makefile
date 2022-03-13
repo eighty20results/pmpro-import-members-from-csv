@@ -89,6 +89,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 $(info Number of running docker images:$(STACK_RUNNING))
 
 .PHONY: \
+	install-hooks \
 	docs \
 	readme \
 	changelog \
@@ -130,6 +131,13 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	hub-login \
 	hub-nologin \
 	prerequisite
+
+#
+# Add the .git hooks we use for commits, etc
+#
+install-hooks:
+	@echo "Configure git repository hooks"
+	@bin/install-hooks
 
 #
 # Make sure the plugin name is set to something
