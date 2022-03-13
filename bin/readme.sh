@@ -12,6 +12,11 @@ if [[ -z "${sed}" ]]; then
     exit 1;
 fi
 
+if [[ -z "${wordpress_version}"  ]]; then
+	echo "Error: Cannot find version number for WordPress. Exiting!"
+	exit 1
+fi
+
 ###########
 #
 # Update plugin and wordpress version info in README.txt
@@ -28,7 +33,7 @@ if [[ -f ./README.txt ]]; then
 		 -e "s/^\=\= (.*) \=\=/### \1/g" \
 		 -e "s/^\=\=\= (.*) \=\=\=/### \1/g" \
 		 -e "s/^\* (.*)$/- \1/g" \
-		 -e "s/^([A-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: ]*)/\`\1\: \2\` <br \/>/g" \
+		 -e "s/^([a-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: -]*)/\`\1\: \2\` <br \/>/g" \
 		 ./README.md > NEW_README.md
 	mv ./NEW_README.md ./README.md
 fi
@@ -46,4 +51,3 @@ if ! git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress
   echo "No need to commit README.md/README.txt (no changes recorded)"
   exit 0
 fi
-
