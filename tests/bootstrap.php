@@ -42,8 +42,8 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 
 
 // Include the class for PluginTestCase
-//if ( file_exists( __DIR__ . '/wpunit/inc/PluginTestCase.php' ) ) {
-//	require_once __DIR__ . '/wpunit/inc/PluginTestCase.php';
+//if ( file_exists( __DIR__ . '/integration/inc/PluginTestCase.php' ) ) {
+//	require_once __DIR__ . '/integration/inc/PluginTestCase.php';
 //}
 
 use AspectMock\Kernel;
@@ -68,4 +68,3 @@ $kernel->init(
 );
 
 return $loader;
-
