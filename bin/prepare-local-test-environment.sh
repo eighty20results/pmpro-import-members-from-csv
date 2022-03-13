@@ -12,7 +12,7 @@ then
     cp  "${PLUGIN_DIR}/hosts.home" ~/PhpStormProjects/docker-images/docker4wordpress/hosts.docker
     scp "${PLUGIN_DIR}/docker-compose.yml" docker.local:./www/docker/docker4wordpress/docker-compose.yml
     scp "${PLUGIN_DIR}/docker-compose.override-home.yml" docker.local:./www/docker/docker4wordpress/docker-compose.override.yml
-    scp "tests/_data/${PROJECT_NAME}.sql" docker.local:./www/docker/docker4wordpress/mariadb-init/
+    scp "../tests/_data/${PROJECT_NAME}.sql" docker.local:./www/docker/docker4wordpress/mariadb-init/
     scp "${PLUGIN_DIR}/env" docker.local:./www/docker/docker4wordpress/.env
     scp "${PLUGIN_DIR}/import-db.sh" docker.local:./www/docker/docker4wordpress/import-db.sh
     # scp -r ${PLUGIN_DIR}/traefik docker.local:./www/docker/docker4wordpress/traefik
@@ -30,7 +30,7 @@ else
     cp "${PLUGIN_DIR}/docker-compose.yml" ~/PhpStormProjects/docker-images/docker4wordpress/docker-compose.yml
     cp "${PLUGIN_DIR}/docker-compose.override-local.yml" ~/PhpStormProjects/docker-images/docker4wordpress/docker-compose.override.yml
     # shellcheck disable=2029
-    cp "tests/_data/${PROJECT_NAME}.sql" ~/PhpStormProjects/docker-images/docker4wordpress/mariadb-init/
+    cp "../tests/_data/${PROJECT_NAME}.sql" ~/PhpStormProjects/docker-images/docker4wordpress/mariadb-init/
     cp "${PLUGIN_DIR}/import-db.sh" ~/PhpStormProjects/docker-images/docker4wordpress/import-db.sh
     cp "${PLUGIN_DIR}/env" ~/PhpStormProjects/docker-images/docker4wordpress/.env
     cd /Users/sjolshag/PhpStormProjects/docker-images/docker4wordpress/ || exit 1
