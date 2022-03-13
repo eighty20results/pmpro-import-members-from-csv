@@ -1,5 +1,6 @@
 E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
 E20R_PLUGIN_BASE_FILE ?= class.pmpro-import-members.php
+COMPOSER_CHECKSUM := '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8'
 
 ifeq ($(E20R_DEPLOYMENT_SERVER),"")
 E20R_DEPLOYMENT_SERVER ?= eighty20results.com
