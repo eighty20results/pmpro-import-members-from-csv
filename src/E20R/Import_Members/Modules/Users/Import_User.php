@@ -115,11 +115,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			if ( empty( $user ) && true === $allow_update ) {
 
-				if ( empty( $user ) && isset( $user_data['user_email'] ) ) {
+				if ( isset( $user_data['user_email'] ) ) {
 					$user = get_user_by( 'Email', $user_data['user_email'] );
 				}
 
-				if ( empty( $user ) && isset( $user_data['user_login'] ) ) {
+				if ( isset( $user_data['user_login'] ) ) {
 					$user = get_user_by( 'login', $user_data['user_login'] );
 				}
 			}

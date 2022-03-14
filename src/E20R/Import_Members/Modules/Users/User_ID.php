@@ -70,10 +70,9 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_ID' ) ) {
 		 * @return bool|int
 		 */
 		public static function validate( $record, $allow_update ) {
-
-			$error_log = new Error_Log(); // phpcs:ignore
-
-			$has_id = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			$error_log = new Error_Log();
+			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
 
 			$error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
 
@@ -81,21 +80,17 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_ID' ) ) {
 				return false;
 			}
 
-			if ( true === $has_id && false === is_int( $record['ID'] ) ) {
-
+			if ( false === is_int( $record['ID'] ) ) {
 				$error_log->debug( "'ID' column isn't a number" );
-
 				return Status::E20R_ERROR_ID_NOT_NUMBER;
 			}
 
-			if ( true === $has_id && false !== get_user_by( 'ID', $record['ID'] ) && false === $allow_update ) {
+			if ( false !== get_user_by( 'ID', $record['ID'] ) && false === $allow_update ) {
 				$error_log->debug( "'ID' column is for a current user _AND_ we're not allowing updates" );
-
 				return Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED;
 			}
 
 			$error_log->debug( 'User ID is present and a number...' );
-
 			return true;
 		}
 	}
