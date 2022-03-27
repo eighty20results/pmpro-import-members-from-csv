@@ -1,34 +1,44 @@
 paths:
-    tests: tests
-    output: tests/_output
-    data: tests/_data
-    support: tests/_support
-    envs: tests/_envs
+  tests: tests
+  output: tests/_output
+  data: tests/_data
+  support: tests/_support
+  envs: tests/_envs
 actor_suffix: Tester
 extensions:
-    enabled:
-        - Codeception\Extension\RunFailed
-    commands:
-        - Codeception\Command\GenerateWPUnit
-        - Codeception\Command\GenerateWPRestApi
-        - Codeception\Command\GenerateWPRestController
-        - Codeception\Command\GenerateWPRestPostTypeController
-        - Codeception\Command\GenerateWPAjax
-        - Codeception\Command\GenerateWPCanonical
-        - Codeception\Command\GenerateWPXMLRPC
+  enabled:
+    - Codeception\Extension\RunFailed
+  commands:
+    - Codeception\Command\GenerateWPUnit
+    - Codeception\Command\GenerateWPRestApi
+    - Codeception\Command\GenerateWPRestController
+    - Codeception\Command\GenerateWPRestPostTypeController
+    - Codeception\Command\GenerateWPAjax
+    - Codeception\Command\GenerateWPCanonical
+    - Codeception\Command\GenerateWPXMLRPC
 params:
-    - tests/_envs/.env.testing
+  - tests/_envs/.env.testing
+bootstrap: _bootstrap.php
 settings:
   lint: true
   colors: true
+  memory_limit: 1024M
 coverage:
-  work_dir: tests/_output/
-  remote: false
   enabled: true
+  colors: true
+  remote_context_options:
+    http:
+      timeout: 60
+    ssl:
+      verify_peer: false
+  low_limit: 16
+  work_dir: tests/_output/
   show_only_summary: true
   include:
-      - src/*
-      - "*.php"
+    - ./inc/wp_plugins/00-e20r-utilities/*
+    - src/*
+    - "*.php"
   exclude:
-      - tests/*
-      - inc/*
+    - tests/*
+    - languages/*
+    - inc/*

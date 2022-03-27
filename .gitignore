@@ -12,6 +12,10 @@
 .idea/**/dataSources/
 .idea/**/dataSources.ids
 .idea/**/dataSources.xml
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
 
 # Gradle:
 .idea/**/gradle.xml
@@ -19,12 +23,15 @@
 
 # CMake
 cmake-build-debug/
+cmake-build-release/
 
 # Mongo Explorer plugin:
 .idea/**/mongoSettings.xml
 
 ## File-based project format:
 *.iws
+
+## Plugin-specific files:
 
 # IntelliJ
 out/
@@ -44,17 +51,37 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-# Editor-based Rest Client
-.idea/httpRequests
-
-# Android studio 3.1+ serialized cache file
-.idea/caches/build_file_checksums.ser
-
-.idea/*
-
-.circleci/docker/test/db_backup
-
+.idea/
+.idea/codeStyles/
+.idea/copyright/
+.idea/deployment.xml
+.idea/e20r-members-list.iml
+.idea/encodings.xml
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/php.xml
+.idea/sqldialects.xml
+.idea/vcs.xml
+/build_readmes/readme_changelog.txt
+/build_readmes/json_changelog.txt
+/build_readmes/
+!/build_readmes/skel/CHANGELOG.md
+!/build_readmes/skel/metadata.json
+!/build_readmes/skel/README.txt
+docker-env/*.sql
+*.sql
+/composer
 /composer.phar
 /composer.lock
-# /inc
+/build/pmpro-import-members-from-csv
 /docker.hub.key
+/workflow/
+/_actions/
+/inc/
+build/
+!build/kits/.gitignore
+!build/kits/.gitkeep
+/.phpunit.result.cache
+/github/
+!tests/integration/

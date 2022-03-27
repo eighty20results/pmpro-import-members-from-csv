@@ -89,7 +89,6 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 $(info Number of running docker images:$(STACK_RUNNING))
 
 .PHONY: \
-	install-hooks \
 	docs \
 	readme \
 	changelog \
@@ -133,18 +132,12 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	prerequisite
 
 #
-# Add the .git hooks we use for commits, etc
-#
-install-hooks:
-	@echo "Configure git repository hooks"
-	@bin/install-hooks
-
-#
 # Make sure the plugin name is set to something
 #
 prerequisite:
 	@echo "Testing prerequisite variable settings"
-	@mkdir -p tests/_output/coverage
+	@mkdir -p tests/_output/
+	@chmod 777 tests/_output
 	@if [[ "$(E20R_PLUGIN_NAME)" =~ "default-plugin-name" ]]; then \
 		echo "The E20R_PLUGIN_NAME environment variable must be configured before running this command!"; \
 		exit 1; \
@@ -488,6 +481,7 @@ code-standard-tests: wp-deps
 # Using codeception to execute standard Unit Tests for this plugin
 #
 unit-tests: wp-deps
+	@echo "Testing if we need to run unit tests"
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running all unit tests for $(PROJECT)"; \
 		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH); \
@@ -510,14 +504,20 @@ coverage: wp-deps
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
 #
-integration-tests: docker-deps start-stack db-import
+integration-tests: integration-start
+	@echo "Testing if we need to run integration tests"
 	@if [[ -n "$(FOUND_INTEGRATION_TESTS)" ]]; then \
   		echo "Running all integration tests for $(PROJECT)"; \
+  		pwd ; \
+  		ls -lart /var/www/html/wp-content/plugins/e20r-members-list/ ; \
+  		echo "Show permissions for _* directories"; \
+  		ls -lart /var/www/html/wp-content/plugins/e20r-members-list/tests/_* ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
   			exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ wordpress \
-  			$(COMPOSER_DIR)/bin/codecept run integration --verbose --debug --steps $(COVERAGE_SETTINGS) -- $(INTEGRATION_TEST_CASE_PATH); \
+  			$(COMPOSER_DIR)/bin/codecept run integration --verbose --debug --steps $(COVERAGE_SETTINGS) -- $(INTEGRATION_TEST_CASE_PATH) && \
+		echo "Completed running all integration tests" ; \
 	fi
 
 integration-start: docker-deps start-stack db-import
@@ -536,6 +536,7 @@ integration:
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
 #
 functional-tests: docker-deps start-stack db-import
+	@echo "Testing if we need to run functional tests"
 	@if [[ -n "$(FOUND_FUNCTIONAL_TESTS)" ]]; then \
   		echo "Running all functional tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
@@ -550,6 +551,7 @@ functional-tests: docker-deps start-stack db-import
 # Using codeception to execute the Plugin Acceptance tests
 #
 acceptance-tests: docker-deps start-stack db-import
+	@echo "Testing if we need to run acceptance tests"
 	@if [[ -n "$(FOUND_WP_ACCEPTANCE_TESTS)" ]]; then \
   		echo "Running all acceptance tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
