@@ -60,8 +60,7 @@
     },
   	"scripts": {
 	  "post-install-cmd": "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs ; fi",
-	  "post-update-cmd" : "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs ; fi",
-	  "lint": "docker-compose -p ${PROJECT} --env-file ${DC_ENV_FILE} --file ${DC_CONFIG_FILE} exec -T -w /var/www/html/wp-content/plugins/pmpro-import-members-from-csv/ wordpress ./inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
+	  "post-update-cmd" : "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs ; fi"
   	},
     "autoload": {
         "psr-4": {
@@ -81,11 +80,15 @@
     },
     "autoload-dev": {
         "psr-4": {
+		  "ProjectRoot\\" : "",
+		  "NamespaceInSourceDir\\": "",
+		  "E20R\\": "src/E20R",
 		  "E20R\\Tests\\": "tests",
 		  "E20R\\Tests\\Unit\\": "tests/unit/testcases",
-		  "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases",
+		  "E20R\\Tests\\Integration\\": "tests/integration/testcases",
 		  "E20R\\Tests\\Functional\\": "tests/functional/testcases",
-		  "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases"
+		  "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases",
+		  "E20R\\Tests\\API\\": "tests/api/testcases"
         }
     }
 }
