@@ -55,7 +55,7 @@ fabric.properties
 .idea/codeStyles/
 .idea/copyright/
 .idea/deployment.xml
-.idea/e20r-members-list.iml
+.idea/pmpro-import-members-from-csv.iml
 .idea/encodings.xml
 .idea/inspectionProfiles/
 .idea/misc.xml
@@ -69,7 +69,6 @@ fabric.properties
 !/build_readmes/skel/CHANGELOG.md
 !/build_readmes/skel/metadata.json
 !/build_readmes/skel/README.txt
-docker-env/*.sql
 *.sql
 /composer
 /composer.phar
@@ -84,4 +83,3 @@ build/
 !build/kits/.gitkeep
 /.phpunit.result.cache
 /github/
-!tests/integration/
