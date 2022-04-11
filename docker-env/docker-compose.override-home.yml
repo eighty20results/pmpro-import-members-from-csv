@@ -1,33 +1,34 @@
-version: "3.2"
+version: "3"
 
 services:
   mariadb:
     image: wodby/mariadb:$MARIADB_TAG
     volumes:
-    - /Volumes/Development/www/docker-images/docker4wordpress/mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
+      - /Volumes/Development/www/docker-images/docker4wordpress/mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
 
   nginx:
+    image: wodby/nginx:latest
     volumes:
-    - files:/mnt/files
-    - ./:/var/www/html
-    - /Volumes/Development/www/clean.local/wp-content/themes/e20r-coaching:/var/www/html/wp-content/themes/e20r-coaching:ro
-    - /Volumes/Development/www/clean.local/wp-content/plugins/paid-memberships-pro:/var/www/html/wp-content/plugins/paid-memberships-pro:ro
-    - /Volumes/Development/www/clean.local/wp-content/plugins/e20r-members-list:/var/www/html/wp-content/plugins/e20r-members-list:ro
-    - /Volumes/Development/www/clean.local/wp-content/plugins/00-e20r-utilities:/var/www/html/wp-content/plugins/00-e20r-utilities:ro
-    - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv
-    - /Volumes/Development/www/clean.local/wp-content/plugins/wp-action-trace.php:/var/www/html/wp-content/plugins/wp-action-trace.php
+      - files:/mnt/files
+      - ./:/var/www/html
+      - /Volumes/Development/www/clean.local/wp-content/themes/e20r-coaching:/var/www/html/wp-content/themes/e20r-coaching:ro
+      - /Volumes/Development/www/clean.local/wp-content/plugins/paid-memberships-pro:/var/www/html/wp-content/plugins/paid-memberships-pro:ro
+      - /Volumes/Development/www/clean.local/wp-content/plugins/e20r-members-list:/var/www/html/wp-content/plugins/e20r-members-list:ro
+      - /Volumes/Development/www/clean.local/wp-content/plugins/00-e20r-utilities:/var/www/html/wp-content/plugins/00-e20r-utilities:ro
+      - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv
+      - /Volumes/Development/www/clean.local/wp-content/plugins/wp-action-trace.php:/var/www/html/wp-content/plugins/wp-action-trace.php
     ports:
-    - target: 80 # Web server
-      published: 80
-      protocol: tcp
-      mode: host
-    - target: 443
-      published: 443
-      protocol: tcp
-      mode: host
+      - target: 80 # Web server
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
 
   php:
-    image: wodby/wordpress:$WORDPRESS_TAG
+    image: wodby/wordpress-php:$WORDPRESS_TAG
     environment:
       PHP_FPM_CLEAR_ENV: "no"
       DB_NAME: clean
@@ -53,16 +54,16 @@ services:
       - /Volumes/Development/www/clean.local/wp-content/plugins/pmpro-import-members-from-csv:/var/www/html/wp-content/plugins/pmpro-import-members-from-csv
       - /Volumes/Development/www/clean.local/wp-content/plugins/wp-action-trace.php:/var/www/html/wp-content/plugins/wp-action-trace.php:ro
     labels:
-    - "traefik.enable=true"
-    - "traefik.frontend.rule=Host:development.local"
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:development.local"
 
   traefik:
     image: traefik:alpine
     ports:
-    - target: 8080
-      published: 8081
-      protocol: tcp
-      mode: host
+      - target: 8080
+        published: 8081
+        protocol: tcp
+        mode: host
 #    volumes:
 #      - ./traefik:/etc
 
