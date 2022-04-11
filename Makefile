@@ -41,13 +41,13 @@ ACCEPTANCE_TEST_CASE_PATH := tests/acceptance/testcases/
 ifneq ($(wildcard ./tests/docker/docker.hub.key),)
 $(info Path to key for docker hub exists)
 CONTAINER_ACCESS_TOKEN := $(shell cat ./tests/docker/docker.hub.key)
-COVERAGE_SETTINGS := --coverage-xml coverage.xml
+# COVERAGE_SETTINGS := --coverage-xml coverage.xml
 endif
 
 ifneq ($(wildcard ./docker.hub.key),)
 $(info Path to key for docker hub exists)
 CONTAINER_ACCESS_TOKEN := $(shell cat ./docker.hub.key)
-COVERAGE_SETTINGS := --coverage-xml coverage.xml
+# COVERAGE_SETTINGS := --coverage-xml coverage.xml
 endif
 
 ifeq ($(DOCKER_USER),)
@@ -489,7 +489,7 @@ unit-tests: wp-deps
 
 unit: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" && -n "$(TEST_TO_RUN)" ]]; then \
-		echo "Running Unit tests for $(PROJECT)/$(TEST_TO_RUN)"; \
+		echo "Running Unit tests for $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN)"; \
 		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
   	else \
   	  echo "Error: Either FOUND_UNIT_TESTS is empty or TEST_TO_RUN is empty. Exiting!" ; \
