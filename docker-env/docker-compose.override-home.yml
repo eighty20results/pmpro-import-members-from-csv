@@ -28,7 +28,7 @@ services:
         mode: host
 
   php:
-    image: wodby/wordpress-php:$WORDPRESS_TAG
+    image: wodby/wordpress-php:$PHP_TAG
     environment:
       PHP_FPM_CLEAR_ENV: "no"
       DB_NAME: clean
