@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 DEV_ENVIRONMENT=$(ipconfig getifaddr en0) ; export DEV_ENVIRONMENT
-PROJECT_NAME="${E20R_PLUGIN_NAME:-pmpro-import-members-from-csv}" ; export PROJECT_NAME
+export PROJECT_NAME="${E20R_PLUGIN_NAME:-pmpro-import-members-from-csv}"
 PLUGIN_DIR=../docker-env
 PLUGIN_LIST="paid-memberships-pro 00-e20r-utilities ${PROJECT_NAME}"
 #PLUGIN_LIST="paid-memberships-pro pmpro-email-confirmation"
