@@ -16,12 +16,12 @@ parameters:
         - '#Parameter .* \$level of function pmpro_changeMembershipLevel expects int, array\<string, mixed\> given\.$#'
         - '#Constant PMPRO_VERSION not found\.#'
     scanDirectories:
-    	- inc/
+    	- inc/wp_plugins/
     paths:
         - class.pmpro-import-members.php
         - ActivateUtilitiesPlugin.php
         - src/E20R/Import_Members/
     bootstrapFiles:
-    	- class.pmpro-import-members.php
+    	- ./class.pmpro-import-members.php
     excludePaths:
         - tests/
