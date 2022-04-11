@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2021 - Thomas Sjolshagen (https://eighty20results.com/thomas-sjolshagen)
+ * Copyright 2021 - 2022 - Thomas Sjolshagen (https://eighty20results.com/thomas-sjolshagen)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -14,6 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * @package E20R\Utilities\ActivateUtilitiesPlugin
  */
 
 namespace E20R\Utilities;
@@ -22,19 +24,34 @@ use WP_Error;
 use function add_action;
 use function is_wp_error;
 
+if ( ! defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
+	die( 'WordPress not loaded. Naughty, naughty!' );
+}
+
 if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 	/**
 	 * Class ActivateUtilitiesPlugin
-	 * @package E20R\Utilities
 	 */
 	class ActivateUtilitiesPlugin {
 
+		/**
+		 * Name of plugin to attempt to activate
+		 *
+		 * @var string
+		 */
 		private static $plugin_name = 'E20R Utilities Module';
 
+		/**
+		 * Path to loader file for the plugin we're attempting to activate
+		 *
+		 * @var string
+		 */
 		private static $plugin_slug = '00-e20r-utilities/class-loader.php';
 
 		/**
 		 * Is the utilities plugin active?
+		 *
+		 * @param string $plugin The path to the plugin we're trying to activate (00-e20r-utilities/class-loader.php).
 		 *
 		 * @return bool
 		 */
@@ -45,16 +62,16 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 			}
 
 			$plugin      = trim( $plugin );
-			$plugin_list = get_option( 'active_plugins' );
+			$plugin_list = get_option( 'active_plugins', array() );
 			return in_array( $plugin, $plugin_list, true );
 		}
 
 		/**
 		 * Activate the plugin (manually)
 		 *
-		 * @param string $plugin
-		 * @param string $redirect
-		 * @param bool $network_wide
+		 * @param string $plugin The plugin activation path.
+		 * @param string $redirect The redirect location (if applicable).
+		 * @param bool   $network_wide Is this a WordPress Network Plugin activation.
 		 *
 		 * @returns null|WP_Error
 		 */
@@ -81,11 +98,11 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 							wp_create_nonce( 'plugin-activation-error_' . $plugin ),
 							$redirect
 						)
-					); // we'll override this later if the plugin can be included without fatal error
+					); // we'll override this later if the plugin can be included without fatal error.
 				}
 
 				ob_start();
-				include plugin_dir_path( __DIR__ ) . "/{$plugin}";
+				include_once plugin_dir_path( __DIR__ ) . "/{$plugin}";
 				do_action( 'activate_plugin', trim( $plugin ) );
 
 				if ( $network_wide ) {
@@ -117,7 +134,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		/**
 		 * Error message to show when the E20R Utilities Module plugin is not installed and active
 		 *
-		 * @param string $dependent_plugin_name
+		 * @param string $dependent_plugin_name The plugin we're dependent on (shown in error message).
 		 */
 		public static function plugin_not_installed( $dependent_plugin_name ) {
 
@@ -138,7 +155,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		/**
 		 * Attempt to activate the E20R Utilities Module plugin when the dependent plugin is activated
 		 *
-		 * @param string|null $path
+		 * @param string|null $path The path to the plugin.
 		 *
 		 * @return bool
 		 */
@@ -213,4 +230,6 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 	}
 }
 
-add_action( 'admin_init', '\E20R\Utilities\ActivateUtilitiesPlugin::attempt_activation', 9999, 1 );
+if ( function_exists( '\add_action' ) ) {
+	add_action( 'admin_init', '\E20R\Utilities\ActivateUtilitiesPlugin::attempt_activation', 9999, 1 );
+}
