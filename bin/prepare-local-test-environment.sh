@@ -18,6 +18,7 @@ then
     # scp -r ${PLUGIN_DIR}/traefik docker.local:./www/docker/docker4wordpress/traefik
     ssh docker.local "cd ./www/docker-images/docker4wordpress/ ; make down ; make up"
     ssh docker.local "cd ./www/docker-images/docker4wordpress/ ; chmod +x ./import-db.sh ; nohup ./import-db.sh"
+    ssh docker.local "cd ./www/docker-images/docker4wordpress/ ; make wp 'user update admin --user_pass=admin'"
     # shellcheck disable=2029
     ssh docker.local "rm -rf ./www/docker-images/docker4wordpress/mariadb-init/${PROJECT_NAME}.sql"
     # shellcheck disable=2029
@@ -38,6 +39,7 @@ else
     make up
     chmod +x ./import-db.sh
     nohup ./import-db.sh
+    make wp user update admin --user_pass=admin
     rm -rf  "/Users/sjolshag/PhpStormProjects/docker-images/docker4wordpress/${PROJECT_NAME}.sql"
    	make wp plugin activate "${PLUGIN_LIST}"
 
