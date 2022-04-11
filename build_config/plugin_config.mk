@@ -28,4 +28,4 @@ DB_VERSION ?= latest
 WP_IMAGE_VERSION ?= 1.0
 
 PHP_CODE_PATHS := *.php src/E20R/**/*.php src/E20R/**/**/*.php src/E20R/**/**/**/*.php
-PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*,src/utilities/*
+PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*
