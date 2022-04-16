@@ -22,9 +22,9 @@ namespace E20R\Import_Members\Modules\PMPro;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
-use E20R\Import_Members\Import_Members;
 use E20R\Import_Members\Variables;
-use E20R\Utilities\Licensing\Licensing;
+use E20R\Licensing\License;
+use E20R\Licensing\Licensing;
 use WP_Error;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
@@ -112,13 +112,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 		 * Load licensed module(s) if license is active
 		 */
 		public function load_sponsor_import() {
-			$check = new \ReflectionMethod( 'E20R\Utilities\Licensing\Licensing', '__construct' );
+			$check = new \ReflectionMethod( 'E20R\Licensing\License', '__construct' );
 
 			if ( false === $check->isPrivate() ) {
-				$licensing   = new Licensing( Import::E20R_LICENSE_SKU );
+				$licensing   = new License( Import::E20R_LICENSE_SKU );
 				$is_licensed = $licensing->is_licensed( Import::E20R_LICENSE_SKU, false );
 			} else {
-				// @phpstan-ignore-next-line
 				$is_licensed = Licensing::is_licensed( Import::E20R_LICENSE_SKU, false );
 			}
 
