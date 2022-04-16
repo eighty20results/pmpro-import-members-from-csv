@@ -37,7 +37,6 @@ class Variables_UnitTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadMocks();
-		$this->loadTestSources();
 	}
 
 	/**
@@ -71,20 +70,19 @@ class Variables_UnitTest extends Unit {
 			);
 	}
 
-
-	/**
-	 * Load all needed source files for the unit test
-	 */
-	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../inc/autoload.php';
-	}
-
 	/**
 	 * Test the happy path for the is_configured method
 	 *
+	 * @param array    $request_variables List of request variables needed for the Variables() class
+	 * @param array    $file_info The $_FILES variable content to use during the test
+	 * @param string[] $error_msgs The error messages array we're testing
+	 * @param string[] $sponsor_links Array of links to use for the PMPro Sponsored members information
+	 *
 	 * @dataProvider fixture_is_configured
+	 *
+	 * @test
 	 */
-	public function test_is_configured( $request_variables, $file_info, $error_msgs, $sponsor_links ) {
+	public function it_should_test_that_variables_are_configured( $request_variables, $file_info, $error_msgs, $sponsor_links ) {
 
 		$errlog_mock = $this->getMockBuilder( Error_Log::class )
 							->onlyMethods( array( 'debug', 'add_error_msg' ) )
@@ -100,8 +98,7 @@ class Variables_UnitTest extends Unit {
 				->with( Mockery::contains( 'e20r_im_error_msg' ) )
 				->andReturn( $error_msgs );
 		} catch ( \Exception $e ) {
-			echo "Error: " . $e->getMessage(); // phpcs:ignore
-			return false;
+			$this->fail( 'Error: ' . $e->getMessage() );
 		}
 
 		try {
@@ -109,8 +106,7 @@ class Variables_UnitTest extends Unit {
 				->with( Mockery::contains( 'e20r_link_for_sponsor' ) )
 				->andReturn( $sponsor_links );
 		} catch ( \Exception $e ) {
-			echo "Error: " . $e->getMessage(); // phpcs:ignore
-			return false;
+			$this->fail( 'Error: ' . $e->getMessage() );
 		}
 
 		try {
@@ -118,8 +114,7 @@ class Variables_UnitTest extends Unit {
 				->with( Mockery::contains( 'e20r_im_error_msg' ) )
 				->andReturn( true );
 		} catch ( \Exception $e ) {
-			echo "Error: " . $e->getMessage(); // phpcs:ignore
-			return false;
+			$this->fail( 'Error: ' . $e->getMessage() );
 		}
 
 		try {
@@ -127,8 +122,7 @@ class Variables_UnitTest extends Unit {
 				->with( Mockery::contains( 'e20r_import_filename' ) )
 				->andReturn( $file_info[0]['members_csv']['name'] );
 		} catch ( Exception $e ) {
-			echo 'Error mocking get_transient(): ' . $e->getMessage(); // phpcs:ignore
-			return false;
+			$this->fail( 'Error: ' . $e->getMessage() );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
