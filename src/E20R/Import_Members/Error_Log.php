@@ -137,7 +137,7 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 			$server_addr = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 			$req_time    = $_SERVER['REQUEST_TIME'] ?? time();
 			$tid         = sprintf( '%08x', abs( crc32( "{$server_addr}{$req_time}" ) ) );
-			$time        = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
+			$time        = gmdate( 'H:m:s', $req_time );
 
 			// Save to the HTTP server error log as a Notice (not a warning/error)
 			// phpcs:ignore
@@ -234,4 +234,3 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 		}
 	}
 }
-
