@@ -720,7 +720,7 @@ CREATE TABLE `wptest_users` (
 
 LOCK TABLES `wptest_users` WRITE;
 /*!40000 ALTER TABLE `wptest_users` DISABLE KEYS */;
-INSERT INTO `wptest_users` VALUES (1,'admin','','admin-2','thomas@localhost.local','','2018-07-07 14:52:49','',0,'admin');
+INSERT INTO `wptest_users` VALUES (1,'admin','','Admin Test User','thomas@localhost.local','','2018-07-07 14:52:49','',0,'Admin Test User');
 /*!40000 ALTER TABLE `wptest_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
