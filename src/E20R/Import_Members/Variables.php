@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Process\CSV;
 
 if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
@@ -230,7 +231,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 			$logfile_url        = $upload_dir['baseurl'] ?? 'https://localhost/';
 			$this->logfile_path = trailingslashit( $upload_dir['basedir'] ?? './' ) . 'e20r_im_errors.log';
-			$this->logfile_url  = esc_url_raw( $logfile_url ) . 'e20r_im_errors.log';
+			$this->logfile_url  = esc_url_raw( $logfile_url ) . '/e20r_im_errors.log';
 			$this->add_fields( array() );
 
 			/**
@@ -441,6 +442,8 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		 * @param string|null $variable_name
 		 *
 		 * @return mixed|null
+		 *
+		 * @throws InvalidSettingsKey Thrown if the specified variable is undefined/not present
 		 */
 		public function get( $variable_name = null ) {
 
@@ -449,6 +452,16 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 				return $this->get_current_vars();
 			}
+
+			if ( ! property_exists( $this, $variable_name ) ) {
+				throw new InvalidSettingsKey(
+					esc_attr__(
+						'Error: The requested parameter does not exist!',
+						'pmpro-import-members-from-csv'
+					)
+				);
+			}
+
 			// phpcs:ignore
 			$this->error_log->debug( "Loading variable value from {$variable_name}: " . print_r( $this->{$variable_name}, true ) );
 
