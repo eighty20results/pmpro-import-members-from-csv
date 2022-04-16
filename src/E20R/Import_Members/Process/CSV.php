@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Process;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Status;
@@ -157,7 +158,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			if ( empty( $saved_filename ) && true === $background_import ) {
 
 				$this->error_log->add_error_msg(
-					__( 'CSV file not selected. Nothing to Import!', 'pmpro-import-members-from-csv' ),
+					esc_attr__( 'CSV file not selected. Nothing to Import!', 'pmpro-import-members-from-csv' ),
 					'error'
 				);
 
@@ -172,7 +173,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$this->error_log->add_error_msg(
 					sprintf(
 					// translators: %s Directory for the CSV Import file
-						__(
+						esc_attr__(
 							'Unable to create directory on your server. Directory: %s',
 							'pmpro-import-members-from-csv'
 						),
@@ -253,7 +254,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					$this->error_log->add_error_msg(
 						sprintf(
 						// translators: %1$s CSV file name, %2$s upload directory for CSV file name
-							__(
+							esc_attr__(
 								'Error uploading file: The %1$s file has been uploaded too many times. Please clean out the %2$s directory on your server.',
 								'pmpro-import-members-from-csv'
 							),
@@ -295,16 +296,15 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		/**
 		 * Import a csv file
 		 *
-		 * @param string $file_name
-		 * @param array $args
+		 * @param string           $file_name Name of the CSV file we're processing
+		 * @param array            $args File arguments supplied
+		 * @param Import_User|null $import_user  Optional Import_User)_ class instance
 		 *
 		 * @return array
 		 *
-		 * @throws \Exception
-		 *
 		 * @since 0.5
 		 */
-		public function process( $file_name, $args ) {
+		public function process( $file_name, $args, $import_user = null ) {
 
 			global $active_line_number;
 			global $e20r_import_err;
@@ -318,7 +318,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$warnings = array();
 			$headers  = array();
 
-			$import_user = new Import_User();
+			if ( null === $import_user ) {
+				$import_user = new Import_User();
+			}
 
 			$user_ids = array();
 			$defaults = apply_filters( 'pmp_im_import_default_settings', $this->variables->get_defaults() );
@@ -362,7 +364,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			}
 
 			while ( ( ! $file_object->eof() ) && ( ! ( true === $partial ) || $current_line_number <= $per_partial ) ) {
-
+				$user_id = null;
 				$active_line_number ++;
 
 				// Read a line from the file and remove the BOM character
@@ -415,13 +417,25 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$user_data = $user_meta = array(); // phpcs:ignore
 
 				$this->error_log->debug( "Processing next user data. (previous line #: {$active_line_number})" );
-				$this->extract_data(
-					$line,
-					$user_data,
-					$user_meta,
-					$headers,
-					$this->variables->get( 'user_fields' )
-				);
+				try {
+					$this->extract_data(
+						$line,
+						$user_data,
+						$user_meta,
+						$headers,
+						$this->variables->get( 'user_fields' )
+					);
+				} catch ( InvalidSettingsKey $e ) {
+					$this->error_log->add_error_msg(
+						sprintf(
+							// translators: %1$d - Line number being imported, %2$s - CSV file name
+							esc_attr__( 'Cannot extract data from line %1$d in file: %2$s', 'pmpro-import-members-from-csv' ),
+							$active_line_number,
+							$file_name
+						)
+					);
+					continue;
+				}
 
 				$this->error_log->debug( "Processed line #{$active_line_number}..." );
 				$user_id_status = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
@@ -429,7 +443,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				if ( Status::E20R_ERROR_NO_USER_ID === $user_id_status ) {
 					$msg = sprintf(
 					// translators: %1$d - Line number in the CSV file being imported
-						__(
+						esc_attr__(
 							'Missing ID, user_login and/or user_email information column at row %1$d',
 							'pmpro-import-members-from-csv'
 						),
@@ -479,35 +493,36 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				if ( empty( $user_data ) ) {
 					$msg = sprintf(
 					// translators: %d - Line number in the CSV file being imported
-						__( 'No user data found at row #%d', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'No user data found at row #%d', 'pmpro-import-members-from-csv' ),
 						( $active_line_number + 1 )
 					);
 
 					$warnings[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
 
 					$this->error_log->debug( $msg );
-					continue;
+				} else {
+
+					$this->error_log->debug( 'Importing user data' );
+					// Try to Import user record and trigger other Import Modules
+					try {
+						$user_id = $import_user->import( $user_data, $user_meta, $headers );
+					} catch ( InvalidSettingsKey $e ) {
+						$msg = sprintf(
+						// translators: %d - Line number in the CSV file being imported
+							esc_attr__( 'Cannot import user data from row %d', 'pmpro-import-members-from-csv' ),
+							$active_line_number
+						);
+
+						$this->error_log->add_error_msg( $msg, 'error' );
+						$this->error_log->debug( $msg );
+						$e20r_import_err[ "user_data_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_missing_data', $msg );
+					}
+
+					/** BUG FIX: Didn't save the created user's ID and added empty user IDs*/
+					if ( ! empty( $user_id ) ) {
+						$user_ids[] = $user_id;
+					}
 				}
-
-				$this->error_log->debug( 'Importing user data' );
-				// Try to Import user record and trigger other Import Modules
-				$user_id = $import_user->import( $user_data, $user_meta, $headers );
-
-				if ( ! $user_id ) {
-
-					$msg = sprintf(
-					// translators: %d - Line number in the CSV file being imported
-						__( 'Unable to Import user data from row %d', 'pmpro-import-members-from-csv' ),
-						$active_line_number
-					);
-
-					$this->error_log->add_error_msg( $msg, 'error' );
-					$this->error_log->debug( $msg );
-					$e20r_import_err[ "user_data_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_missing_data', $msg );
-				}
-
-				/** BUG FIX: Didn't save the created user's ID */
-				$user_ids[] = $user_id;
 
 				if ( ! empty( $partial ) && ! empty( $active_line_number ) ) {
 					$active_line_number = ( $file_object->key() + 1 );
@@ -542,7 +557,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 
 			if ( true === $member_error ) {
 				$this->error_log->add_error_msg(
-					__(
+					esc_attr__(
 						'Data format error(s) detected during the Import. Some records may not have been imported!',
 						'pmpro-import-members-from-csv'
 					),
