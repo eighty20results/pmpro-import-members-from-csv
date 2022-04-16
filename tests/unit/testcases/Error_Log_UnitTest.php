@@ -37,7 +37,6 @@ class Error_Log_UnitTest extends \Codeception\Test\Unit {
 	public function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-		$this->loadTestSources();
 	}
 
 	/**
@@ -48,13 +47,6 @@ class Error_Log_UnitTest extends \Codeception\Test\Unit {
 		parent::tearDown();
 	}
 
-	/**
-	 * Load all needed source files for the unit test
-	 */
-	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/Error_Log.php';
-	}
 
 	/**
 	 * Define function stubs for the unit test
