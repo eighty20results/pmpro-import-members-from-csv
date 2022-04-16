@@ -25,12 +25,9 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
 use Mockery;
-use E20R\Import_Members\Data;
-use E20R\Import_Members\Import_Members;
-use E20R\Test\Unit\Test_In_A_Tweet\TFIAT;
+use E20R\Import_Members\Import;
 
-// Functions to Import from other namespaces
-use function PHPUnit\Framework\assertEquals;
+
 use function Brain\Monkey\Functions\stubEscapeFunctions;
 
 class Import_UnitTest extends Unit {
@@ -43,7 +40,6 @@ class Import_UnitTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadMocks();
-		$this->loadTestSources();
 	}
 
 	/**
@@ -80,14 +76,6 @@ class Import_UnitTest extends Unit {
 
 		Functions\when( 'update_option' )
 			->justReturn( true );
-	}
-
-	/**
-	 * Load all needed source files for the unit test
-	 */
-	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/class-Import-members.php';
 	}
 
 	/**
@@ -138,8 +126,9 @@ class Import_UnitTest extends Unit {
 	 * @param bool $expected_result
 	 *
 	 * @dataProvider fixture_active_plugin_list
+	 * @test
 	 */
-	public function test_is_pmpro_active( $active_plugin_list, $mocked_plugin_list, $expected_result ) {
+	public function it_should_verify_status_of_pmpro_plugin( $active_plugin_list, $mocked_plugin_list, $expected_result ) {
 
 		if ( empty( $mocked_plugin_list ) ) {
 			try {
@@ -152,7 +141,7 @@ class Import_UnitTest extends Unit {
 			}
 		}
 
-		$result = Import_Members::is_pmpro_active( $mocked_plugin_list );
+		$result = Import::is_pmpro_active( $mocked_plugin_list );
 		$this->assertEquals( $expected_result, $result );
 	}
 
