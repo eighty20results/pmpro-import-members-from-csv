@@ -28,11 +28,11 @@ use Exception;
 use Mockery;
 
 // Functions to Import from other namespaces
-use function PHPUnit\Framework\assertEquals;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 class CSV_UnitTest extends Unit {
 
-	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+	use MockeryPHPUnitIntegration;
 
 	/**
 	 * Codeception _before() method
@@ -41,7 +41,6 @@ class CSV_UnitTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadMocks();
-		$this->loadTestSources();
 	}
 
 	/**
@@ -81,18 +80,17 @@ class CSV_UnitTest extends Unit {
 	}
 
 	/**
-	 * Load all needed source files for the unit test
-	 */
-	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../inc/autoload.php';
-	}
-
-	/**
 	 * Test whether the correct path is returned for the Import file specified
 	 *
+	 * @param string[] $files_array The contents of the $_FILES[] variable during the test
+	 * @param string   $function_arg Argument(s) for the called function
+	 * @param mixed    $transient_result The return value for the get_transient() call
+	 * @param string   $expected_result The expected URL for the file path this test should have generated
+	 *
 	 * @dataProvider fixture_import_file_names
+	 * @test
 	 */
-	public function test_GetImportFilePath( $files_array, $function_arg, $transient_result, $file_exists, $expected_result ) {
+	public function it_should_return_the_import_file_path($files_array, $function_arg, $transient_result, $file_exists, $expected_result ) {
 
 		$_FILES                   = $files_array;
 		$_REQUEST['filename']     = $_FILES['members_csv']['name'];
@@ -160,7 +158,7 @@ class CSV_UnitTest extends Unit {
 	 */
 	public function fixture_import_file_names() : array {
 		return array(
-			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			// files_array, function_arg, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -173,7 +171,7 @@ class CSV_UnitTest extends Unit {
 				true,
 				'/var/www/html/wp-content/uploads/e20r_imports/test-error-imports.csv',
 			),
-			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			// files_array, function_arg, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -186,7 +184,7 @@ class CSV_UnitTest extends Unit {
 				true,
 				'/var/www/html/wp-content/uploads/e20r_imports/example_file.csv',
 			),
-			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			//files_array, function_arg, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -200,7 +198,7 @@ class CSV_UnitTest extends Unit {
 				'',
 			),
 			// Assigned a function variable value
-			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			//files_array, function_arg, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -214,7 +212,7 @@ class CSV_UnitTest extends Unit {
 				'/var/www/html/wp-content/uploads/e20r_imports/from_function_argument.csv',
 			),
 			// Test sanitize_filename option (i.e. $_REQUEST['filename'] contains information)
-			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			//files_array, function_arg, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -228,7 +226,7 @@ class CSV_UnitTest extends Unit {
 				'/var/www/html/wp-content/uploads/e20r_imports/test-error-imports.csv',
 			),
 			// File doesn't exist so return
-			// $files_array, $function_arg, $transient_result, $file_exists, $expected_result
+			//files_array, function_arg, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
