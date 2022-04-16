@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Modules\Users;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Validate\Time;
@@ -64,13 +65,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		/**
 		 * Process and Import user data/user meta data
 		 *
-		 * @param array $user_data
-		 * @param array $user_meta
-		 * @param string[] $headers
+		 * @param array    $user_data Array of data from the CSV file we will import as WP_User data
+		 * @param array    $user_meta Array of metadata for the user being imported
+		 * @param string[] $headers   The file headers/import headers supplied
 		 *
 		 * @return int
-		 * @throws \Exception
-		 *
+		 * @throws InvalidSettingsKey Thrown when we specify an invalid setting (variable)
 		 */
 		public function import( $user_data, $user_meta, $headers ) {
 
