@@ -19,8 +19,10 @@
 
 namespace E20R\Import_Members\Email;
 
+use E20R\Exceptions\InvalidTemplateProperty;
 use E20R\Import_Members\Error_Log;
-use \MemberOrder;
+use MemberOrder;
+use WP_User;
 
 if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 	/**
@@ -32,14 +34,14 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 		/**
 		 * User record
 		 *
-		 * @var \WP_User $user
+		 * @var WP_User|null $user
 		 */
 		private $user = null;
 
 		/**
-		 * PMPro Order object
+		 * PMPro MemberOrder object
 		 *
-		 * @var \MemberOrder $order
+		 * @var \MemberOrder|null $order
 		 */
 		private $order = null;
 
@@ -80,9 +82,37 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 
 		/**
 		 * Imported_Data constructor.
+		 *
+		 * @param MemberOrder|null $order The PMPro Member Order object received
+		 * @param WP_User|null     $user The WP_User object for the import
+		 * @param array|null       $user_meta The WP_User's metadata for the import
+		 * @param Error_Log|null   $error_log The Error_Log object (error logging)
 		 */
-		public function __construct() {
-			$this->error_log = new Error_Log(); // phpcs:ignore
+		public function __construct( $order = null, $user = null, $user_meta = null, $error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore
+			}
+			$this->error_log = $error_log;
+
+			if ( null === $order ) {
+				$order = new MemberOrder();
+			}
+			$this->order = $order;
+
+			if ( empty( $this->order->user_id ) ) {
+				$this->error_log->debug( 'Warning: Using the logged in user\'s information' );
+				$user = wp_get_current_user();
+
+			}
+			if ( null === $user && ! empty( $this->order->user_id ) ) {
+				$user = new WP_User( $this->order->user_id );
+			}
+			$this->user = $user;
+
+			if ( empty( $user_meta ) ) {
+				$user_meta = get_user_meta( $this->user->ID );
+			}
+			$this->meta = $user_meta;
 		}
 
 		/**
@@ -122,7 +152,7 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 		 *
 		 * @return array
 		 */
-		public function default_site_field_values( array $field_list = array() ): array {
+		public function default_site_field_values( $field_list = array() ) {
 			global $current_user;
 
 			/**
@@ -147,9 +177,9 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 		 * @param string $type
 		 *
 		 * @return mixed|bool|null
-		 * @throws \Exception
+		 * @throws InvalidTemplateProperty Thrown when the specified property doesn't exist in this class
 		 */
-		public function get( string $field_name, string $type = null ) {
+		public function get( $field_name, $type = null ) {
 
 			$value = null;
 			$type  = strtolower( $type );
@@ -176,7 +206,7 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 							esc_attr__( 'Error: Field name not found (%1$s)', 'pmpro-import-members-from-csv' ),
 							$field_name
 						);
-						throw new \Exception( $msg );
+						throw new InvalidTemplateProperty( $msg );
 					}
 
 					$value = $this->{$field_name};
