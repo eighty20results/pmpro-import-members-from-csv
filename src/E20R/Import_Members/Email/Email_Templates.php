@@ -19,6 +19,8 @@
 
 namespace E20R\Import_Members\Email;
 
+use E20R\Exceptions\InvalidInstantiation;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Variables;
@@ -52,18 +54,46 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		private $variables = null;
 
 		/**
-		 * Email_Templates constructor.
+		 * @var null|Import The Import class
 		 */
-		private function __construct() {
-			$this->error_log = new Error_Log(); //phpcs:ignore
-			$this->variables = new Variables();
+		private $import = null;
+
+		/**
+		 * Email_Templates constructor.
+		 *
+		 * @param Variables|null $variables Instance of the Variables() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
+		 *
+		 * @throws InvalidInstantiation Thrown if the Import() class isn't present and instantiated when creating this class
+		 */
+		public function __construct( $import = null, $variables = null, $error_log = null ) {
+			if ( null === $import ) {
+				throw new InvalidInstantiation(
+					esc_attr__(
+						'The Import() class was not instantiated correctly',
+						'pmpro-import-members-from-csv'
+					)
+				);
+			}
+
+			$this->import = $import;
+
+			if ( null === $variables ) {
+				$variables = new Variables();
+			}
+			$this->variables = $variables;
+
+			if ( null === $error_log ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				$error_log = new Error_Log();
+			}
+			$this->error_log = $error_log;
 		}
 
 		/**
 		 * Load Action and Filter hooks for this class
 		 */
 		public function load_hooks() {
-
 			add_action( 'wp_loaded', array( $this, 'add_email_templates' ), 11 );
 			add_action( 'wp_mail_failed', array( $this, 'mail_failure_handler' ) );
 			add_filter( 'e20r_import_message_body', array( $this, 'substitute_data' ), - 1, 3 );
@@ -75,6 +105,8 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 *
 		 * @param \WP_User $user
 		 * @param array $fields
+		 *
+		 * @throws InvalidSettingsKey Thrown if the specified settings key is undefined
 		 */
 		public function maybe_send_email( $user, $fields ) {
 			$send_email = (bool) $this->variables->get( 'send_welcome_email' );
@@ -143,6 +175,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 			// Process and send Email
 			$email->sendEmail();
+			return true;
 		}
 
 		/**
@@ -161,7 +194,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				return $substitution_text;
 			}
 
-			if ( 1 !== preg_match( '/\!\![membership|user]_(.*)\!\!/', $substitution_text ) ) {
+			if ( 1 !== preg_match( '/!![membership|user]_(.*)!!/', $substitution_text ) ) {
 				$this->error_log->debug( 'No Metadata substitution data found' );
 			}
 
@@ -319,6 +352,8 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Load Imported Member template to Email Templates Admin (add-on)
 		 *
+		 * @throws InvalidSettingsKey Thrown if the specified settings key is missing
+		 *
 		 * @since v2.50 - ENHANCEMENT: Allow editing imported_member.html in the Email Templates Admin add-on
 		 */
 		public function add_email_templates() {
@@ -328,10 +363,10 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			$this->error_log->debug( 'Attempting to load template for the Welcome Imported Member message' );
 
 			$pmpro_email_templates_defaults['imported_member'] = array(
-				'subject'     => __( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
-				'description' => __( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
+				'subject'     => esc_attr__( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
+				'description' => esc_attr__( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
 				// phpcs:ignore
-				'body'        => file_get_contents( Import::$plugin_path . '/emails/imported_member.html' ),
+				'body'        => file_get_contents( $this->import->get( 'plugin_path' ) . '/emails/imported_member.html' ),
 			);
 		}
 
