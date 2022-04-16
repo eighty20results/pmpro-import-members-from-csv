@@ -35,10 +35,9 @@ coverage:
   work_dir: tests/_output/
   show_only_summary: true
   include:
-    - ./inc/wp_plugins/00-e20r-utilities/*
+    - inc/wp_plugins/
     - src/*
     - "*.php"
   exclude:
     - tests/*
     - languages/*
-    - inc/*

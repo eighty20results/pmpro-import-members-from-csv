@@ -19,7 +19,29 @@
  * @package \
  */
 
+// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+error_log( 'Loading _bootstrap for unit tests' );
+
+
 // Load fixtures for UNIT testing
 if ( file_exists( __DIR__ . '/inc/unittest_stubs.php' ) ) {
 	require_once __DIR__ . '/inc/unittest_stubs.php';
+}
+
+if ( ! class_exists( 'MemberOrder' ) && file_exists( __DIR__ . '/inc/class.memberorder.php' ) ) {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'Loading mock/replacement MemberOrder() class' );
+	require_once __DIR__ . '/inc/class.memberorder.php';
+}
+
+if ( ! class_exists( 'WP_User' ) && file_exists( __DIR__ . '/inc/WP_User.php' ) ) {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'Loading mock/replacement WP_User() class' );
+	require_once __DIR__ . '/inc/WP_User.php';
+}
+
+if ( class_exists( '\WP_Mock' ) ) {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'Loading the WP_Mock settings' );
+	WP_Mock::setUsePatchwork( true );
 }
