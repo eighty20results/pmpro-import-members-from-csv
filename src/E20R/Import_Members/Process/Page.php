@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Process;
 
+use E20R\Exceptions\InvalidInstantiation;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
@@ -36,9 +37,43 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		private static $instance = null;
 
 		/**
-		 * Page constructor.
+		 * Instance of the Import() class. Should always be instantiated
+		 * @var Import|null
 		 */
-		private function __construct() {
+		private $import = null;
+
+		/**
+		 * Error_Log() class instance
+		 *
+		 * @var Error_Log|mixed|null
+		 */
+		private $error_log = null;
+
+		/**
+		 * Page constructor.
+		 *
+		 * @param Import|null    $import Instance of the Import class
+		 * @param Error_Log|null $error_log Instance of the Error_Log
+		 *
+		 * @throws InvalidInstantiation Raised when the Import class isn't pre-defined and passed to us
+		 */
+		public function __construct( $import = null, $error_log = null ) {
+			if ( null === $import ) {
+				throw new InvalidInstantiation(
+					esc_attr__(
+						'The Import() class was not instantiated correctly',
+						'pmpro-import-members-from-csv'
+					)
+				);
+			}
+
+			$this->import = $import;
+
+			if ( null === $error_log ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				$error_log = new Error_Log();
+			}
+			$this->error_log = $error_log;
 		}
 
 		/**
@@ -57,7 +92,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		 * Load action and filter hooks
 		 */
 		public function load_hooks() {
-
 			add_action( 'admin_menu', array( $this, 'add_admin_pages' ), 10 );
 			add_action( 'admin_notices', array( $this, 'display_admin_message' ), 9 );
 			add_action( 'admin_bar_menu', array( $this, 'load_to_pmpro_menu' ), 1001 );
@@ -455,7 +489,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 											sprintf(
 												'<a href="%1$s" target="_blank">',
 												esc_url_raw(
-													plugins_url( '/examples/Import.csv', Import::$plugin_path . '/class.pmpro-Import-members.php' )
+													plugins_url( '/examples/Import.csv', $this->import->get( 'plugin_path' ) . '/class.pmpro-Import-members.php' )
 												)
 											),
 											'</a>'
