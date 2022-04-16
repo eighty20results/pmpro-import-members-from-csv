@@ -18,6 +18,8 @@
  */
 namespace E20R\Import_Members;
 
+use E20R\Exceptions\InvalidInstantiation;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
@@ -30,10 +32,8 @@ use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Validate\Validate;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Licensing\License;
-use PHPStan\Rules\Cast\EchoRule;
-use PMPro\Tests\Includes\Functions;
 
-if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
+if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 	/**
 	 * Class Import_Members
 	 * @package E20R\Import_Members
@@ -46,7 +46,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 		 *
 		 * @var null|string $plugin_path
 		 */
-		public static $plugin_path = null;
+		private $plugin_path = null;
 
 		/**
 		 * Instance of this class
@@ -105,6 +105,13 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 		private $pmpro = null;
 
 		/**
+		 * Holds the HTML generator for the import admin page
+		 *
+		 * @var Page|null
+		 */
+		private $page = null;
+
+		/**
 		 * Instance of the Ajax Handler
 		 *
 		 * @var Ajax|null $ajax
@@ -112,16 +119,26 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 		private $ajax = null;
 
 		/**
+		 * Class handling integration with the PMPro Email Templates
+		 *
+		 * @var Email_Templates|null
+		 */
+		private $email_templates = null;
+		/**
 		 * Import constructor.
 		 *
-		 * @param null|Variables $variables
-		 * @param null|PMPro $pmpro
-		 * @param null|Data $data
-		 * @param null|Import_User $import_user
-		 * @param null|CSV $csv
-		 * @param null|Error_Log $error_log
+		 * @param null|Variables       $variables
+		 * @param null|PMPro           $pmpro
+		 * @param null|Data            $data
+		 * @param null|Import_User     $import_user
+		 * @param null|CSV             $csv
+		 * @param null|Email_Templates $email_templates
+		 * @param null|Page            $page
+		 * @param null|Error_Log       $error_log
+		 *
+		 * @throws InvalidInstantiation Thrown if this class isn't instantiated properly
 		 */
-		private function __construct( $variables = null, $pmpro = null, $data = null, $import_user = null, $csv = null, $error_log = null ) {
+		public function __construct( $variables = null, $pmpro = null, $data = null, $import_user = null, $csv = null, $email_templates = null, $page = null, $error_log = null ) {
 			if ( empty( $error_log ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}
@@ -150,10 +167,37 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 			if ( empty( $csv ) ) {
 				$csv = new CSV( $this->variables );
 			}
-			$this->csv  = $csv;
+			$this->csv = $csv;
+
+			if ( null === $email_templates ) {
+				$email_templates = new Email_Templates( $this, $this->variables, $this->error_log );
+			}
+			$this->email_templates = $email_templates;
+
+			if ( null === $page ) {
+				$page = new Page( $this, $this->error_log );
+			}
+			$this->page = $page;
+
 			$this->ajax = new Ajax( $variables, $csv, $error_log );
 
-			self::$plugin_path = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
+			$this->plugin_path = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
+		}
+
+		/**
+		 * Return parameter values for the class
+		 *
+		 * @param string $param The class parameter we're trying to get the value of
+		 *
+		 * @return mixed
+		 * @throws InvalidSettingsKey Raised if the parameter doesn't exist in this class
+		 */
+		public function get( $param = 'plugin_path' ) {
+			if ( ! property_exists( $this, $param ) ) {
+				throw new InvalidSettingsKey( esc_attr__( 'Error: The requested parameter does not exist!', 'pmpro-import-members-from-csv' ) );
+			}
+
+			return $this->{$param};
 		}
 
 		/**
@@ -199,9 +243,9 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 			}
 			add_action( 'plugins_loaded', array( $this->pmpro, 'load_hooks' ), 11, 0 );
 			add_action( 'plugins_loaded', array( $this->import_user, 'load_actions' ), 11, 0 );
-			add_action( 'plugins_loaded', array( Email_Templates::get_instance(), 'load_hooks' ), 99, 0 );
+			add_action( 'plugins_loaded', array( $this->email_templates, 'load_hooks' ), 99, 0 );
 			add_action( 'plugins_loaded', array( $this->ajax, 'load_hooks' ), 99, 0 );
-			add_action( 'plugins_loaded', array( Page::get_instance(), 'load_hooks' ), 99, 0 );
+			add_action( 'plugins_loaded', array( $this->page, 'load_hooks' ), 99, 0 );
 
 			// Add validation logic for all Modules
 			add_action( 'plugins_loaded', array( User_Validation::get_instance(), 'load_actions' ), 30, 0 );
@@ -229,7 +273,7 @@ if ( ! class_exists( '\E20R\Import_Members\Import' ) ) {
 			add_action( 'e20r_after_user_import', array( $this->data, 'cleanup' ), 9999, 3 );
 
 			// Set URIs in plugin listing to plugin support
-			add_filter( 'plugin_row_meta', array( self::get_instance(), 'plugin_row_meta' ), 10, 2 );
+			add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
 
 			// Clear action handler(s) from the Import Users from CSV Integration Add-on for PMPro
 			add_action( 'wp_loaded', array( $this, 'remove_iucsv_support' ), 10, 0 );
