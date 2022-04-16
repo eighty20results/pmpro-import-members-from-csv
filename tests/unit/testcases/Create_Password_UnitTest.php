@@ -29,11 +29,11 @@ use Exception;
 use Mockery;
 
 // Functions to Import from other namespaces
-use function PHPUnit\Framework\assertEquals;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 class Create_Password_UnitTest extends Unit {
 
-	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+	use MockeryPHPUnitIntegration;
 
 	/**
 	 * Codeception _before() method
@@ -42,7 +42,6 @@ class Create_Password_UnitTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadMocks();
-		$this->loadTestSources();
 	}
 
 	/**
@@ -82,18 +81,16 @@ class Create_Password_UnitTest extends Unit {
 	}
 
 	/**
-	 * Load all needed source files for the unit test
-	 */
-	public function loadTestSources(): void {
-		require_once __DIR__ . '/../../../inc/autoload.php';
-	}
-
-	/**
 	 * Test whether the correct path is returned for the Import file specified
 	 *
+	 * @param array $user_record The user record (array) to import
+	 * @param bool  $update_user Whether to update a user's data (record) or not
+	 * @param bool  $expected_result The expected result after running the Create_Password::validate() method for the password
+	 *
 	 * @dataProvider fixture_user_password_validation
+	 * @test
 	 */
-	public function test_validate( $user_record, $update_user, $user, $expected_result ) {
+	public function it_should_validate_the_created_password( $user_record, $update_user, $user, $expected_result ) {
 		$result = Create_Password::validate( $user_record, $update_user, $user );
 		$this->assertEquals( $expected_result, $result );
 	}
