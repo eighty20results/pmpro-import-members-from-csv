@@ -321,7 +321,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				);
 			}
 
-			if ( isset( $_REQUEST['Import'] ) ) {
+			if ( isset( $_REQUEST['import'] ) ) {
 				$error_log_msg = '';
 
 				if ( file_exists( $this->variables->get( 'logfile_path' ) ) ) {
@@ -333,7 +333,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 					);
 				}
 
-				switch ( $_REQUEST['Import'] ) {
+				switch ( $_REQUEST['import'] ) {
 					case 'file':
 						$status = sprintf(
 							'<div class="error"><p><strong>%s</strong></p></div>',
