@@ -245,12 +245,12 @@ function to_wordpress_org() {
 	fi
 
 	# Should be excluded from the Wordpress.org repo
-	if [ -z "${excluded_for_svn}" ]; then
+	if [ -z "${exclude}" ]; then
 		echo "ℹ︎ Don't believe we have nothing Git related to exclude from the SVN repository!"
 		exit 1
 	fi
 
-	for remove_file in "${excluded_for_svn[@]}"; do
+	for remove_file in "${exclude[@]}"; do
 		# Only need to remove the file if it exists
 		if [[ -f "${remove_file}" || -d $"${remove_file}" ]]; then
 			echo "ℹ︎ Removing ${remove_file}. Not to be included in the SVN repo"

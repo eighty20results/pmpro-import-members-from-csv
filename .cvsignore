@@ -13,6 +13,7 @@ build_config/
 build_env/
 build_readmes/
 docker-env/
+github/
 inc/wp_plugins/
 node_modules/
 tests/
@@ -24,6 +25,7 @@ tests/
 .editorconfig
 .gitattributes
 .gitignore
+.am_on_github
 action.yml
 codeception.dist.yml
 composer.lock
