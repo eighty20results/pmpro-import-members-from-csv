@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,71 +15,67 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Validate\Column_Values\Users_Validation
  */
 
-namespace E20R\Import_Members\Modules\Users;
+namespace E20R\Import_Members\Validate\Column_Values;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
 
-if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Column_Validation' ) ) {
+if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validation' ) ) {
 	/**
-	 * Class Column_Validation
-	 * @package E20R\Import_Members\Modules\Users
+	 * Used to validate the column data for WordPress users being imported/updated
 	 */
-	class Column_Validation extends Base_Validation {
+	class Users_Validation extends Base_Validation {
 
 		/**
 		 * Instance of the Variables() class
+		 *
 		 * @var null|Variables $variables
 		 */
 		private $variables = null;
 
 		/**
-		 * Get or instantiate and get the current class
+		 * Constructor for the Users_Validation class
 		 *
-		 * @return Column_Validation|Base_Validation|null
+		 * @param Variables|null $variables Instance of the Variables() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
 		 */
-		public static function get_instance() {
+		public function __construct( $variables = null, $error_log = null ) {
+			parent::__construct( $error_log );
 
-			if ( true === is_null( self::$instance ) ) {
-				self::$instance = new self();
-
-				add_filter(
-					'e20r_import_errors_to_ignore',
-					array( self::$instance, 'load_ignored_module_errors' ),
-					10,
-					2
-				);
-
-				// Add list of errors to ignore for the BuddyPress module
-				self::$instance->errors_to_ignore = apply_filters(
-					'e20r_import_errors_to_ignore',
-					self::$instance->errors_to_ignore,
-					'users'
-				);
-
-				self::$instance->error_log = new Error_Log(); // phpcs:ignore
-				self::$instance->variables = new Variables();
-
+			if ( null === $variables ) {
+				$variables = new Variables();
 			}
+			$this->variables = $variables;
 
-			return self::$instance;
+			add_filter(
+				'e20r_import_errors_to_ignore',
+				array( $this, 'load_ignored_module_errors' ),
+				10,
+				2
+			);
+
+			// Add list of errors to ignore for the BuddyPress module
+			$this->errors_to_ignore = apply_filters(
+				'e20r_import_errors_to_ignore',
+				$this->errors_to_ignore,
+				'users'
+			);
 		}
 
 		/**
-		 * Load action and filter handlers for PMPro validation
+		 * Load action and filter handlers for User validation
 		 */
 		public function load_actions() {
 
-			add_filter(
-				'e20r_import_users_validate_field_data',
-				array( $this, 'validate_user_id' ),
-				1,
-				3
-			);
+			add_filter( 'e20r_import_users_validate_field_data', array( $this, 'validate_user_id' ), 1, 3 );
+			add_filter( 'e20r_import_users_validate_field_data', array( $this, 'validate_email' ), 2, 3 );
 		}
 
 		/**
@@ -97,16 +93,19 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Column_Validation' ) ) {
 			}
 
 			$this->error_log->debug( 'Loading WP User specific error(s) to ignore' );
-
 			$this->errors_to_ignore = array();
 
 			return $ignored_error_list + $this->errors_to_ignore;
 		}
 
 		/**
-		 * @param array $record
+		 * Verify that the record contains a valid email address or user_login AND that the user doesn't exist (if we're updating)
+		 *
+		 * @param array $record The supplied user array (record) from the .CSV file row
 		 *
 		 * @return bool|string
+		 *
+		 * @throws InvalidSettingsKey Raised if the 'update_users' key is not a valid setting/variable
 		 */
 		public function validate_email( $record ) {
 
@@ -192,6 +191,62 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Column_Validation' ) ) {
 			}
 
 			return true;
+		}
+
+		/**
+		 * Process the status for user validations and set a status message
+		 *
+		 * @param int $status
+		 * @param bool $allow_update
+		 *
+		 * @return bool
+		 */
+		public static function status_msg( $status, $allow_update ) {
+
+			global $e20r_import_err;
+			global $active_line_number;
+
+			$should_exit = false;
+
+			switch ( $status ) {
+				case Status::E20R_ERROR_ID_NOT_NUMBER:
+					$msg = __(
+						"The value specified in the 'ID' column is not numeric (integer)",
+						'pmpro-import-members-from-csv'
+					);
+					break;
+
+				case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
+					$msg         = __(
+						'User ID specified and user record exists but the "Update User Record" option is not selected',
+						'pmpro-import-members-from-csv'
+					);
+					$should_exit = true;
+					break;
+
+				case Status::E20R_ERROR_USER_EXISTS_NO_UPDATE:
+					$msg = __(
+						'User exists, but the "Update User Record" option is not selected.',
+						'pmpro-import-members-from-csv'
+					);
+
+					$should_exit = true;
+					break;
+				default:
+					$msg         = null;
+					$should_exit = false;
+			}
+
+			// Process the resulting error/warning message
+			if ( ! empty( $msg ) ) {
+
+				// Save the error message (based on the supplied status)
+				$e20r_import_err[ "user_check_{$active_line_number}" ] = $msg;
+
+				return $should_exit;
+			}
+
+			return false;
 		}
 	}
 }
