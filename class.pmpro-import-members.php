@@ -1,4 +1,4 @@
-<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
+<?php
 /**
 Plugin Name: Import Paid Memberships Pro Members from CSV
 Plugin URI: http://wordpress.org/plugins/pmpro-import-members-from-csv/
@@ -37,6 +37,13 @@ use E20R\Import_Members\Import;
 use E20R\Utilities\ActivateUtilitiesPlugin;
 use function add_action;
 use function register_deactivation_hook;
+
+// Make sure Composer (and thus the auto-loader exists)
+if ( ! file_exists( __DIR__ . '/composer.phar' ) ) {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'Missing autoloader: Import Members for PMPro plugin cannot be loaded' );
+	return;
+}
 
 // Load the PSR-4 Autoloader
 require_once __DIR__ . '/inc/autoload.php';
