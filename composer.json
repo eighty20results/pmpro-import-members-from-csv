@@ -81,7 +81,8 @@
 			"E20R\\Import_Members\\Modules\\BuddyPress\\": "src/E20R/Import_Members/Modules/BuddyPress",
 			"E20R\\Import_Members\\Modules\\PMPro\\": "src/E20R/Import_Members/Modules/PMPro",
 			"E20R\\Import_Members\\Modules\\Users\\": "src/E20R/Import_Members/Modules/Users",
-			"E20R\\Import_Members\\Validate\\": "src/E20R/Import_Members/Validate"
+			"E20R\\Import_Members\\Validate\\": "src/E20R/Import_Members/Validate",
+		  	"E20R\\Import_Members\\Validate\\Column_Values\\": "src/E20R/Import_Members/Validate/Column_Values"
 		}
     },
     "autoload-dev": {
