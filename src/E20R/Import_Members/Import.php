@@ -18,19 +18,20 @@
  */
 namespace E20R\Import_Members;
 
+use E20R\Exceptions\AutoloaderNotFound;
 use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Import_Members\Email\Email_Templates;
+use E20R\Import_Members\Modules\PMPro\Import_Member;
+use E20R\Import_Members\Modules\PMPro\PMPro;
+use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
-use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BuddyPress_Validation;
-use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
-use E20R\Import_Members\Modules\PMPro\Import_Member;
-use E20R\Import_Members\Modules\PMPro\PMPro;
-use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
-use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Validate\Column_Values\PMPro_Validation;
+use E20R\Import_Members\Validate\Column_Values\Users_Validation;
+use E20R\Import_Members\Validate\Column_Values\BuddyPress_Validation;
 use E20R\Import_Members\Validate\Validate;
-use E20R\Import_Members\Email\Email_Templates;
 use E20R\Licensing\License;
 
 if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
@@ -124,8 +125,23 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @var Email_Templates|null
 		 */
 		private $email_templates = null;
+
 		/**
-		 * Import constructor.
+		 * Holds the *_Column_Validation classes we'll load and use.
+		 *
+		 * @var string[]
+		 */
+		private $column_validation_classes = null;
+
+		/**
+		 * Class instances for any custom validator(s)
+		 *
+		 * @var array
+		 */
+		private $validators = array();
+
+		/**
+		 * Import class constructor with support for unit test mocking
 		 *
 		 * @param null|Variables       $variables
 		 * @param null|PMPro           $pmpro
@@ -134,11 +150,15 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param null|CSV             $csv
 		 * @param null|Email_Templates $email_templates
 		 * @param null|Page            $page
+		 * @param null|Ajax            $ajax
 		 * @param null|Error_Log       $error_log
 		 *
 		 * @throws InvalidInstantiation Thrown if this class isn't instantiated properly
+		 * @throws AutoloaderNotFound Thrown if there's something wrong with our instantiation of the Composer PSR4 autoloader
+		 *
+		 * @filter e20r_import_column_validation_classes - Add to/remove Column Validation classes
 		 */
-		public function __construct( $variables = null, $pmpro = null, $data = null, $import_user = null, $csv = null, $email_templates = null, $page = null, $error_log = null ) {
+		public function __construct( $variables = null, $pmpro = null, $data = null, $import_user = null, $csv = null, $email_templates = null, $page = null, $ajax = null, $error_log = null ) {
 			if ( empty( $error_log ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}
@@ -179,9 +199,86 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			$this->page = $page;
 
-			$this->ajax = new Ajax( $variables, $csv, $error_log );
+			if ( null === $ajax ) {
+				$ajax = new Ajax( $this->variables, $this->csv, $this->error_log );
+			}
+			$this->ajax = $ajax;
 
-			$this->plugin_path = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
+			$this->plugin_path               = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
+			$this->column_validation_classes = apply_filters(
+				'e20r_import_column_validation_class_names',
+				array(
+					'PMPro_Validation'      => false,
+					'Users_Validation'      => false,
+					'BuddyPress_Validation' => false,
+				)
+			);
+
+			$own_validators = array( 'PMPro_Validation', 'Users_Validation', 'BuddyPress_Validation' );
+
+			try {
+				$this->load_validation_classes( $own_validators );
+			} catch ( AutoloaderNotFound $e ) {
+				$this->error_log->debug( 'Could not find the auto-loader so did not load custom validation classes' );
+			}
+		}
+
+		/**
+		 * Autoload custom import validation to the E20R\Import_Members\Validate\Custom_Validator namespace
+		 *
+		 * @param string[] $own_validators List of validators defined by this plugin
+		 *
+		 * @return void
+		 * @throws AutoloaderNotFound Thrown if the Composer PSR4 auto-loader instance was not found
+		 */
+		private function load_validation_classes( $own_validators = array() ) {
+			global $import_loader;
+			$this->validators = array();
+
+			if ( empty( $import_loader ) ) {
+				throw new AutoloaderNotFound(
+					esc_attr__(
+						'Error: Cannot locate an instance of the auto-loader for this plugin!',
+						'pmpro-import-members-from-csv'
+					)
+				);
+			}
+
+			// Iterate through the list of Column Validation classes and add them to the autoloader as needed
+			foreach ( $this->column_validation_classes as $name => $path ) {
+
+				$base_namespace = 'E20R\\Import_Members\\Validate\\Custom';
+
+				// Only default Column Value validators have 'false' as their path
+				if ( false === $path && in_array( $name, $own_validators, true ) ) {
+
+					if ( 'Users_Validation' === $name ) {
+						$this->validators['Users_Validation'] = new Users_Validation(
+							$this->variables,
+							$this->error_log
+						);
+					} else {
+						$this->validators[ $name ] = new $name( $this->error_log );
+					}
+					// Process the next entry
+					continue;
+				}
+
+				if ( ! empty( $path ) && 1 !== preg_match( '/Custom/', $base_namespace ) ) {
+					// Add custom validation class
+					$this->error_log->debug( "Adding custom validator class {$name} in {$path} to the {$base_namespace} namespace" );
+					$class_name = sprintf( '%1$s\\%2$s', $base_namespace, $name );
+					$import_loader->setPsr4( $class_name, $path );
+
+					// Then instantiate the class
+					$this->validators[ strtolower( $name ) ] = new $class_name( $this->error_log );
+
+					// And add its load_actions() method to the plugins_loaded
+					add_action( 'plugins_loaded', array( $this->validators[ strtolower( $name ) ], 'load_actions' ), 99 );
+				} else {
+					$this->error_log->debug( 'Error in custom list from the "e20r_import_column_validation_class_names" filter!' );
+				}
+			}
 		}
 
 		/**
@@ -248,9 +345,9 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			add_action( 'plugins_loaded', array( $this->page, 'load_hooks' ), 99, 0 );
 
 			// Add validation logic for all Modules
-			add_action( 'plugins_loaded', array( User_Validation::get_instance(), 'load_actions' ), 30, 0 );
-			add_action( 'plugins_loaded', array( PMPro_Validation::get_instance(), 'load_actions' ), 31, 0 );
-			add_action( 'plugins_loaded', array( BuddyPress_Validation::get_instance(), 'load_actions' ), 32, 0 );
+			add_action( 'plugins_loaded', array( $this->validators['Users_Validation'], 'load_actions' ), 30, 0 );
+			add_action( 'plugins_loaded', array( $this->validators['PMPro_Validation'], 'load_actions' ), 31, 0 );
+			add_action( 'plugins_loaded', array( $this->validators['BuddyPress_Validation'], 'load_actions' ), 32, 0 );
 
 			add_action( 'init', array( $this, 'load_i18n' ), 5, 0 );
 			add_action( 'init', array( $this->data, 'process_csv' ), 10, 0 );
