@@ -20,6 +20,7 @@ namespace E20R\Import_Members\Modules\BuddyPress;
 
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 	/**
@@ -27,13 +28,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 	 * @package E20R\Import_Members\Modules\BuddyPress
 	 */
 	class BuddyPress {
-
-		/**
-		 * Singleton instance of this class (BuddyPress)
-		 *
-		 * @var null|BuddyPress
-		 */
-		private static $instance = null;
 
 		/**
 		 * Instance of the Data class
@@ -49,6 +43,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 		 */
 		private $error_log = null;
 
+		/**
+		 * Instance of the Import() class
+		 *
+		 * @var Import|null $import
+		 */
+		private $import = null;
 		/**
 		 * The names of BuddyPress tables we can Import to
 		 *
@@ -75,9 +75,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 		 *
 		 * @access private
 		 */
-		public function __construct() {
-			$this->data      = new Data();
-			$this->error_log = new Error_Log(); // phpcs:ignore
+		public function __construct( $import = null ) {
+			$this->import    = $import;
+			$this->data      = $import->get( 'data' );
+			$this->error_log = $import->get( 'error_log' );
 
 			$this->required_tables = apply_filters(
 				'e20r_import_buddypress_tables',
