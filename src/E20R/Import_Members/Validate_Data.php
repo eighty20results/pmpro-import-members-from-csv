@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,24 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * Copyright (c) 2018-2019. - Eighty / 20 Results by Wicked Strong Chicks.
- * ALL RIGHTS RESERVED
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * @package E20R\Import_Members\Validate_Data
  */
 
 namespace E20R\Import_Members;
@@ -40,32 +24,33 @@ namespace E20R\Import_Members;
 if ( ! class_exists( 'E20R\Import_Members\Validate_Data' ) ) {
 	/**
 	 * Class Validate_Data
-	 * @package E20R\Import_Members
 	 */
 	class Validate_Data {
 
-		private static $instance = null;
-
+		/**
+		 * Fields to process
+		 *
+		 * @var array
+		 */
 		private $fields = array();
 
-		private function __construct() {
-		}
-
-		private function __clone() {
-		}
+		/**
+		 * Instance of the debug logger|error message handler
+		 *
+		 * @var Error_Log|null
+		 */
+		private $error_log = null;
 
 		/**
-		 * Get or instantiate and return this class instance (Validate_Data)
+		 * Constructor for the Validate_Data() class
 		 *
-		 * @return Validate_Data|null
+		 * @param null|Error_Log $error_log Instance of the Error_Log() class
 		 */
-		public static function get_instance() {
-
-			if ( null === self::$instance ) {
-				self::$instance = new self();
+		public function __construct( $error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
-
-			return self::$instance;
+			$this->error_log = $error_log;
 		}
 
 		/**
