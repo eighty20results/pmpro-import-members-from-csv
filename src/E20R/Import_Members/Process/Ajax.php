@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Process;
 
+use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
@@ -63,27 +64,30 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		private $variables = null;
 
 		/**
+		 * Import class instance
+		 *
+		 * @var Import|null
+		 */
+		private $import = null;
+
+		/**
+		 * Instance of the Data() class
+		 *
+		 * @var Data|null
+		 */
+		private $data = null;
+
+		/**
 		 * Ajax constructor.
 		 *
-		 * @param null|Variables $variables
-		 * @param null|CSV       $csv
-		 * @param null|Error_Log $error_log
+		 * @param null|Import $import
 		 */
-		public function __construct( $variables = null, $csv = null, $error_log = null ) {
-			if ( empty( $error_log ) ) {
-				$error_log = new Error_Log(); // phpcs:ignore
-			}
-			$this->error_log = $error_log;
-
-			if ( empty( $variables ) ) {
-				$variables = new Variables();
-			}
-			$this->variables = $variables;
-
-			if ( empty( $csv ) ) {
-				$csv = new CSV( $this->variables );
-			}
-			$this->csv = $csv;
+		public function __construct( $import ) {
+			$this->import    = $import;
+			$this->error_log = $this->import->get( 'error_log' );
+			$this->variables = $this->import->get( 'variables' );
+			$this->csv       = $this->import->get( 'csv' );
+			$this->data      = $this->import->get( 'data' );
 		}
 
 		/**
@@ -170,7 +174,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		 */
 		public function wp_ajax_cleanup_csv() {
 
-			$sponsors = new Import_Sponsors( $this->variables, null, $this->error_log );
+			$sponsors = new Import_Sponsors( $this->variables, $this->data, $this->csv, $this->error_log );
 			$this->error_log->debug( 'Import is complete... ' );
 
 			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );

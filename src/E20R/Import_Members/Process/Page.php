@@ -54,11 +54,11 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		 * Page constructor.
 		 *
 		 * @param Import|null    $import Instance of the Import class
-		 * @param Error_Log|null $error_log Instance of the Error_Log
 		 *
 		 * @throws InvalidInstantiation Raised when the Import class isn't pre-defined and passed to us
+		 * @throws InvalidSettingsKey Raised when the specified Import::get() key isn't valid
 		 */
-		public function __construct( $import = null, $error_log = null ) {
+		public function __construct( $import = null ) {
 			if ( null === $import ) {
 				throw new InvalidInstantiation(
 					esc_attr__(
@@ -68,13 +68,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				);
 			}
 
-			$this->import = $import;
-
-			if ( null === $error_log ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				$error_log = new Error_Log();
-			}
-			$this->error_log = $error_log;
+			$this->import    = $import;
+			$this->error_log = $this->import->get( 'error_log' );
 		}
 
 		/**
@@ -354,7 +349,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				if ( empty( $_REQUEST['filename'] ) ) {
 
 					$has_donated    = false;
-					$ajax           = new Ajax();
+					$ajax           = $this->import->get( 'ajax' );
 					$current_client = $ajax->get_client_ip();
 
 					/**

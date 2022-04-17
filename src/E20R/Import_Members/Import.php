@@ -226,16 +226,6 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			$this->validate_data = $validate_data;
 
-			if ( null === $page ) {
-				$page = new Page( $this, $this->error_log );
-			}
-			$this->page = $page;
-
-			if ( null === $ajax ) {
-				$ajax = new Ajax( $this->variables, $this->csv, $this->error_log );
-			}
-			$this->ajax = $ajax;
-
 			$this->plugin_path               = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
 			$this->column_validation_classes = apply_filters(
 				'e20r_import_column_validation_class_names',
@@ -258,6 +248,17 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				$import_member = new Import_Member( $this );
 			}
 			$this->import_member = $import_member;
+
+			if ( null === $ajax ) {
+				$ajax = new Ajax( $this );
+			}
+			$this->ajax = $ajax;
+
+			if ( null === $page ) {
+				$page = new Page( $this );
+			}
+			$this->page = $page;
+
 		}
 
 		/**
