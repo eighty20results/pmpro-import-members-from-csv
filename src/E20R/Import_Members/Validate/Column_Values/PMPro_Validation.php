@@ -21,6 +21,7 @@
 
 namespace E20R\Import_Members\Validate\Column_Values;
 
+use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Validate_Data;
@@ -35,7 +36,9 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 	class PMPro_Validation extends Base_Validation {
 
 		/**
-		 * @param $error_log
+		 * Constructor for the PMPro CSV column value validation
+		 *
+		 * @param Error_Log|null $error_log
 		 */
 		public function __construct( $error_log = null ) {
 			parent::__construct( $error_log );
