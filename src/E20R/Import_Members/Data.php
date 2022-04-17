@@ -51,14 +51,28 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 		private $csv = null;
 
 		/**
-		 * Singleton Data constructor.
+		 * Data class constructor.
 		 *
-		 * @access private
+		 * @param Variables|null $variables Instance of the Variables() class
+		 * @param CSV|null       $csv Instance of the CSV() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class for debugging, etc.
 		 */
-		public function __construct() {
-			$this->error_log = new Error_Log(); // phpcs:ignore
-			$this->variables = new Variables();
-			$this->csv       = new CSV( $this->variables );
+		public function __construct( $variables = null, $csv = null, $error_log = null ) {
+			if ( null === $error_log ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				$error_log = new Error_Log();
+			}
+			$this->error_log = $error_log;
+
+			if ( null === $variables ) {
+				$variables = new Variables();
+			}
+			$this->variables = $variables;
+
+			if ( null === $csv ) {
+				$csv = new CSV( $this->variables, $this->error_log );
+			}
+			$this->csv = $csv;
 		}
 
 		/**
@@ -145,7 +159,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 				$this->error_log->debug( $msg );
 				$this->error_log->add_error_msg( $msg, 'error' );
 
-				wp_safe_redirect( add_query_arg( 'Import', 'fail', wp_get_referer() ) );
+				wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
 				exit();
 			}
 
@@ -156,7 +170,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 			$this->error_log->debug( 'Settings from class: ' . print_r( $settings, true ) ); // phpcs:ignore
 
 			if ( ! isset( $_FILES['members_csv']['tmp_name'] ) ) {
-				wp_safe_redirect( add_query_arg( 'Import', 'file', wp_get_referer() ) );
+				wp_safe_redirect( add_query_arg( 'import', 'file', wp_get_referer() ) );
 				exit();
 			}
 
@@ -174,7 +188,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 
 				if ( empty( $processed_file_name ) ) {
 					$this->error_log->add_error_msg( __( 'CSV file not selected. Nothing to Import!', 'Import-members-from-csv' ), 'error' );
-					wp_safe_redirect( add_query_arg( 'Import', 'fail', wp_get_referer() ) );
+					wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
 					exit();
 				}
 
@@ -182,7 +196,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 				$url = add_query_arg(
 					$settings + array(
 						'page'              => 'pmpro-import-members-from-csv',
-						'Import'            => 'resume',
+						'import'            => 'resume',
 						'background_import' => true,
 						'partial'           => true,
 					),
@@ -210,18 +224,18 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 
 				// No users imported?
 				if ( ! isset( $results['user_ids'] ) || empty( $results['user_ids'] ) ) {
-					wp_safe_redirect( add_query_arg( 'Import', 'fail', wp_get_referer() ) );
+					wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
 					exit();
 				}
 
 				// Some users imported?
 				if ( isset( $results['errors'] ) || ! empty( $results['errors'] ) ) {
-					wp_safe_redirect( add_query_arg( 'Import', 'errors', wp_get_referer() ) );
+					wp_safe_redirect( add_query_arg( 'import', 'errors', wp_get_referer() ) );
 					exit();
 				}
 
 				// All users imported? :D
-				wp_safe_redirect( add_query_arg( 'Import', 'success', wp_get_referer() ) );
+				wp_safe_redirect( add_query_arg( 'import', 'success', wp_get_referer() ) );
 			}
 			exit();
 		}
