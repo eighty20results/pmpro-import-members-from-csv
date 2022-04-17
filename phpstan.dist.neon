@@ -18,11 +18,10 @@ parameters:
     scanDirectories:
     	- inc/wp_plugins/paid-memberships-pro
     	- inc/wp_plugins/00-e20r-utilities
-    	- inc/wp_plugins/woocommerce
     paths:
         - class.pmpro-import-members.php
         - ActivateUtilitiesPlugin.php
-        - src/E20R/Import_Members/
+        - src/
     bootstrapFiles:
     	- ./class.pmpro-import-members.php
     excludePaths:
