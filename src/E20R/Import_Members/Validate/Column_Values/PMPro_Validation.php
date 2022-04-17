@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,56 +15,44 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Validate\Column_Values\PMPro_Validation
  */
 
-namespace E20R\Import_Members\Modules\PMPro;
+namespace E20R\Import_Members\Validate\Column_Values;
 
-use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Validate\Base_Validation;
+use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Validate_Data;
-use E20R\Import_Members\Import;
 use WP_Error;
+use function \add_filter;
+use function \apply_filters;
 
-if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
+if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validation' ) ) {
 	/**
-	 * Class Column_Validation
-	 * @package E20R\Import_Members\Modules\PMPro
+	 * Class PMPro_Validation
 	 */
-	class Column_Validation extends Base_Validation {
+	class PMPro_Validation extends Base_Validation {
 
 		/**
-		 * Instance of the PMPro Column_Validation class
-		 *
-		 * @var null|Column_Validation|Base_Validation $instance
+		 * @param $error_log
 		 */
-		protected static $instance = null;
+		public function __construct( $error_log = null ) {
+			parent::__construct( $error_log );
 
-		/**
-		 * Get or instantiate and get the current class
-		 *
-		 * @return Column_Validation|Base_Validation|null
-		 */
-		public static function get_instance() {
+			add_filter(
+				'e20r_import_errors_to_ignore',
+				array( $this, 'load_ignored_module_errors' ),
+				10,
+				2
+			);
 
-			if ( true === is_null( self::$instance ) ) {
-				self::$instance = new self();
-
-				add_filter(
-					'e20r_import_errors_to_ignore',
-					array( self::$instance, 'load_ignored_module_errors' ),
-					10,
-					2
-				);
-
-				// Add list of errors to ignore for the pmpro module
-				self::$instance->errors_to_ignore = apply_filters(
-					'e20r_import_errors_to_ignore',
-					self::$instance->errors_to_ignore,
-					'pmpro'
-				);
-			}
-
-			return self::$instance;
+			// Add list of errors to ignore for the pmpro module
+			$this->errors_to_ignore = apply_filters(
+				'e20r_import_errors_to_ignore',
+				$this->errors_to_ignore,
+				'pmpro'
+			);
 		}
 
 		/**
@@ -641,7 +629,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 
 				$msg = sprintf(
 				// translators: %1$s - CSV supplied value, %2$d - User ID
-					__(
+					esc_attr__(
 						'Notice: You specified a membership_gateway (%1$s), but you didn\'t specify the gateway environment to use (membership_gateway_environment) for user with ID %2$d. Using current PMPro setting.',
 						'pmpro-import-members-from-csv'
 					),
@@ -893,13 +881,18 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Column_Validation' ) ) {
 				return $has_error;
 			}
 
+			if ( ! function_exists( 'pmpro_gateways' ) ) {
+				$this->error_log->debug( "Can't find the pmpro_gateways() function. Is the PMPro plugin active?!?" );
+				return $has_error;
+			}
+
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
 			}
 
 			if ( ! empty( $fields['membership_gateway'] ) ) {
 
-				$gateways = Import::is_pmpro_active() ? pmpro_gateways() : array();
+				$gateways = pmpro_gateways();
 
 				if ( ! in_array( $fields['membership_gateway'], array_keys( $gateways ), true ) ) {
 					$msg = sprintf(
