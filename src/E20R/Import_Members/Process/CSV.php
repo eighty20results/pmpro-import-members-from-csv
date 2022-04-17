@@ -53,26 +53,22 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		private $variables = null;
 
 		/**
-		 * Instance of the CSV class
-		 *
-		 * @var null|CSV $csv
-		 */
-		private $csv;
-
-		/**
 		 * CSV constructor.
 		 *
-		 * @param Variables|null $variables
+		 * @param Variables|null $variables Instance of the Request variables (settings) class
+		 * @param Error_Log|null $error_log For debug logging and status messages
 		 */
-		public function __construct( $variables = null ) {
-			self::$instance  = $this;
-			$this->error_log = new Error_Log(); // phpcs:ignore
+		public function __construct( $variables = null, $error_log = null ) {
+
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore
+			}
+			$this->error_log = $error_log;
 
 			if ( null === $variables ) {
-				$this->variables = new Variables();
-			} else {
-				$this->variables = $variables;
+				$variables = new Variables( $this->error_log );
 			}
+			$this->variables = $variables;
 		}
 
 		/**
@@ -88,7 +84,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$upload_dir = wp_upload_dir();
 
 			if ( empty( $file_name ) ) {
-				self::$instance->error_log->debug( 'Trying to look for file name from cached variables' );
+				$this->error_log->debug( 'Trying to look for file name from cached variables' );
 				$file_name = $this->variables->get( 'filename' );
 			}
 
@@ -230,6 +226,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @param string $file_name
 		 *
 		 * @return bool
+		 * @throws InvalidSettingsKey Thrown if the filename variable is unset/not present
 		 */
 		private function clean_files( $file_name ) {
 			$dir_name  = dirname( $file_name );
