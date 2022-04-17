@@ -131,7 +131,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 *
 		 * @var string[]
 		 */
-		private $column_validation_classes = null;
+		private $column_validation_classes = array();
 
 		/**
 		 * Class instances for any custom validator(s)
@@ -214,10 +214,10 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				)
 			);
 
-			$own_validators = array( 'PMPro_Validation', 'Users_Validation', 'BuddyPress_Validation' );
+			$defaults = array( 'PMPro_Validation', 'Users_Validation', 'BuddyPress_Validation' );
 
 			try {
-				$this->load_validation_classes( $own_validators );
+				$this->load_validation_classes( $defaults );
 			} catch ( AutoloaderNotFound $e ) {
 				$this->error_log->debug( 'Could not find the auto-loader so did not load custom validation classes' );
 			}
@@ -226,12 +226,12 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		/**
 		 * Autoload custom import validation to the E20R\Import_Members\Validate\Custom_Validator namespace
 		 *
-		 * @param string[] $own_validators List of validators defined by this plugin
+		 * @param string[] $defaults List of validators defined by this plugin (defaults)
 		 *
 		 * @return void
 		 * @throws AutoloaderNotFound Thrown if the Composer PSR4 auto-loader instance was not found
 		 */
-		private function load_validation_classes( $own_validators = array() ) {
+		private function load_validation_classes( $defaults = array() ) {
 			global $e20r_import_loader;
 			$this->validators = array();
 
@@ -250,7 +250,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				$base_namespace = 'E20R\\Import_Members\\Validate\\Custom';
 
 				// Only default Column Value validators have 'false' as their path
-				if ( false === $path && in_array( $name, $own_validators, true ) ) {
+				if ( ! $path && in_array( $name, $defaults, true ) ) {
 
 					$class_name = sprintf( '%1$s\\%2$s', 'E20R\\Import_Members\\Validate\\Column_Values', $name );
 
