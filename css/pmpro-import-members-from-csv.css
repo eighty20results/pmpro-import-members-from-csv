@@ -36,3 +36,6 @@ div#e20r-status div.notice {
 input#e20r-import-clear-log {
 	float: right;
 }
+tr.e20r-import-row {
+	vertical-align: top;
+}

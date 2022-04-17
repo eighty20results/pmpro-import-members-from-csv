@@ -20,6 +20,7 @@
 namespace E20R\Import_Members\Process;
 
 use E20R\Exceptions\InvalidInstantiation;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
@@ -77,18 +78,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		}
 
 		/**
-		 * @return Page|null
-		 */
-		public static function get_instance() {
-
-			if ( is_null( self::$instance ) ) {
-				self::$instance = new self();
-			}
-
-			return self::$instance;
-		}
-
-		/**
 		 * Load action and filter hooks
 		 */
 		public function load_hooks() {
@@ -128,13 +117,12 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		 **/
 		public function add_admin_pages() {
 
-			$error_log = new Error_Log(); // phpcs:ignore
-			$error_log->debug( 'Add submenu to Memberships menu item. Headers sent? ' . ( headers_sent() ? 'Yes' : 'No' ) );
+			$this->error_log->debug( 'Add submenu to Memberships menu item. Headers sent? ' . ( headers_sent() ? 'Yes' : 'No' ) );
 
 			add_submenu_page(
 				'pmpro-membershiplevels',
-				__( 'Import Members', 'pmpro-import-members-from-csv' ),
-				__( 'Import Members', 'pmpro-import-members-from-csv' ),
+				esc_attr__( 'Import Members', 'pmpro-import-members-from-csv' ),
+				esc_attr__( 'Import Members', 'pmpro-import-members-from-csv' ),
 				'create_users',
 				'pmpro-import-members-from-csv',
 				array( $this, 'import_page' )
@@ -149,15 +137,14 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 
 			global $wp_admin_bar;
 
-			$error_log = new Error_Log(); // phpcs:ignore
-			$error_log->debug( 'Load the Import Members menu item. Headers sent? ' . ( headers_sent() ? 'Yes' : 'No' ) );
+			$this->error_log->debug( 'Load the Import Members menu item. Headers sent? ' . ( headers_sent() ? 'Yes' : 'No' ) );
 
 			if ( current_user_can( 'create_users' ) ) {
 				$wp_admin_bar->add_menu(
 					array(
 						'id'     => 'pmpro-import-members-from-csv',
 						'parent' => 'paid-memberships-pro',
-						'title'  => __( 'Import Members', 'pmpro-import-members-from-csv' ),
+						'title'  => esc_attr__( 'Import Members', 'pmpro-import-members-from-csv' ),
 						'href'   => add_query_arg( 'page', 'pmpro-import-members-from-csv', get_admin_url( null, 'admin.php' ) ),
 					)
 				);
@@ -167,6 +154,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		/**
 		 * Content of the settings page
 		 *
+		 * @throws InvalidSettingsKey Thrown if the specified parameter is invalid
 		 * @since 0.1
 		 **/
 		public function import_page() {
@@ -216,7 +204,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				printf(
 					'<div id="e20r-status" %1$s></div>',
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					( ! isset( $_REQUEST['Import'] ) ? 'style="display: none;"' : 'style="display: inline-block;"' )
+					( ! isset( $_REQUEST['import'] ) ? 'style="display: none;"' : 'style="display: inline-block;"' )
 				);
 				$efh = fopen( $variables->get( 'logfile_path' ), 'a' ); //phpcs:ignore
 				// phpcs::ignore
@@ -226,7 +214,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						sprintf(
 							// translators: %s - Path to log file
 							esc_attr__( 'Note: Please make the %s directory writable to see/save the error log.', 'pmpro-import-members-from-csv' ),
-							esc_attr__( $variables->get( 'logfile_path' ) ) // phpcs:ignore
+							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+							esc_attr__( $variables->get( 'logfile_path' ) )
 						)
 					);
 				}
@@ -246,14 +235,14 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				// File was writable and accessible
 				fclose( $efh ); // phpcs:ignore
 				$nonce = wp_nonce_field(
-					'e20r-im-Import-members',
-					'e20r-im-Import-members-wpnonce',
+					'e20r-im-import-members',
+					'e20r-im-import-members-wpnonce',
 					true,
 					false
 				);
 
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				if ( isset( $_REQUEST['Import'] ) ) {
+				if ( isset( $_REQUEST['import'] ) ) {
 					$error_log_msg = '';
 
 					if ( filesize( $variables->get( 'logfile_path' ) ) > 0 ) {
@@ -265,16 +254,14 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						);
 					}
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					switch ( $_REQUEST['Import'] ) {
+					switch ( $_REQUEST['import'] ) {
 						case 'file':
-							// phpcs:ignore
 							printf(
 								'<div class="error"><p><strong>%1$s</strong></p></div>',
 								esc_attr__( 'Error during file upload.', 'pmpro-import-members-from-csv' )
 							);
 							break;
 						case 'data':
-							// phpcs:ignore
 							printf(
 								'<div class="error"><p><strong>%1$s</strong></p></div>',
 								esc_attr__(
@@ -284,7 +271,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							);
 							break;
 						case 'fail':
-							// phpcs:ignore
 							printf(
 								'<div class="error"><p><strong>%1$s</strong></p></div>',
 								sprintf(
@@ -298,7 +284,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							);
 							break;
 						case 'errors':
-							// phpcs:ignore
 							printf(
 								'<div class="error"><p><strong>%1$s</strong></p></div>',
 								sprintf(
@@ -312,11 +297,10 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							);
 							break;
 						case 'success':
-							// phpcs:ignore
 							printf(
 								'<div class="updated"><p><strong>%1$s</strong></p></div>',
 								esc_attr__(
-									'Member Import was successful.',
+									'Member import was successful.',
 									'pmpro-import-members-from-csv'
 								)
 							);
@@ -324,7 +308,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						default:
 					}
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					if ( isset( $_REQUEST['Import'] ) && 'resume' === $_REQUEST['Import'] && ! empty( $_REQUEST['filename'] ) ) {
+					if ( 'resume' === $_REQUEST['import'] && ! empty( $_REQUEST['filename'] ) ) {
 
 						// phpcs:ignore $filename = sanitize_file_name( $_REQUEST['filename'] );
 
@@ -340,7 +324,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						printf(
 								// translators: %1$s HTML, %2$s HTML, %3$s - wp-admin URL, %4$s HTML
 							esc_attr__(
-								'Your Import is not finished. %1$sClosing this page will stop the Import operation%2$s. If the Import stops or you have to close your browser, you can navigate to %3$sthis link%4$s and resume the Import operation later.',
+								'Your import is not finished. %1$sClosing this page will stop the import operation%2$s. If the import stops or you have to close your browser, you can navigate to %3$sthis link%4$s and resume the import operation later.',
 								'pmpro-import-members-from-csv'
 							),
 							'<strong>',
@@ -360,7 +344,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 
 					<textarea id="importstatus" rows="10" cols="60"><?php esc_attr_e( 'Loading...', 'pmpro-import-members-from-csv' ); ?></textarea>
 					<p class="complete_btn">
-						<?php echo $nonce; // phpcs:ignore ?>
+						<?php printf( '%s', $nonce ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						<input type="button" class="button-primary" id="completed_import" value="<?php esc_attr_e( 'Finished', 'pmpro-import-members-from-csv' ); ?>" style="display:none;"/>
 					</p>
 						<?php
@@ -370,7 +354,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				if ( empty( $_REQUEST['filename'] ) ) {
 
 					$has_donated    = false;
-					$current_client = Ajax::get_instance()->get_client_ip();
+					$ajax           = new Ajax();
+					$current_client = $ajax->get_client_ip();
 
 					/**
 					 * Add "donations welcome" button info if the user hasn't recently donated/clicked the button
@@ -458,9 +443,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				</div>
 				<hr/>
 				<form method="post" action="" id="e20r-import-form" enctype="multipart/form-data">
-					<?php echo $nonce; // phpcs:ignore ?>
+					<?php printf( '%s', $nonce ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<table class="form-table">
-						<tr valign="top">
+						<tr class="e20r-import-row">
 							<th scope="row">
 								<label for="members_csv">
 								<?php
@@ -489,7 +474,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 											sprintf(
 												'<a href="%1$s" target="_blank">',
 												esc_url_raw(
-													plugins_url( '/examples/Import.csv', $this->import->get( 'plugin_path' ) . '/class.pmpro-Import-members.php' )
+													plugins_url( '/examples/import.csv', $this->import->get( 'plugin_path' ) . '/class.pmpro-import-members.php' )
 												)
 											),
 											'</a>'
@@ -499,18 +484,18 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 								</div>
 							</td>
 						</tr>
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Update user record', 'pmpro-import-members-from-csv' ); ?></th>
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Update WP User', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Users update', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Update the WordPress user information', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="update_users">
 										<input id="update_users" name="update_users" type="checkbox" value="1" checked="checked"/>
 										<?php
 										esc_attr_e(
-											'Update, do not add, the user if the username or Email already exists (Recommended)',
+											'If the WP User record exists, based on the user_login or user_email fields specified in the .csv file, update the existing record with the data being imported. (Recommended) Not checking this box will cause the plugin to try and add the user. In that case, should the user actually exists on this site, we should not attempt to update any information for this user from the .csv file',
 											'pmpro-import-members-from-csv'
 										);
 										?>
@@ -518,60 +503,76 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Deactivate existing membership', 'pmpro-import-members-from-csv' ); ?></th>
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Deactivate any existing memberships', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Deactivate existing membership', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Deactivate any existing memberships', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="deactivate_">
 										<input id="deactivate_old_memberships" name="deactivate_old_memberships"  type="checkbox" value="1" checked="checked"/>
 										<?php
-										esc_attr_e( "Update the status when importing a user who already has an 'active' membership level (Recommended)", 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'For existing members, update the membership information by deactivating their pre-import (existing) active membership levels (Recommended to help avoid duplicate member status records in the database)', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Add order', 'pmpro-import-members-from-csv' ); ?></th>
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Add PMPro order', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Attempt to create PMPro Order record', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Try to create a Paid Memberships Pro order record', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="update_users">
 										<input id="create_order" name="create_order" type="checkbox" value="1"/>
 										<?php
-										esc_attr_e( 'Attempt to add a PMPro order record when required data is included in the Import row', 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'Try to add a PMPro order record when the required order data is included in the data from the .csv file', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
+						<tr class="e20r-import-row">
 							<th scope="row"><?php esc_attr_e( 'Send WordPress notification', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Send the WordPress new user/updated password notification to the user', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Send the standard new user/updated password notification from WordPress to the user', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="new_user_notification">
 										<input id="new_user_notification" name="new_user_notification" type="checkbox" value="1"/>
 										<?php
-										esc_attr_e( 'Send the WordPress new user/updated password notification to the user', 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'Send the standard new user/updated password notification for WordPress to the user. This notification would be in addition to the "Welcome to the membership" email.', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( "Send 'Welcome to the membership' email", 'pmpro-import-members-from-csv' ); ?></th>
+							<td>
+								<fieldset>
+									<legend class="screen-reader-text">
+										<span><?php esc_attr_e( "Send the 'Welcome to the membership' email to the imported/updated user", 'pmpro-import-members-from-csv' ); ?></span>
+									</legend>
+									<label for="send_welcome_email">
+										<input id="send_welcome_email" name="send_welcome_email" type="checkbox" value="1"/>
+										<?php
+										esc_attr_e( "Send the 'Welcome to the membership' email message from the imported_member.html template to the imported/updated user(s)", 'pmpro-import-members-from-csv' );
+										?>
+									</label>
+								</fieldset>
+							</td>
+						</tr>
+						<tr class="e20r-import-row">
 							<th scope="row"><?php esc_attr_e( 'Suppress "Password/Email Changed" notification', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Do not send the "Your password was changed" nor the "Your Email address was changed" Email messages to the updated user', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Do not send the "Your password was changed", nor the "Your email address was changed" email messages to the added/updated user(s)', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="suppress_pwdmsg">
 										<input id="suppress_pwdmsg" name="suppress_pwdmsg" type="checkbox" value="1"/>
@@ -579,7 +580,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 										printf(
 												// translators: %1$s HTML, %2$s HTML
 											esc_attr__(
-												'%1$sDo not send%2$s the "Your password was changed" nor the "Your Email address was changed" Email messages to the updated user',
+												'%1$sDo not send%2$s the "Your password was changed" nor the "Your email address was changed" email messages to the updated/added user(s)',
 												'pmpro-import-members-from-csv'
 											),
 											'<strong>',
@@ -590,9 +591,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 								</fieldset>
 							</td>
 						</tr>
-						<!-- send_welcome_email -->
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Send WordPress notification to admin', 'pmpro-import-members-from-csv' ); ?></th>
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Send notification to admin', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
@@ -601,63 +601,46 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 									<label for="admin_new_user_notification">
 										<input id="admin_new_user_notification" name="admin_new_user_notification" type="checkbox" value="1"/>
 										<?php
-										esc_attr_e( 'Send WordPress new user/updated user notification to admin', 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'Send WordPress new user/updated user notification to the email address defined as the admin in the General Settings section', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Send \'Welcome to the membership\' Email', 'pmpro-import-members-from-csv' ); ?></th>
-							<td>
-								<fieldset>
-									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Send the imported_member.html welcome Email to the imported user', 'pmpro-import-members-from-csv' ); ?></span>
-									</legend>
-									<label for="send_welcome_email">
-										<input id="send_welcome_email" name="send_welcome_email" type="checkbox" value="1"/>
-										<?php
-										esc_attr_e( 'Send the imported_member.html welcome Email to the imported user', 'pmpro-import-members-from-csv' );
-										?>
-									</label>
-								</fieldset>
-							</td>
-						</tr>
-						<!--  -->
-						<tr valign="top">
+						<tr class="e20r-import-row">
 							<th scope="row"><?php esc_attr_e( 'Display password nag', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Password nag', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Show the update your password nag for updated user(s)', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="password_nag">
 										<input id="password_nag" name="password_nag" type="checkbox" value="1"/>
 										<?php
-										esc_attr_e( 'Show the password nag when the new user(s) log in', 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'Show the "update your password" password nag message when the new/updated user(s) log in', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Password is already hashed', 'pmpro-import-members-from-csv' ); ?></th>
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Password is hashed', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Password is hashed', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Password is hashed in .csv file', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="password_hashing_disabled">
 										<input id="password_hashing_disabled" name="password_hashing_disabled" type="checkbox" value="1"/>
 										<?php
-										esc_attr_e( "The passsword in the .csv file is already hashed and doesn't need to be encrypted by the Import process.", 'pmpro-import-members-from-csv' );
+										esc_attr_e( "The data in the 'user_password' field, in the .csv file, is already encrypted/hashed and does not need to be encrypted again during the import process.", 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
 							</td>
 						</tr>
-						<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Background Import', 'pmpro-import-members-from-csv' ); ?></th>
+						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Background import', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
@@ -666,7 +649,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 									<label for="background_import">
 										<input id="background_import" name="background_import" type="checkbox" value="1" checked="checked"/>
 										<?php
-										esc_attr_e( 'Use a background process to Import all of the records. (Recommeded)', 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'Use a background process to import all of the records and support pause/resume. (Recommeded)', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
@@ -677,18 +660,18 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							global $current_blog_id;
 							$site_list = get_sites();
 							?>
-							<tr valign="top">
-							<th scope="row"><?php esc_attr_e( 'Site to Import to', 'pmpro-import-members-from-csv' ); ?></th>
+							<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Site to import to', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Select the multisite instance to Import these members to.', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( 'Select the multisite instance to import these members to.', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<select id="site_id" name="site_id">
 								<?php
 								foreach ( $site_list as $site ) {
-									// phpcs:ignore ?>
-										<option value="<?php esc_attr_e( $site->blog_id ); ?>" <?php selected( $site->blog_id, $current_blog_id ); ?>><?php esc_html_e( $site->blogname ); ?></option>
+								 	// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText ?>
+									<option value="<?php esc_attr_e( $site->blog_id ); ?>" <?php selected( $site->blog_id, $current_blog_id ); ?>><?php esc_html_e( $site->blogname ); ?></option>
 										<?php
 								}
 								?>
@@ -702,7 +685,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						<?php do_action( 'e20r_import_page_setting_html' ); ?>
 					</table>
 					<p class="submit">
-						<input type="submit" class="button-primary" value="<?php esc_attr_e( 'Import', 'pmpro-import-members-from-csv' ); ?>" id="e20r-import-form-submit"/>
+						<input type="submit" class="button-primary" value="<?php esc_attr_e( 'Start import', 'pmpro-import-members-from-csv' ); ?>" id="e20r-import-form-submit"/>
 					</p>
 				</form>
 					<?php
