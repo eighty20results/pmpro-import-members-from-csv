@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Modules\PMPro;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
@@ -70,38 +71,49 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		private $variables = null;
 
 		/**
-		 * Import_Member constructor.
+		 * Instance of the Validate_Data() class
 		 *
-		 * Hide/protect the constructor for this class (singleton pattern)
-		 *
-		 * @access private
+		 * @var Validate_Data|null
 		 */
-		private function __construct() {
-		}
+		private $validate_data = null;
 
 		/**
-		 * Return or instantiate and return a single instance of this class (singleton pattern)
+		 * Instance of the Email_Templates class
 		 *
-		 * @return Import_Member|null
+		 * @var null|Email_Templates
 		 */
-		public static function get_instance() {
+		private $email_templates = null;
 
-			if ( true === is_null( self::$instance ) ) {
-				self::$instance            = new self();
-				self::$instance->error_log = new Error_Log(); // phpcs:ignore
-				self::$instance->data      = new Data();
-				self::$instance->variables = new Variables();
-			}
+		/**
+		 * Instance of the main Import() class
+		 *
+		 * @var null|Import
+		 */
+		private $import = null;
 
-			return self::$instance;
+		/**
+		 * Constructor for the Import_Member class
+		 *
+		 * @param Import|null $import
+		 *
+		 * @throws InvalidSettingsKey Raised if the specified class property is missing
+		 */
+		public function __construct( $import ) {
+			$this->import          = $import;
+			$this->error_log       = $import->get( 'error_log' );
+			$this->variables       = $import->get( 'variables' );
+			$this->data            = $import->get( 'data' );
+			$this->validate_data   = $import->get( 'validate_data' );
+			$this->email_templates = $import->get( 'email_templates' );
 		}
 
 		/**
 		 * Add action & filter handlers (run early)
 		 */
 		public function load_actions() {
-			add_action( 'e20r_before_user_import', array( $this, 'clean_up_old_import_data' ), - 1 );
-			add_action( 'e20r_after_user_import', array( $this, 'import_membership_info' ), - 1, 3 );
+			$this->error_log->debug( 'Loading membership import handler and clean-up' );
+			add_action( 'e20r_before_user_import', array( $this, 'clean_up_old_import_data' ), -1, 2 );
+			add_action( 'e20r_after_user_import', array( $this, 'import_membership_info' ), -1, 3 );
 		}
 
 		/**
@@ -153,9 +165,9 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		/**
 		 * After the new user was created, Import PMPro membership metadata
 		 *
-		 * @param int $user_id
-		 * @param array $user_data
-		 * @param array $user_meta
+		 * @param int   $user_id WP_User ID for the user we're importing data for
+		 * @param array $user_data The WP_User data being imported
+		 * @param array $user_meta The metadata for the user being imported
 		 *
 		 * @since 2.9 BUG FIX: A little too silent when the imported file is mis-configured
 		 * @since 2.9 BUG FIX: MS Excel causing trouble w/first column Import values (Improved UTF BOM handling)
@@ -171,8 +183,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			global $wpdb;
 			global $e20r_import_err;
 			global $active_line_number;
-
-			$emails = Email_Templates::get_instance();
 
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
@@ -522,7 +532,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			do_action( 'e20r_import_trigger_membership_module_imports', $user_id, $user_data, $user_meta );
 
 			$this->error_log->debug( "Should we send welcome Email ({$send_email})? " . ( $send_email ? 'Yes' : 'No' ) );
-			$emails->maybe_send_email( $user, $user_meta );
+			$this->email_templates->maybe_send_email( $user, $user_meta );
 
 			// Log errors to log file
 			if ( ! empty( $e20r_import_err ) ) {
@@ -701,7 +711,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			$gateway_name   = $record['membership_gateway'] ?? $gw_name;
 			$gw_environment = $record['membership_gateway_environment'] ?? $gw_env;
 			$user           = get_user_by( 'ID', $user_id );
-			$validate       = Validate_Data::get_instance();
 
 			/**
 			 * Load order table columns for processing
@@ -820,7 +829,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 			// Update order timestamp?
 			if ( ! empty( $record['membership_timestamp'] ) ) {
-				if ( true === $validate->date( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
+				if ( true === $this->validate_data->date( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
 					$timestamp = strtotime( $record['membership_timestamp'], time() );
 				} else {
 					$timestamp = is_numeric( $record['membership_timestamp'] ) ? $record['membership_timestamp'] : null;
