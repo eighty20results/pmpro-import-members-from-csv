@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 - 2020. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,47 +15,43 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Modules\BuddyPress
  */
 
-namespace E20R\Import_Members\Modules\BuddyPress;
+namespace E20R\Import_Members\Validate\Column_Values;
 
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Modules\BuddyPress\BuddyPress;
 
-if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress\Column_Validation' ) ) {
+if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Validation' ) ) {
 	/**
-	 * Class Column_Validation
-	 * @package E20R\Import_Members\Modules\BuddyPress
+	 * Class UsersColumn_Validation
 	 */
-	class Column_Validation extends Base_Validation {
+	class BuddyPress_Validation extends Base_Validation {
 
 		/**
-		 * Get or instantiate and get the current class
+		 * Constructor for validation of BuddyPress columns in the import .csv file
 		 *
-		 * @return Column_Validation|Base_Validation|null
+		 * @param Error_Log|null $error_log Instance of the (shared) error logging class (debugging)
 		 */
-		public static function get_instance() {
+		public function __construct( $error_log = null ) {
+			parent::__construct( $error_log );
 
-			if ( true === is_null( self::$instance ) ) {
-				self::$instance = new self();
+			add_filter(
+				'e20r_import_errors_to_ignore',
+				array( $this, 'load_ignored_module_errors' ),
+				10,
+				2
+			);
 
-				add_filter(
-					'e20r_import_errors_to_ignore',
-					array( self::$instance, 'load_ignored_module_errors' ),
-					10,
-					2
-				);
-
-				// Add list of errors to ignore for the BuddyPress module
-				self::$instance->errors_to_ignore = apply_filters(
-					'e20r_import_errors_to_ignore',
-					self::$instance->errors_to_ignore,
-					'buddypress'
-				);
-			}
-
-			return self::$instance;
+			// Add list of errors to ignore for the BuddyPress module
+			$this->errors_to_ignore = apply_filters(
+				'e20r_import_errors_to_ignore',
+				$this->errors_to_ignore,
+				'buddypress'
+			);
 		}
 
 		/**
@@ -109,17 +105,15 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress\Column_Validation' 
 
 			if ( ! isset( $fields['bp_field_name'] ) ) {
 				$this->error_log->debug( "No need to process 'bp_field_name' column" );
-
 				return $has_error;
 			}
 
-			if ( ! isset( $fields['bp_field_name'] ) && in_array( 'bp_field_name', array_keys( $fields ), true ) ) {
+			if ( in_array( 'bp_field_name', array_keys( $fields ), true ) ) {
 				$this->error_log->debug( "'bp_field_name' is doesn't need to be processed..." );
-
 				return $has_error;
 			}
 
-			if ( isset( $fields['bp_field_name'] ) && empty( $fields['bp_field_name'] ) ) {
+			if ( empty( $fields['bp_field_name'] ) ) {
 				$has_error = $has_error && ( ! $this->ignore_validation_error( 'bp_field_name' ) );
 			}
 
