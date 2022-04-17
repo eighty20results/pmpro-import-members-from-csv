@@ -28,6 +28,11 @@ plugin_description_text="Import and create user + PMPro member records from a CS
 remote_server="${2}"
 
 short_name="$(${sed} -e 's/\.php//g' -e 's/class[\.-]//g' <<< "${1}")"
+if [[ -n "${E20R_PLUGIN_NAME}" && "${short_name}" != "${E20R_PLUGIN_NAME}" ]]; then
+	echo "Override the plugin short_name variable"
+	short_name="${E20R_PLUGIN_NAME}"
+fi
+
 plugin_homepage="https://${remote_server}/plugins/${short_name}/"
 version="$(./bin/get_plugin_version.sh "${1}")"
 github_url="https://github.com/eighty20results/${short_name}/"
