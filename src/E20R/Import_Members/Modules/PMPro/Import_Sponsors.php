@@ -22,6 +22,7 @@ namespace E20R\Import_Members\Modules\PMPro;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
+use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Variables;
 use E20R\Licensing\License;
 use E20R\Licensing\Licensing;
@@ -56,27 +57,40 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 		private $variables = null;
 
 		/**
+		 * Instance of the CSV class
+		 *
+		 * @var CSV|null
+		 */
+		private $csv = null;
+
+		/**
 		 * Import_Sponsors constructor.
 		 *
-		 * @param null|Variables $variables
-		 * @param null|Data      $data
-		 * @param null|Error_Log $error_log
+		 * @param null|Variables $variables Request variables
+		 * @param null|Data      $data Data() class instance
+		 * @param null|CSV       $csv CSV() management instance
+		 * @param null|Error_Log $error_log Debug logging and error messages
 		 */
-		public function __construct( $variables = null, $data = null, $error_log = null ) {
+		public function __construct( $variables = null, $data = null, $csv = null, $error_log = null ) {
 			if ( empty( $error_log ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}
 			$this->error_log = $error_log;
 
-			if ( empty( $data ) ) {
-				$data = new Data();
-			}
-			$this->data = $data;
-
 			if ( empty( $variables ) ) {
-				$variables = new Variables();
+				$variables = new Variables( $this->error_log );
 			}
 			$this->variables = $variables;
+
+			if ( null === $csv ) {
+				$csv = new CSV( $this->variables, $this->error_log );
+			}
+			$this->csv = $csv;
+
+			if ( empty( $data ) ) {
+				$data = new Data( $this->variables, $this->csv, $this->error_log );
+			}
+			$this->data = $data;
 		}
 
 		/**
@@ -283,7 +297,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 				return false;
 			}
 
-			//Make sure the sponsor has a discount code
+			// Make sure the sponsor has a discount code
 			$code_id = pmprosm_getCodeByUserID( $sponsor_id ); // @phpstan-ignore-line
 
 			$this->error_log->debug( "Got sponsor code {$code_id} for sponsor {$sponsor_id}" );
