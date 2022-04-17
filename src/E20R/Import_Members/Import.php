@@ -252,13 +252,15 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				// Only default Column Value validators have 'false' as their path
 				if ( false === $path && in_array( $name, $own_validators, true ) ) {
 
+					$class_name = sprintf( '%1$s\\%2$s', 'E20R\\Import_Members\\Validate\\Column_Values', $name );
+
 					if ( 'Users_Validation' === $name ) {
 						$this->validators['Users_Validation'] = new Users_Validation(
 							$this->variables,
 							$this->error_log
 						);
 					} else {
-						$this->validators[ $name ] = new $name( $this->error_log );
+						$this->validators[ $name ] = new $class_name( $this->error_log );
 					}
 					// Process the next entry
 					continue;
