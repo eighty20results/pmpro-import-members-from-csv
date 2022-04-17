@@ -22,9 +22,6 @@
 namespace E20R\Import_Members\Validate;
 
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Modules\PMPro\Column_Validation as PMPro_Validation;
-use E20R\Import_Members\Modules\Users\Column_Validation as User_Validation;
-use E20R\Import_Members\Modules\BuddyPress\Column_Validation as BP_Validation;
 
 if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 	/**
@@ -32,13 +29,6 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 	 * @package E20R\Import_Members\Validate
 	 */
 	abstract class Base_Validation {
-
-		/**
-		 * Instance of the column validation logic for PMPro
-		 *
-		 * @var null|Base_Validation|PMPro_Validation|User_Validation|BP_Validation
-		 */
-		protected static $instance = null;
 
 		/**
 		 * Error log class
@@ -59,8 +49,11 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		 *
 		 * @access private
 		 */
-		protected function __construct() {
-			$this->error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		public function __construct( $error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			$this->error_log = $error_log;
 		}
 
 		/**
@@ -78,13 +71,6 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 
 			return false;
 		}
-
-		/**
-		 * Get or instantiate and get the current class
-		 *
-		 * @return User_Validation|PMPro_Validation|BP_Validation|Base_Validation|null
-		 */
-		abstract public static function get_instance();
 
 		/**
 		 * Load all validation actions for the specific module
