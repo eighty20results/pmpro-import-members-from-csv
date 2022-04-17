@@ -485,17 +485,17 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							</td>
 						</tr>
 						<tr class="e20r-import-row">
-							<th scope="row"><?php esc_attr_e( 'Update WP User', 'pmpro-import-members-from-csv' ); ?></th>
+							<th scope="row"><?php esc_attr_e( 'Update member (WP User)', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( 'Update the WordPress user information', 'pmpro-import-members-from-csv' ); ?></span>
+										<span><?php esc_attr_e( "Update the member's WordPress user-information", 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
 									<label for="update_users">
 										<input id="update_users" name="update_users" type="checkbox" value="1" checked="checked"/>
 										<?php
 										esc_attr_e(
-											'If the WP User record exists, based on the user_login or user_email fields specified in the .csv file, update the existing record with the data being imported. (Recommended) Not checking this box will cause the plugin to try and add the user. In that case, should the user actually exists on this site, we should not attempt to update any information for this user from the .csv file',
+											'If the WP User record exists, based on the user_login or user_email fields specified in the .csv file, update the existing user record with the data being imported. (Recommended) Not checking this box will cause the plugin to try and add the user. In that case, should the user actually exists on this site, we should not attempt to update any information for this user from the .csv file',
 											'pmpro-import-members-from-csv'
 										);
 										?>
