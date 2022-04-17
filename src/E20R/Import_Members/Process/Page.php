@@ -649,7 +649,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 									<label for="background_import">
 										<input id="background_import" name="background_import" type="checkbox" value="1" checked="checked"/>
 										<?php
-										esc_attr_e( 'Use a background process to import all of the records and support pause/resume. (Recommeded)', 'pmpro-import-members-from-csv' );
+										esc_attr_e( 'Use a background process to import all of the records and support pause/resume. (Recommended)', 'pmpro-import-members-from-csv' );
 										?>
 									</label>
 								</fieldset>
