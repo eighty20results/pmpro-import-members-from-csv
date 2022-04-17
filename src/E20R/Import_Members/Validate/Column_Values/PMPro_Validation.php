@@ -22,6 +22,7 @@
 namespace E20R\Import_Members\Validate\Column_Values;
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Validate_Data;
@@ -38,10 +39,10 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 		/**
 		 * Constructor for the PMPro CSV column value validation
 		 *
-		 * @param Error_Log|null $error_log
+		 * @param Import|null $import Instance of the main Import() class
 		 */
-		public function __construct( $error_log = null ) {
-			parent::__construct( $error_log );
+		public function __construct( $import ) {
+			parent::__construct( $import );
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
@@ -189,7 +190,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 				$e20r_import_err = array();
 			}
 
-			$validate = Validate_Data::get_instance();
+			$validate = $this->import->get( 'validate_data' );
 
 			if (
 				! empty( $fields['membership_startdate'] ) &&
@@ -245,7 +246,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 
 			$this->error_log->debug( "Running 'has_no_startdate' validations" );
 
-			$validate = Validate_Data::get_instance();
+			$validate = $this->import->get( 'validate_data' );
 
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
@@ -302,7 +303,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 		 */
 		public function has_invalid_enddate( $has_error, $user_id, $fields ) {
 
-			$validate = Validate_Data::get_instance();
+			$validate = $this->import->get( 'validate_data' );
 			$this->error_log->debug( "Running 'has_invalid_enddate' validations" );
 
 			global $e20r_import_err;

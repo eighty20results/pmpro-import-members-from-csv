@@ -21,7 +21,7 @@
 
 namespace E20R\Import_Members\Validate\Column_Values;
 
-use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Modules\BuddyPress\BuddyPress;
 
@@ -34,10 +34,10 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Vali
 		/**
 		 * Constructor for validation of BuddyPress columns in the import .csv file
 		 *
-		 * @param Error_Log|null $error_log Instance of the (shared) error logging class (debugging)
+		 * @param Import|null    $import  Instance of the Import() class
 		 */
-		public function __construct( $error_log = null ) {
-			parent::__construct( $error_log );
+		public function __construct( $import ) {
+			parent::__construct( $import );
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
@@ -68,8 +68,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Vali
 				return $ignored_error_list;
 			}
 
-			$this->error_log->debug( "Loading BuddyPress specific error(s) when it's safe to can continue importing" );
-
+			$this->error_log->debug( "Loading BuddyPress specific error(s) to ignore and it's safe to continue importing" );
 			$this->errors_to_ignore = array(
 				'bp_field_name' => true,
 			);
@@ -81,6 +80,8 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Vali
 		 * Load action and filter handlers for PMPro validation
 		 */
 		public function load_actions() {
+
+			$this->error_log->debug( 'Loading default field validation checks!' );
 
 			if ( ! function_exists( 'bp_core_new_nav_default' ) ) {
 				return;

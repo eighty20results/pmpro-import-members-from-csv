@@ -23,6 +23,7 @@ namespace E20R\Import_Members\Validate\Column_Values;
 
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
@@ -43,16 +44,14 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		/**
 		 * Constructor for the Users_Validation class
 		 *
-		 * @param Variables|null $variables Instance of the Variables() class
-		 * @param Error_Log|null $error_log Instance of the Error_Log() class
+		 * @param Import|null $import Instance of the Import() class
+		 *
+		 * @throws InvalidSettingsKey Thrown when the Import::get() operation uses the wrong property
 		 */
-		public function __construct( $variables = null, $error_log = null ) {
-			parent::__construct( $error_log );
+		public function __construct( $import ) {
+			parent::__construct( $import );
 
-			if ( null === $variables ) {
-				$variables = new Variables();
-			}
-			$this->variables = $variables;
+			$this->variables = $this->import->get( 'variables' );
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
@@ -73,7 +72,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 * Load action and filter handlers for User validation
 		 */
 		public function load_actions() {
-
+			$this->error_log->debug( 'Loading default field validation checks!' );
 			add_filter( 'e20r_import_users_validate_field_data', array( $this, 'validate_user_id' ), 1, 3 );
 			add_filter( 'e20r_import_users_validate_field_data', array( $this, 'validate_email' ), 2, 3 );
 		}
