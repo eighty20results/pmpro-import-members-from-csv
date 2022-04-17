@@ -116,7 +116,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			if ( empty( $user ) && true === $allow_update ) {
 
 				if ( isset( $user_data['user_email'] ) ) {
-					$user = get_user_by( 'Email', $user_data['user_email'] );
+					$user = get_user_by( 'email', $user_data['user_email'] );
 				}
 
 				if ( isset( $user_data['user_login'] ) ) {
@@ -153,7 +153,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$e20r_import_err[ "warn_login_created_{$active_line_number}" ] = new WP_Error( 'e20r_im_login', $msg );
 			}
 
-			if ( empty( $user_data['user_email'] ) || ( ! empty( $user_data['user_email'] ) && ! is_email( $user_data['user_email'] ) ) ) {
+			if ( empty( $user_data['user_email'] ) || ! is_email( $user_data['user_email'] ) ) {
 
 				$msg = sprintf(
 				// translators: %d row number
@@ -177,7 +177,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$msg = sprintf(
 				// translators: %1$s column name, %2$s: row number
 					__(
-						'No "%1$s" column found, or the "%1$s" was/were included, the user exists but the "Update user record" option was not selected (row: %2$d). Not imported!',
+						'No "%1$s" column found, or the "%1$s" was/were included, the user exists and the "Update user record" option was NOT selected (row: %2$d). Will not import/update user.',
 						'pmpro-import-members-from-csv'
 					),
 					$error_column,
@@ -198,10 +198,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			// Insert, Update or insert without (re) hashing the password
 			if ( true === $needs_update && false === $password_hashing_disabled ) {
+				$this->error_log->debug( 'Updating an exisign user record...' );
 				$user_id = wp_update_user( $user_data );
 			} elseif ( false === $needs_update && false === $password_hashing_disabled ) {
+				$this->error_log->debug( 'Adding new user record...' );
 				$user_id = wp_insert_user( $user_data );
-			} elseif ( true === $password_hashing_disabled ) {
+			} elseif ( false === $needs_update && true === $password_hashing_disabled ) {
 				$user_id = self::insert_disabled_hashing_user( $user_data );
 			} else {
 				$active_line_number ++;
@@ -244,6 +246,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$site_id = (int) $this->variables->get( 'site_id' );
 
 				if ( is_multisite() && ! empty( $site_id ) ) {
+					$this->error_log->debug( "Adding user with ID {$user_id} to {$site_id} (blog id) as a {$default_role} (role)" );
 					add_user_to_blog( $site_id, $user_id, $default_role );
 				}
 
