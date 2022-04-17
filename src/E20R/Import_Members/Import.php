@@ -127,6 +127,20 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		private $email_templates = null;
 
 		/**
+		 * Collection of various data validation methods
+		 *
+		 * @var null|Validate_Data
+		 */
+		private $validate_data = null;
+
+		/**
+		 * Class handling import operations for PMPro Member data
+		 *
+		 * @var Import_Member|null
+		 */
+		private $import_member = null;
+
+		/**
 		 * Holds the *_Column_Validation classes we'll load and use.
 		 *
 		 * @var string[]
@@ -147,6 +161,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param null|PMPro           $pmpro
 		 * @param null|Data            $data
 		 * @param null|Import_User     $import_user
+		 * @param null|Import_Member   $import_member
 		 * @param null|CSV             $csv
 		 * @param null|Email_Templates $email_templates
 		 * @param null|Page            $page
@@ -154,11 +169,23 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param null|Error_Log       $error_log
 		 *
 		 * @throws InvalidInstantiation Thrown if this class isn't instantiated properly
-		 * @throws AutoloaderNotFound Thrown if there's something wrong with our instantiation of the Composer PSR4 autoloader
+		 * @throws InvalidSettingsKey Thrown if the specified class property is undefined/not present
 		 *
 		 * @filter e20r_import_column_validation_classes - Add to/remove Column Validation classes
 		 */
-		public function __construct( $variables = null, $pmpro = null, $data = null, $import_user = null, $csv = null, $email_templates = null, $page = null, $ajax = null, $error_log = null ) {
+		public function __construct(
+			$variables = null,
+			$pmpro = null,
+			$data = null,
+			$import_user = null,
+			$import_member = null,
+			$csv = null,
+			$email_templates = null,
+			$validate_data = null,
+			$page = null,
+			$ajax = null,
+			$error_log = null
+		) {
 			if ( empty( $error_log ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}
@@ -168,11 +195,6 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				$pmpro = new PMPro();
 			}
 			$this->pmpro = $pmpro;
-
-			if ( empty( $data ) ) {
-				$data = new Data();
-			}
-			$this->data = $data;
 
 			if ( empty( $import_user ) ) {
 				$import_user = new Import_User();
@@ -189,10 +211,20 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			$this->csv = $csv;
 
+			if ( empty( $data ) ) {
+				$data = new Data( $this->variables, $this->csv, $this->error_log );
+			}
+			$this->data = $data;
+
 			if ( null === $email_templates ) {
 				$email_templates = new Email_Templates( $this, $this->variables, $this->error_log );
 			}
 			$this->email_templates = $email_templates;
+
+			if ( null === $validate_data ) {
+				$validate_data = new Validate_Data( $this->error_log );
+			}
+			$this->validate_data = $validate_data;
 
 			if ( null === $page ) {
 				$page = new Page( $this, $this->error_log );
@@ -221,6 +253,11 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			} catch ( AutoloaderNotFound $e ) {
 				$this->error_log->debug( 'Could not find the auto-loader so did not load custom validation classes' );
 			}
+
+			if ( null === $import_member ) {
+				$import_member = new Import_Member( $this );
+			}
+			$this->import_member = $import_member;
 		}
 
 		/**
@@ -251,17 +288,13 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 
 				// Only default Column Value validators have 'false' as their path
 				if ( ! $path && in_array( $name, $defaults, true ) ) {
-
+					$this->error_log->debug( 'Attempting to enable a validator class: ' . $name );
 					$class_name = sprintf( '%1$s\\%2$s', 'E20R\\Import_Members\\Validate\\Column_Values', $name );
 
-					if ( 'Users_Validation' === $name ) {
-						$this->validators['Users_Validation'] = new Users_Validation(
-							$this->variables,
-							$this->error_log
-						);
-					} else {
-						$this->validators[ $name ] = new $class_name( $this->error_log );
-					}
+					$this->validators[ $name ] = new $class_name( $this );
+
+					add_action( 'plugins_loaded', array( $this->validators[ $name ], 'load_actions' ), 99 );
+					$this->error_log->debug( "Loaded {$name} column validation class" );
 					// Process the next entry
 					continue;
 				}
@@ -303,7 +336,6 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * Plugin deactivation hook
 		 */
 		public static function deactivation() {
-
 			delete_option( 'e20r_import_has_donated' );
 			delete_option( 'e20r_link_for_sponsor' );
 		}
@@ -342,6 +374,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			add_action( 'plugins_loaded', array( $this->pmpro, 'load_hooks' ), 11, 0 );
 			add_action( 'plugins_loaded', array( $this->import_user, 'load_actions' ), 11, 0 );
+			add_action( 'plugins_loaded', array( $this->import_member, 'load_actions' ), 11, 0 );
 			add_action( 'plugins_loaded', array( $this->email_templates, 'load_hooks' ), 99, 0 );
 			add_action( 'plugins_loaded', array( $this->ajax, 'load_hooks' ), 99, 0 );
 			add_action( 'plugins_loaded', array( $this->page, 'load_hooks' ), 99, 0 );
@@ -360,16 +393,8 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			// We do this in the CSV() class as it's a clean-up operation
 			// add_action( 'e20r_before_user_import', array( $this->csv, 'pre_import' ), 10, 2 ); // phpcs:ignore
 			// add_filter( 'e20r_import_usermeta', array( $this->import_user, 'import_usermeta' ), 10, 3 );
-			add_action(
-				'e20r_after_user_import',
-				array(
-					Import_Member::get_instance(),
-					'import_membership_info',
-				),
-				- 1,
-				3
-			);
-			add_action( 'e20r_after_user_import', array( $this->data, 'cleanup' ), 9999, 3 );
+			// add_action( 'e20r_after_user_import', array( $this->import_member, 'import_membership_info' ), -1, 3 );
+			// add_action( 'e20r_after_user_import', array( $this->data, 'cleanup' ), 9999, 3 );
 
 			// Set URIs in plugin listing to plugin support
 			add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
@@ -404,20 +429,6 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			if ( true === $is_licensed ) {
 				do_action( 'e20r_import_load_licensed_modules' );
 			}
-		}
-
-		/**
-		 * Return or instantiate class for use
-		 *
-		 * @return Import
-		 */
-		public static function get_instance() {
-
-			if ( is_null( self::$instance ) ) {
-				self::$instance = new self();
-			}
-
-			return self::$instance;
 		}
 
 		/**
