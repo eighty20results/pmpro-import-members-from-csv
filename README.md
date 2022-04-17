@@ -2,8 +2,8 @@
 `Contributors: eighty20results, sorich87, ideadude` <br />
 `Tags: user, users, csv, batch, import, importer, admin, paid memberships pro, members, member, pmpro` <br />
 `Requires at least: 5.0` <br />
-`Tested up to: 5.8` <br />
-`Stable tag: 3.1.4` <br />
+`Tested up to: 5.9.3` <br />
+`Stable tag: 3.2` <br />
 `License: GPLv2` <br />
 `License URI: http://www.gnu.org/licenses/gpl` <br />
 
@@ -180,7 +180,7 @@ However, human readable is often problematic for CSV imports, so you **have to m
 for the enddate I'd suggest using `23:59:59`.
 
 `Just to be clear: The __only__ date format for the `membership_startdate`, `membership_enddate` and the` <br />
-``user_registered` columns that this plugin will accept is the MySQL datetime format: YYYY` <br />-MM-DD HH:ii:ss.
+`user_registered` columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -296,7 +296,7 @@ etc. The exceptions are the `user_id` and `membership_id` columns/fields which s
 The `status` column has a limited number of valid values. By default, we recommend using either `success` or `cancelled`
 
 All timestamp values ('timestamp') must use the same format as the one used by the MySQL database's 'DATETIME'
-`format: `YYYY` <br />-MM-DD HH:MM:SS`
+`format: `YYYY-MM-DD HH:MM:SS`` <br />
 
 **PLEASE NOTE:**
 
