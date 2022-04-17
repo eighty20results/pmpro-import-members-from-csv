@@ -46,7 +46,8 @@ if ( ! file_exists( __DIR__ . '/composer.phar' ) ) {
 }
 
 // Load the PSR-4 Autoloader
-require_once __DIR__ . '/inc/autoload.php';
+global $e20r_import_loader;
+$e20r_import_loader = require_once __DIR__ . '/inc/autoload.php';
 require_once __DIR__ . '/ActivateUtilitiesPlugin.php';
 
 if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {

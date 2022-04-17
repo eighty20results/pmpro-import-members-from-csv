@@ -232,10 +232,10 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @throws AutoloaderNotFound Thrown if the Composer PSR4 auto-loader instance was not found
 		 */
 		private function load_validation_classes( $own_validators = array() ) {
-			global $import_loader;
+			global $e20r_import_loader;
 			$this->validators = array();
 
-			if ( empty( $import_loader ) ) {
+			if ( empty( $e20r_import_loader ) ) {
 				throw new AutoloaderNotFound(
 					esc_attr__(
 						'Error: Cannot locate an instance of the auto-loader for this plugin!',
@@ -268,7 +268,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 					// Add custom validation class
 					$this->error_log->debug( "Adding custom validator class {$name} in {$path} to the {$base_namespace} namespace" );
 					$class_name = sprintf( '%1$s\\%2$s', $base_namespace, $name );
-					$import_loader->setPsr4( $class_name, $path );
+					$e20r_import_loader->setPsr4( $class_name, $path );
 
 					// Then instantiate the class
 					$this->validators[ strtolower( $name ) ] = new $class_name( $this->error_log );
