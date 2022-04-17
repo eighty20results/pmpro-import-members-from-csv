@@ -16,7 +16,9 @@ parameters:
         - '#Parameter .* \$level of function pmpro_changeMembershipLevel expects int, array\<string, mixed\> given\.$#'
         - '#Constant PMPRO_VERSION not found\.#'
     scanDirectories:
-    	- inc/wp_plugins/
+    	- inc/wp_plugins/paid-memberships-pro
+    	- inc/wp_plugins/00-e20r-utilities
+    	- inc/wp_plugins/wordpress
     paths:
         - class.pmpro-import-members.php
         - ActivateUtilitiesPlugin.php
