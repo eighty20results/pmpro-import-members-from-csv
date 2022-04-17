@@ -57,14 +57,20 @@ declare -x -a include=( \
 		"README.txt" \
 		)
 declare -x -a exclude=( \
+	".codecov.yml" \
+	".dockerignore" \
+	".csvignore" \
+	".distignore" \
 	".editorconfig" \
 	".env.testing" \
+	".gitattributes" \
 	".gitignore" \
-	"phpcs.xml.dist"
+	"phpcs.*"
 	"*.yml" \
-	"*.phar" \
-	"*.json" \
+	"*.key" \
 	"composer.lock" \
+	"Dockerfile" \
+	"patchwork.json"
 	"Makefile" \
 	"*.neon" \
 	"*.xml" \
