@@ -1,0 +1,17 @@
+{
+  "name": "Import Members from CSV for Paid Memberships Pro",
+  "slug": "pmpro-import-members-from-csv",
+  "download_url": "https://wordpress.org/plugins/pmpro-import-members-from-csv/",
+  "version": "3.2",
+  "tested": "5.9.3",
+  "requires": "5.0",
+  "author": "Thomas Sjolshagen <thomas@eighty20results.com>",
+  "author_homepage": "https://eighty20results.com/thomas-sjolshagen",
+  "last_updated": "2022-04-17 11:23:03 CET",
+  "homepage": "https://wordpress.org/plugins/pmpro-import-members-from-csv/",
+  "sections": {
+    "description": "Import and create user + PMPro member records from a CSV file on your WordPress with Paid Memberships Pro website. The plugin will import the membership information, user meta data, PMPro order data, Sponsored Members information and can even link pre-existing recurring payment records for your payment gateway integration.",
+    "changelog": "See the linked <a href='CHANGELOG.md' target='_blank'>Change Log</a> for details",
+    "faq": "<h3>I found a bug in the plugin.</h3><p>Please report your issue to us by using the <a href='https://github.com/eighty20results/pmpro-import-members-from-csv//issues' target='_blank'>Github Issues page</a>, and we'll try to respond within 1 business day.</p>"
+    }
+}
