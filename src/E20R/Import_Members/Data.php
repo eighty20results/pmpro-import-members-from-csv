@@ -130,7 +130,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 				return false;
 			}
 
-			if ( ! isset( $_REQUEST['e20r-im-Import-members-wpnonce'] ) ) {
+			if ( ! isset( $_REQUEST['e20r-im-import-members-wpnonce'] ) ) {
 				return false;
 			}
 
@@ -138,7 +138,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 				return false;
 			}
 
-			if ( false === wp_verify_nonce( $_REQUEST['e20r-im-Import-members-wpnonce'], 'e20r-im-Import-members' ) ) {
+			if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 
 				$msg = __( 'Insecure connection attempted!', 'pmpro-import-members-from-csv' );
 
@@ -332,4 +332,3 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 		}
 	}
 }
-

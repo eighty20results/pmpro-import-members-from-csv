@@ -19,7 +19,6 @@
 
 namespace E20R\Import_Members\Process;
 
-use Automattic\WooCommerce\Admin\API\Reports\Cache;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
@@ -84,20 +83,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			if ( empty( $csv ) ) {
 				$csv = new CSV( $this->variables );
 			}
-			$this->csv      = $csv;
-			self::$instance = $this;
-		}
-
-		/**
-		 * @return Ajax|null
-		 */
-		public static function get_instance() {
-
-			if ( is_null( self::$instance ) ) {
-				self::$instance = new self();
-			}
-
-			return self::$instance;
+			$this->csv = $csv;
 		}
 
 		/**
@@ -119,9 +105,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		public function save_donation_ip() {
 			// phpcs:ignore
 			$this->error_log->debug( "Visitor clicked the 'Donate' button: " . print_r( $_REQUEST, true ) );
-
-			check_admin_referer( 'e20r-im-Import-members', 'e20r-im-Import-members-wpnonce' );
-
+			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 			$this->error_log->debug( 'Nonce is good' );
 
 			$client_ip    = $this->get_client_ip();
@@ -133,7 +117,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				$donated[ $client_ip ] = time();
 
 				if ( true === update_option( 'e20r_import_has_donated', $donated ) ) {
-
 					$this->error_log->debug( "Visitor ({$client_ip}) clicked the 'Donate' button" );
 					wp_send_json_success();
 				}
@@ -169,10 +152,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		 * Clear (remove) the error log
 		 */
 		public function wp_ajax_clear_log() {
+			$this->error_log->debug( 'Checking nonce for the clear_log action' );
+			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 			$logfile_path = $this->variables->get( 'logfile_path' );
-
-			check_admin_referer( 'e20r-im-Import-members', 'e20r-im-Import-members-wpnonce' );
-
 			$this->error_log->debug( "Nonce is good. Deleting -> {$logfile_path}" );
 
 			if ( false === $this->delete_file( $logfile_path ) ) {
@@ -189,11 +171,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		public function wp_ajax_cleanup_csv() {
 
 			$sponsors = new Import_Sponsors( $this->variables, null, $this->error_log );
-
 			$this->error_log->debug( 'Import is complete... ' );
 
-			check_admin_referer( 'e20r-im-Import-members', 'e20r-im-Import-members-wpnonce' );
-
+			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 			$file_name = $this->csv->get_import_file_path( null );
 
 			if ( empty( $file_name ) ) {
@@ -207,7 +187,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			$this->error_log->debug( 'Does the file exist??? ' . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
 
 			if ( false === $this->delete_file( $file_name ) ) {
-
 				wp_send_json_error();
 			}
 
@@ -231,9 +210,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		private function delete_file( $file_name = null ) {
 
 			if ( ! empty( $file_name ) && file_exists( $file_name ) ) {
-
 				$this->error_log->debug( "Removing {$file_name}" );
-
 				return unlink( $file_name );
 			}
 
@@ -250,13 +227,13 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 
 			$this->error_log->debug( 'Processing AJAX request to Import data?' );
 
-			check_admin_referer( 'e20r-im-Import-members', 'e20r-im-Import-members-wpnonce' );
+			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
 
 			$this->error_log->debug( 'Nonce verified in import_members_from_csv()' );
 
 			/* @codingStandardsIgnoreStart
 			 *
-			 * if ( false === wp_verify_nonce( $_REQUEST['e20r-im-Import-members-wpnonce'], 'e20r-im-Import-members' ) ) {
+			 * if ( false === wp_verify_nonce( $_REQUEST['e20r-im-import-members-wpnonce'], 'e20r-im-import-members' ) ) {
 			 *
 			 * $msg = __( 'Insecure connection attempted!', 'pmpro-import-members-from-csv' );
 			 *
@@ -339,7 +316,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				$error_log_msg = sprintf(
 				// translators: %1$s - HTML, %2$s - HTML
 					__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
-					sprintf( '<a href="%s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
+					sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
 					'</a>'
 				);
 			}
@@ -351,7 +328,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 					$error_log_msg = sprintf(
 					// translators: %1$s - HTML, %2$s - HTML
 						__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
-						sprintf( '<a href="%s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
+						sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
 						'</a>'
 					);
 				}
