@@ -20,6 +20,9 @@
 namespace E20R\Import_Members\Modules\PMPro;
 
 use E20R\Import_Members\Data;
+use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Process\CSV;
+use E20R\Import_Members\Variables;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Sponsor' ) ) {
 	/**
@@ -50,15 +53,52 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Sponsor' ) ) {
 		private $membership_level = null;
 
 		/**
+		 * Request settings
+		 *
+		 * @var Variables|null
+		 */
+		private $variables = null;
+
+		/**
+		 * CSV file processing
+		 *
+		 * @var CSV|null
+		 */
+		private $csv = null;
+
+		/**
+		 * Handle debug logging and error messages
+		 *
+		 * @var Error_Log|null
+		 */
+		private $error_log = null;
+
+		/**
 		 * Sponsor constructor.
 		 *
 		 * @param int|string $user_id
 		 *
 		 * @throws \Exception
 		 */
-		public function __construct( $user_id = null ) {
+		public function __construct( $user_id = null, $variables = null, $csv = null, $error_log = null ) {
 
-			$data = new Data();
+			if ( null === $error_log ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				$error_log = new Error_Log();
+			}
+			$this->error_log = $error_log;
+
+			if ( null === $variables ) {
+				$variables = new Variables();
+			}
+			$this->variables = $variables;
+
+			if ( null === $csv ) {
+				$csv = new CSV( $this->variables, $this->error_log );
+			}
+			$this->csv = $csv;
+
+			$data = new Data( $this->variables, $this->csv, $this->error_log );
 
 			if ( ! empty( $user_id ) ) {
 				$this->user = $data->get_user_info( $user_id );
