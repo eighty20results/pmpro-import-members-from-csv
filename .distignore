@@ -7,9 +7,10 @@ build_config/
 build_env/
 build_readmes/
 docker-env/
+github/
 inc/wp_plugins/
 node_modules/
-# tests/
+tests/
 
 # Files to ignore
 .codecov.yml
