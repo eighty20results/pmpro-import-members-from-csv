@@ -205,9 +205,12 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		 *
 		 * @access private
 		 */
-		public function __construct() {
+		public function __construct( $error_log = null ) {
 
-			$this->error_log = new Error_Log(); // phpcs:ignore
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore
+			}
+			$this->error_log = $error_log;
 			$this->error_log->debug( 'Instantiating the Variables class' );
 			$this->configure();
 		}
@@ -329,7 +332,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 				if ( false === $this->filename && true === (bool) $this->background_import ) {
 					$this->error_log->debug( "Will redirect since we're processing in the background" );
-					wp_safe_redirect( add_query_arg( 'Import', 'fail', wp_get_referer() ) );
+					wp_safe_redirect( add_query_arg( 'import', 'fail', wp_get_referer() ) );
 					exit();
 				}
 			}
