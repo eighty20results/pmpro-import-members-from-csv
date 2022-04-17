@@ -3,6 +3,7 @@
 .github/
 .idea/
 bin/
+build/
 build_config/
 build_env/
 build_readmes/
