@@ -205,7 +205,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		 *
 		 * @access private
 		 */
-		public function __construct( $error_log = null ) {
+		public function __construct( &$error_log = null ) {
 
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore
