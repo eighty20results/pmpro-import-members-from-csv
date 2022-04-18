@@ -27,6 +27,7 @@ use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
+use const Patchwork\CodeManipulation\Actions\RedefinitionOfNew\STATIC_INSTANTIATION_REPLACEMENT;
 
 if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validation' ) ) {
 	/**
@@ -113,16 +114,16 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 			$update = (bool) $this->variables->get( 'update_users' );
 
 			if ( isset( $record['user_login'] ) && ! empty( 'user_login' ) && false === $update && false !== get_user_by( 'login', $record['user_login'] ) ) {
-				return 'user_login';
+				return Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN;
 			}
 
-			if ( isset( $record['user_email'] ) && ! empty( 'user_email' ) && false === $update && false !== get_user_by( 'login', $record['user_login'] ) ) {
-				return 'user_email';
+			if ( isset( $record['user_email'] ) && ! empty( 'user_email' ) && false === $update && false !== get_user_by( 'login', $record['user_email'] ) ) {
+				return Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL;
 			}
 
 			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
 			if ( empty( $user_data['user_login'] ) && empty( $user_data['user_email'] ) ) {
-				return 'user_email and user_login';
+				return Status::E20R_ERROR_NO_EMAIL_OR_LOGIN;
 			}
 
 			return true;
