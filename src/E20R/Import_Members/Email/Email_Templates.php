@@ -176,9 +176,9 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Substitute all in-message (body) !!something!! variables from the imported data
 		 *
-		 * @param string $substitution_text
-		 * @param \WP_User $user
-		 * @param array $fields
+		 * @param string $substitution_text The text to perform substitution on
+		 * @param \WP_User $user WP_User data fields to substitute
+		 * @param array $fields Metadata fields to substitute (key/value)
 		 *
 		 * @return string
 		 */
@@ -200,8 +200,8 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			}
 
 			// Substitute WP_User information from the user's WP_User data
-			foreach ( (array) $user as $user_key => $user_value ) {
-				$this->error_log->debug( "Fpr User data: Try to substitute !!{$user_key}!! with {$user_value}" );
+			foreach ( $user->to_array() as $user_key => $user_value ) {
+				$this->error_log->debug( "For user data: Try to substitute !!{$user_key}!! with {$user_value}" );
 				$substitution_text = str_replace( "!!{$user_key}!!", $user_value, $substitution_text );
 			}
 
