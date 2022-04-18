@@ -80,7 +80,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Sponsor' ) ) {
 		 *
 		 * @throws \Exception
 		 */
-		public function __construct( $user_id = null, $variables = null, $csv = null, $error_log = null ) {
+		public function __construct( $user_id = null, &$variables = null, &$csv = null, &$error_log = null ) {
 
 			if ( null === $error_log ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
