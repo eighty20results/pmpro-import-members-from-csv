@@ -178,7 +178,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Substitute all in-message (body) !!something!! variables from the imported data
 		 *
-		 * @param string $substitution_text The text to perform substitution on
+		 * @param string|null|false $substitution_text The text to perform substitution on
 		 * @param \WP_User $user WP_User data fields to substitute
 		 * @param array $fields Metadata fields to substitute (key/value)
 		 *
