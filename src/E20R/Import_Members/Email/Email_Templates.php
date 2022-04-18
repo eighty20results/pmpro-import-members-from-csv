@@ -107,19 +107,16 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 			if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) { // @phpstan-ignore-line
 				$this->error_log->debug( 'Unable to send Email due to the specified PMPro version: ' . PMPRO_VERSION );
-
 				return false;
 			}
 
 			if ( false === $send_email ) {
 				$this->error_log->debug( 'Not sending Email because you asked me not to!' );
-
 				return false;
 			}
 
 			if ( ! isset( $fields['membership_status'] ) || ( isset( $fields['membership_status'] ) && 'active' !== $fields['membership_status'] ) ) {
 				$this->error_log->debug( "The membership_status field wasn't set to active: {$fields['membership_status']}" );
-
 				return false;
 			}
 
@@ -171,8 +168,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			$email->subject = apply_filters( 'e20r_import_message_subject', $email->subject, $user, $fields );
 
 			// Process and send Email
-			$email->sendEmail();
-			return true;
+			return $email->sendEmail();
 		}
 
 		/**
@@ -362,6 +358,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 			$pmpro_email_templates_defaults['imported_member'] = array(
 				'subject'     => esc_attr__( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
+				'help_text'   => esc_attr__( 'This email message is sent during a Member import from CSV operation if the "Send \'Welcome to the membership\' email" option has been checked.', 'pmpro-import-members-from-csv' ),
 				'description' => esc_attr__( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
 				// phpcs:ignore
 				'body'        => file_get_contents( $this->import->get( 'plugin_path' ) . '/emails/imported_member.html' ),
