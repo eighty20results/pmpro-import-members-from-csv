@@ -213,10 +213,13 @@
                             if (typeof response.data.message !== 'undefined' && (response.data.status === false || response.data.status === -1)) {
 
                                 self.status.html(self.status.html() + response.data.message);
-
                                 document.title = self.title;
-
                                 window.alert(e20r_im_settings.lang.error);
+
+								// Wait 10 seconds, then redirect...
+								setTimeout(function () {
+									self.trigger_redirect( e20r_im_settings.admin_page );
+								}, 10000);
                             }
 
                             if ( typeof response.data.display_errors !== 'undefined' && response.data.display_errors !== null ) {
@@ -230,7 +233,6 @@
                         window.console.debug("Info: ", jqXHR );
 
                         window.alert(e20r_im_settings.lang.alert_msg + "\n" + $error_thrown );
-
                         self.process_errors( $error_thrown );
 
                         // Wait 10 seconds, then redirect...
