@@ -502,7 +502,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 						break;
 				}
 
-
 				if ( true !== $user_id_status && ! empty( $msg ) ) {
 					if ( ! empty( $error_key ) ) {
 						$e20r_import_err[ $error_key ] = new WP_Error( 'e20r_im_missing_data', $msg );
