@@ -50,9 +50,16 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @access private
 		 */
-		public function __construct() {
-			$this->variables = new Variables();
-			$this->error_log = new Error_Log(); // phpcs:ignore
+		public function __construct( &$variables = null, &$error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			$this->error_log = $error_log;
+
+			if ( null === $variables ) {
+				$variables = new Variables( $this->error_log );
+			}
+			$this->variables = $variables;
 		}
 
 		/**
@@ -198,13 +205,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			// Insert, Update or insert without (re) hashing the password
 			if ( true === $needs_update && false === $password_hashing_disabled ) {
-				$this->error_log->debug( 'Updating an exisign user record...' );
+				$this->error_log->debug( 'Updating an existing user record...' );
 				$user_id = wp_update_user( $user_data );
 			} elseif ( false === $needs_update && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding new user record...' );
 				$user_id = wp_insert_user( $user_data );
 			} elseif ( false === $needs_update && true === $password_hashing_disabled ) {
-				$user_id = self::insert_disabled_hashing_user( $user_data );
+				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
+				$user_id = $this->insert_disabled_hashing_user( $user_data );
 			} else {
 				$active_line_number ++;
 
