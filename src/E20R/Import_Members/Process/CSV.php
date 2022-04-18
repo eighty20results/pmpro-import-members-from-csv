@@ -58,10 +58,10 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @param Variables|null $variables Instance of the Request variables (settings) class
 		 * @param Error_Log|null $error_log For debug logging and status messages
 		 */
-		public function __construct( $variables = null, $error_log = null ) {
+		public function __construct( &$variables = null, &$error_log = null ) {
 
 			if ( null === $error_log ) {
-				$error_log = new Error_Log(); // phpcs:ignore
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 			$this->error_log = $error_log;
 
@@ -360,9 +360,15 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				switch_to_blog( $site_id );
 			}
 
+			// Suppress the Email message to the user that their password was/may have been changed
+			if ( true === $suppress_pwdmsg ) {
+				add_filter( 'send_email_change_email', '__return_false', 99 );
+				add_filter( 'send_password_change_email', '__return_false', 99 );
+			}
+
 			while ( ( ! $file_object->eof() ) && ( ! ( true === $partial ) || $current_line_number <= $per_partial ) ) {
 				$user_id = null;
-				$active_line_number ++;
+				$active_line_number++;
 
 				// Read a line from the file and remove the BOM character
 				$line = $file_object->fgetcsv();
@@ -373,11 +379,11 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					if ( true === $first ) {
 						$msg = esc_attr__( 'The expected header line in the Import file is missing?!?', 'pmpro-import-members-from-csv' );
 						$this->error_log->add_error_msg( $msg, 'error' );
-						$e20r_import_err[ "header_missing_$active_line_number" ] = new WP_Error( 'e20r_im_header', $msg );
+						$e20r_import_err[ "header_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_header', $msg );
 						break;
-					} else {
-						continue;
 					}
+					$this->error_log->debug( "Line # {$active_line_number} is empty" );
+					continue;
 				}
 
 				// If we are on the first line, the columns are the headers
@@ -404,14 +410,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					$active_line_number = $file_object->key();
 				}
 
-				// Suppress the Email message to the user that their password was/may have been changed
-				if ( true === $suppress_pwdmsg ) {
-					add_filter( 'send_email_change_email', '__return_false', 99 );
-					add_filter( 'send_password_change_email', '__return_false', 99 );
-				}
-
 				// Separate user data from meta
-				$user_data = $user_meta = array(); // phpcs:ignore
+				$user_data = $user_meta = array(); // phpcs:ignore Squiz.PHP.DisallowMultipleAssignments.Found
 
 				$this->error_log->debug( "Processing next user data. (previous line #: {$active_line_number})" );
 				try {
@@ -437,32 +437,71 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$this->error_log->debug( "Processed line #{$active_line_number}..." );
 				$user_id_status = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
 
-				if ( Status::E20R_ERROR_NO_USER_ID === $user_id_status ) {
-					$msg = sprintf(
-					// translators: %1$d - Line number in the CSV file being imported
-						esc_attr__(
-							'Missing ID, user_login and/or user_email information column at row %1$d',
-							'pmpro-import-members-from-csv'
-						),
-						$active_line_number
-					);
+				switch ( $user_id_status ) {
+					case Status::E20R_ERROR_NO_USER_ID:
+						$msg = sprintf(
+						// translators: %1$d - Line number in the CSV file being imported
+							esc_attr__(
+								'Missing ID, user_login and/or user_email information column at row %1$d',
+								'pmpro-import-members-from-csv'
+							),
+							$active_line_number
+						);
 
-					$error_key = "user_id_missing_{$active_line_number}";
-				}
-
-				if ( Status::E20R_ERROR_USER_NOT_FOUND === $user_id_status ) {
-
-					$msg = sprintf(
+						$error_key = "user_id_missing_{$active_line_number}";
+						break;
+					case Status::E20R_ERROR_USER_NOT_FOUND:
+						$msg = sprintf(
 						// translators: %1$d - User ID, %2$d - Current line number in the CSV file being imported
-						esc_attr__(
-							'WP User ID %1$d not found in database (from CSV file line: %2$d)',
-							'pmpro-import-members-from-csv'
-						),
-						$user_data['ID'],
-						$active_line_number
-					);
-					$error_key = "user_missing_{$active_line_number}";
+							esc_attr__(
+								'WP User ID %1$d not found in database (from CSV file line: %2$d)',
+								'pmpro-import-members-from-csv'
+							),
+							$user_data['ID'],
+							$active_line_number
+						);
+						$error_key = "user_missing_{$active_line_number}";
+						break;
+
+					case Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN:
+						$msg = sprintf(
+						// translators: %1$d - User's user_login info, %2$d - Current line number in the CSV file being imported
+							esc_attr__(
+								'User login %1$d already exists, updates are disallowed (from CSV file line: %2$d)',
+								'pmpro-import-members-from-csv'
+							),
+							$user_data['user_login'],
+							$active_line_number
+						);
+						$error_key = "existing_user_login_{$active_line_number}";
+						break;
+
+					case Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL:
+						$msg = sprintf(
+						// translators: %1$d - User's user_email, %2$d - Current line number in the CSV file being imported
+							esc_attr__(
+								'User (%1$d) already exists, updates are disallowed (from CSV file line: %2$d)',
+								'pmpro-import-members-from-csv'
+							),
+							$user_data['user_email'],
+							$active_line_number
+						);
+						$error_key = "existing_user_email_{$active_line_number}";
+						break;
+
+					case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
+						$msg = sprintf(
+						// translators: %1$d - User's user_email, %2$d - Current line number in the CSV file being imported
+							esc_attr__(
+								'Neither user_email, nor user_login information provided (from CSV file line: %1$d)',
+								'pmpro-import-members-from-csv'
+							),
+							$active_line_number
+						);
+						$error_key = "user_email_missing_{$active_line_number}";
+						break;
 				}
+
 
 				if ( true !== $user_id_status && ! empty( $msg ) ) {
 					if ( ! empty( $error_key ) ) {
@@ -470,7 +509,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					}
 
 					$this->error_log->debug( $msg );
-
 					$msg = null;
 				}
 
