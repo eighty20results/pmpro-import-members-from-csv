@@ -35,6 +35,7 @@ if ( ! class_exists( '\E20R\Import_Members\Status' ) ) {
 		const E20R_ERROR_NO_UPDATE_FROM_LOGIN  = 101;
 		const E20R_ERROR_NO_UPDATE_FROM_ID     = 102;
 		const E20R_ERROR_USER_EXISTS_NO_UPDATE = 103;
+		const E20R_ERROR_NO_EMAIL_OR_LOGIN     = 104;
 
 		const E20R_ERROR_ID_NOT_NUMBER             = 200;
 		const E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED = 201;
