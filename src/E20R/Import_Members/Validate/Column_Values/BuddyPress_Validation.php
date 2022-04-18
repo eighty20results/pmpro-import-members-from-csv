@@ -36,7 +36,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Vali
 		 *
 		 * @param Import|null    $import  Instance of the Import() class
 		 */
-		public function __construct( $import ) {
+		public function __construct( &$import ) {
 			parent::__construct( $import );
 
 			add_filter(

@@ -98,7 +98,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		 *
 		 * @throws InvalidSettingsKey Raised if the specified class property is missing
 		 */
-		public function __construct( $import ) {
+		public function __construct( &$import ) {
 			$this->import          = $import;
 			$this->error_log       = $import->get( 'error_log' );
 			$this->variables       = $import->get( 'variables' );

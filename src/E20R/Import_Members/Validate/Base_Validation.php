@@ -60,7 +60,7 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		 *
 		 * @throws InvalidSettingsKey Thrown when the Import::get() operation uses the wrong property
 		 */
-		public function __construct( $import ) {
+		public function __construct( &$import ) {
 			$this->import    = $import;
 			$this->error_log = $this->import->get( 'error_log' );
 		}

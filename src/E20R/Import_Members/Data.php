@@ -57,7 +57,7 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 		 * @param CSV|null       $csv Instance of the CSV() class
 		 * @param Error_Log|null $error_log Instance of the Error_Log() class for debugging, etc.
 		 */
-		public function __construct( $variables = null, $csv = null, $error_log = null ) {
+		public function __construct( &$variables = null, &$csv = null, &$error_log = null ) {
 			if ( null === $error_log ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				$error_log = new Error_Log();

@@ -71,7 +71,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 		 * @param null|CSV       $csv CSV() management instance
 		 * @param null|Error_Log $error_log Debug logging and error messages
 		 */
-		public function __construct( $variables = null, $data = null, $csv = null, $error_log = null ) {
+		public function __construct( &$variables = null, &$data = null, &$csv = null, &$error_log = null ) {
 			if ( empty( $error_log ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}

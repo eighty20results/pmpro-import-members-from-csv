@@ -68,7 +68,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 * @throws InvalidInstantiation Thrown when the Import() class isn't present and instantiated when creating this class
 		 * @throws InvalidSettingsKey Thrown when the Import::get() method attempts to access an invalid class property
 		 */
-		public function __construct( $import = null ) {
+		public function __construct( &$import = null ) {
 			if ( null === $import ) {
 				throw new InvalidInstantiation(
 					esc_attr__(
@@ -152,7 +152,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			// (i.e. TODO when PMPro takes better advantage of PHP)
 			$email           = new \PMProEmail();
 			$email->email    = $user->user_email; // @phpstan-ignore-line
-			$email->data     = apply_filters( 'e20r_import_message_data', $user, $fields ); // @phpstan-ignore-line
+			$email->data     = apply_filters( 'e20r_import_message_data', $fields, $user ); // @phpstan-ignore-line
 			$email->subject  = apply_filters( 'e20r_import_message_subject', $subject, $user, $fields ); // @phpstan-ignore-line
 			$email->template = $template_name; // @phpstan-ignore-line
 
@@ -330,20 +330,6 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		}
 
 		/**
-		 * Get or instantiate and get this class
-		 *
-		 * @return null|Email_Templates
-		 */
-		public static function get_instance() {
-
-			if ( is_null( self::$instance ) ) {
-				self::$instance = new self();
-			}
-
-			return self::$instance;
-		}
-
-		/**
 		 * Load Imported Member template to Email Templates Admin (add-on)
 		 *
 		 * @throws InvalidSettingsKey Thrown if the specified settings key is missing
@@ -357,10 +343,10 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			$this->error_log->debug( 'Attempting to load template for the Welcome Imported Member message' );
 
 			$pmpro_email_templates_defaults['imported_member'] = array(
-				'subject'     => esc_attr__( 'Welcome to my new website', 'pmpro-import-members-from-csv' ),
-				'help_text'   => esc_attr__( 'This email message is sent during a Member import from CSV operation if the "Send \'Welcome to the membership\' email" option has been checked.', 'pmpro-import-members-from-csv' ),
+				'subject'     => esc_attr__( 'Welcome to !!sitename!!', 'pmpro-import-members-from-csv' ),
+				'help_text'   => esc_attr__( 'This email message sent to each user/member who is added/updated during the import operation, if the appropriate option has been selected on the Import PMPro members from a CSV file page.', 'pmpro-import-members-from-csv' ),
 				'description' => esc_attr__( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
-				// phpcs:ignore
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 				'body'        => file_get_contents( $this->import->get( 'plugin_path' ) . '/emails/imported_member.html' ),
 			);
 		}
@@ -368,7 +354,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Add message to /wp-admin/ when having problem(s) with sending wp_mail() message
 		 *
-		 * @param \WP_Error $error
+		 * @param \WP_Error $error The supplied error object
 		 */
 		public function mail_failure_handler( $error ) {
 
