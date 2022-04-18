@@ -21,6 +21,7 @@ namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Validate\Time;
 use WP_Error;
@@ -84,6 +85,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			global $e20r_import_err;
 			global $active_line_number;
 
+			$user_upd_validator = new User_Update( $this->variables, $this->error_log );
+			$user_id_validator  = new User_ID( $this->variables, $this->error_log );
+			$passwd_validator   = new Create_Password( $this->variables, $this->error_log );
+
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
 			}
@@ -108,12 +113,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			/**
 			 * BUG FIX: Didn't ensure the ID column contained an integer
 			 */
-			$user_id_exists = User_ID::validate( $user_data, $allow_update );
+			$user_id_exists = $user_id_validator->validate( $user_data, $allow_update );
 
 			if ( true === $user_id_exists ) {
 				$user = get_user_by( 'ID', $user_data['ID'] );
 			} else {
-				$status_msg = User_ID::status_msg( $user_id_exists, $allow_update );
+				$status_msg = $user_id_validator->status_msg( $user_id_exists, $allow_update );
 				$this->error_log->debug( 'User ID exists? -> ' . ( empty( $status_msg ) ? 'No' : 'Yes' ) );
 				if ( ! empty( $status_msg ) ) {
 					$e20r_import_err[] = $status_msg;
@@ -131,11 +136,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 			}
 
-			$needs_update = false;
+			$user_exists_needs_update = false;
 
 			if ( ! empty( $user ) ) {
-				$user_data['ID'] = $user->ID;
-				$needs_update    = true;
+				$user_data['ID']          = $user->ID;
+				$user_exists_needs_update = true;
 			}
 
 			if (
@@ -177,9 +182,23 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				return $user_id;
 			}
 
-			$error_column = User_Update::validate( $user_data, $allow_update );
+			$user_identifier = $user_upd_validator->validate( $user_data, $allow_update );
 
-			if ( true === $needs_update && false === $allow_update && true !== $error_column ) {
+			if ( true === $user_exists_needs_update && false === $allow_update && true !== $user_identifier ) {
+
+				switch ( $user_identifier ) {
+					case Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL:
+						$missing_column = 'user_email';
+						break;
+					case Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN:
+						$missing_column = 'user_login';
+						break;
+					case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
+						$missing_column = 'user_email or user_login';
+						break;
+					default:
+						$missing_column = 'unknown';
+				}
 
 				$msg = sprintf(
 				// translators: %1$s column name, %2$s: row number
@@ -187,7 +206,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 						'No "%1$s" column found, or the "%1$s" was/were included, the user exists and the "Update user record" option was NOT selected (row: %2$d). Will not import/update user.',
 						'pmpro-import-members-from-csv'
 					),
-					$error_column,
+					$missing_column,
 					$active_line_number ++
 				);
 
@@ -197,22 +216,23 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
+			$create_password           = $passwd_validator->validate( $user_data, $allow_update, ( $user_id_exists ? $user : null ) );
 
 			// If creating a new user and no password was set, let auto-generate one!
-			if ( true === Create_Password::validate( $user_data, $allow_update, ( $user_id_exists ? $user : null ) ) ) {
+			if ( true === $create_password && empty( $user_data['user_pass'] ) ) {
 				$user_data['user_pass'] = wp_generate_password( 12, false );
 			}
 
 			// Insert, Update or insert without (re) hashing the password
-			if ( true === $needs_update && false === $password_hashing_disabled ) {
+			if ( true === $user_exists_needs_update && true === $allow_update && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Updating an existing user record...' );
 				$user_id = wp_update_user( $user_data );
-			} elseif ( false === $needs_update && false === $password_hashing_disabled ) {
-				$this->error_log->debug( 'Adding new user record...' );
-				$user_id = wp_insert_user( $user_data );
-			} elseif ( false === $needs_update && true === $password_hashing_disabled ) {
+			} elseif ( false === $user_exists_needs_update && true === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
 				$user_id = $this->insert_disabled_hashing_user( $user_data );
+			} elseif ( false === $user_exists_needs_update && false === $allow_update && false === $password_hashing_disabled ) {
+				$this->error_log->debug( 'Adding new user record...' );
+				$user_id = wp_insert_user( $user_data );
 			} else {
 				$active_line_number ++;
 
@@ -259,7 +279,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 
 				// If we created a new user, send new user notification?
-				if ( false === $needs_update ) {
+				if ( false === $user_exists_needs_update ) {
 
 					$new_user_notification       = (bool) $this->variables->get( 'new_user_notification' );
 					$admin_new_user_notification = (bool) $this->variables->get( 'admin_new_user_notification' );
