@@ -1,7 +1,27 @@
 <?php
+/**
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
+ * ALL RIGHTS RESERVED
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Tests\Unit\Email_Templates_UnitTest
+ */
 
 namespace E20R\Tests\Unit;
 
+use Codeception\Test\Unit;
 use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Data;
@@ -17,15 +37,15 @@ use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use MemberOrder;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use WP_Mock;
 
 use stdClass;
-use WP_Mock;
+use MemberOrder;
 use WP_User;
 
-class Email_Templates_UnitTest extends \Codeception\Test\Unit {
+class Email_Templates_UnitTest extends Unit {
 	use MockeryPHPUnitIntegration;
 
 	/**
