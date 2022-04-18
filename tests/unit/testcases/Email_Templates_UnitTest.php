@@ -151,19 +151,6 @@ class Email_Templates_UnitTest extends \Codeception\Test\Unit {
 				},
 			)
 		);
-
-		/**
-		 * phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-
-
-
-
-
-
-
-
-
-		 */
 	}
 
 	/**
@@ -259,6 +246,7 @@ class Email_Templates_UnitTest extends \Codeception\Test\Unit {
 			array( 'Hi !!user_login!!! Welcome to the !!sitename!! website', $wp_user, array( 'sitename' => 'Testing' ), 'Hi ! Welcome to the Testing website' ),
 		);
 	}
+
 	/**
 	 * Create mocked WP_User objects
 	 *
