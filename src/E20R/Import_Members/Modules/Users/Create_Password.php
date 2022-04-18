@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Modules\Users;
 
+use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
@@ -28,7 +29,39 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
 	 */
 	class Create_Password {
 
-		public static function status_msg( $status, $allow_updates ) {
+		/**
+		 * Instance of the Error_Log() class
+		 *
+		 * @var Error_Log|null
+		 */
+		private $error_log = null;
+
+		/**
+		 * Instance of the Variables() class
+		 *
+		 * @var Variables|null
+		 */
+		private $variables = null;
+
+		/**
+		 * Constructor for the User_Update() class
+		 *
+		 * @param Variables|null $variables
+		 * @param Error_Log|null $error_log
+		 */
+		public function __construct( &$variables = null, &$error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			$this->error_log = $error_log;
+
+			if ( null === $variables ) {
+				$variables = new Variables( $this->error_log );
+			}
+			$this->variables = $variables;
+		}
+
+		public function status_msg( $status, $allow_updates ) {
 
 			// TODO: Create status_msg for Create password validation!
 			return $status;
@@ -43,7 +76,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function validate( $record, $update_user = false, $user = null ) {
+		public function validate( $record, $update_user = false, $user = null ) {
 
 			// We set a dummy password when...
 			$set_password = false;
