@@ -196,15 +196,15 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			$this->pmpro = $pmpro;
 
-			if ( empty( $import_user ) ) {
-				$import_user = new Import_User();
-			}
-			$this->import_user = $import_user;
-
 			if ( empty( $variables ) ) {
-				$variables = new Variables();
+				$variables = new Variables( $this->error_log );
 			}
 			$this->variables = $variables;
+
+			if ( empty( $import_user ) ) {
+				$import_user = new Import_User( $this->variables, $this->error_log );
+			}
+			$this->import_user = $import_user;
 
 			if ( empty( $csv ) ) {
 				$csv = new CSV( $this->variables );
