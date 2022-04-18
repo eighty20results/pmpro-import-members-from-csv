@@ -22,12 +22,10 @@
 namespace E20R\Import_Members\Validate\Column_Values;
 
 use E20R\Exceptions\InvalidSettingsKey;
-use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
-use const Patchwork\CodeManipulation\Actions\RedefinitionOfNew\STATIC_INSTANTIATION_REPLACEMENT;
 
 if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validation' ) ) {
 	/**
@@ -103,7 +101,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 *
 		 * @param array $record The supplied user array (record) from the .CSV file row
 		 *
-		 * @return bool|string
+		 * @return bool|int
 		 *
 		 * @throws InvalidSettingsKey Raised if the 'update_users' key is not a valid setting/variable
 		 */
@@ -138,6 +136,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 * @param null|string|string[] $field_name
 		 *
 		 * @return bool|int
+		 * @throws InvalidSettingsKey Thrown if Variables::get() references an invalid property
 		 */
 		public function validate_user_id( $has_error, $user_id, $record, $field_name = null ) {
 
