@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Modules\PMPro
  */
 namespace E20R\Import_Members\Modules\PMPro;
 
@@ -23,7 +25,6 @@ use E20R\Import_Members\Error_Log;
 if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 	/**
 	 * Class PMPro
-	 * @package E20R\Import_Members\Modules\PMPro
 	 */
 	class PMPro {
 		/**
@@ -34,33 +35,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 		private static $instance = null;
 
 		/**
-		 * PMPro specific Import fields
-		 *
-		 * @var array $fields
-		 */
-		private $fields = array();
-
-		/**
 		 * PMPro constructor.
 		 *
 		 * @access private
 		 */
 		public function __construct() {
 			self::$instance = $this;
-		}
-
-		/**
-		 * Get or instantiate and return this class (PMPro)
-		 *
-		 * @return PMPro|null
-		 */
-		public static function get_instance() {
-
-			if ( null === self::$instance ) {
-				self::$instance = new self();
-			}
-
-			return self::$instance;
 		}
 
 		/**
@@ -114,7 +94,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 		 *
 		 * @param array $fields
 		 *
-		 * @return bool|array
+		 * @return array
 		 *
 		 * @access private
 		 *
