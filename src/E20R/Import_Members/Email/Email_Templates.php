@@ -189,8 +189,13 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				return $substitution_text;
 			}
 
+			if ( in_array( $substitution_text, array( false, null ), true ) ) {
+				$substitution_text = '';
+			}
+
 			if ( 1 !== preg_match( '/!![a-zA-Z\-_].*!!/', $substitution_text ) ) {
 				$this->error_log->debug( 'No Metadata substitution data found' );
+				return $substitution_text;
 			}
 
 			// Substitute all membership information from the user's metadata

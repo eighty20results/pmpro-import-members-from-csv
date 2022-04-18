@@ -152,18 +152,18 @@ class Email_Templates_UnitTest extends \Codeception\Test\Unit {
 			)
 		);
 
-/**
- * phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-//		$this->mock_order = $this->makeEmpty(
-//			MemberOrder::class,
-//			array(
-//				'getLastMemberOrder' => $this->fixture_pmpro_order(),
-//				'setGateway'         => false,
-//				'getRandomCode'      => $this->random_strings( 10 ),
-//				'get_test_order'     => $this->fixture_pmpro_order(),
-//			)
-//		);
- */
+		/**
+		 * phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+
+
+
+
+
+
+
+
+
+		 */
 	}
 
 	/**
@@ -195,7 +195,7 @@ class Email_Templates_UnitTest extends \Codeception\Test\Unit {
 	 * @test
 	 */
 	public function it_should_have_loaded_action_hooks() {
-		$template = new Email_Templates( $this->mocked_import, $this->mocked_variables, $this->mocked_errorlog );
+		$template = new Email_Templates( $this->mocked_import );
 		$template->load_hooks();
 
 		self::assertSame( 11, has_action( 'wp_loaded', array( $template, 'add_email_templates' ) ) );
@@ -211,13 +211,54 @@ class Email_Templates_UnitTest extends \Codeception\Test\Unit {
 	 * @test
 	 */
 	public function it_should_have_loaded_filter_hooks() {
-		$template = new Email_Templates( $this->mocked_import, $this->mocked_variables, $this->mocked_errorlog );
+		$template = new Email_Templates( $this->mocked_import );
 		$template->load_hooks();
 
 		self::assertSame( 1, has_filter( 'e20r_import_message_body', array( $template, 'substitute_data' ) ) );
 		self::assertSame( 1, has_filter( 'e20r_import_message_subject', array( $template, 'substitute_data' ) ) );
 	}
 
+	/**
+	 * It should test string substitution for supplied variable(s)
+	 *
+	 * @param string $text
+	 * @param WP_User $user_object
+	 * @param array $fields_to_substitute
+	 * @param string $expected_text
+	 *
+	 * @return void
+	 *
+	 * @dataProvider fixture_string_substitutions
+	 * @test
+	 */
+	public function it_should_substitute_data_in_string( $text, $user_object, $fields_to_substitute, $expected_text ) {
+		$templates = new Email_Templates( $this->mocked_import );
+		$result    = $templates->substitute_data( $text, $user_object, $fields_to_substitute );
+		self::assertIsString( $result );
+		self::assertSame( $expected_text, $result );
+	}
+
+	/**
+	 * Substitution test fixture
+	 *
+	 * @return array[]
+	 *
+	 * @throws \Exception
+	 */
+	public function fixture_string_substitutions() {
+		$wp_user = $this->create_mocked_wp_users( 1 );
+		return array(
+			array( 'This is a string with no substitutions', $wp_user, array( 'membership_id' => 1 ), 'This is a string with no substitutions' ),
+			array( 'Welcome to the !!sitename!! website', $wp_user, array( 'sitename' => 'Testing' ), 'Welcome to the Testing website' ),
+			array( 'Welcome to the !!SITENAME!! website', $wp_user, array( 'SITENAME' => 'Testing' ), 'Welcome to the Testing website' ),
+			array( 'Hi !!display_name!!! Welcome to the !!sitename!! website', $wp_user, array( 'sitename' => 'Testing' ), 'Hi Test User # 1000! Welcome to the Testing website' ),
+			array( '', $wp_user, array( 'sitename' => 'Testing' ), '' ),
+			array( null, $wp_user, array( 'sitename' => 'Testing' ), '' ),
+			array( false, $wp_user, array( 'sitename' => 'Testing' ), '' ),
+			array( 'Hi !!display_Name!!! Welcome to the !!sitename!! website', $wp_user, array( 'sitename' => 'Testing' ), 'Hi !!display_Name!!! Welcome to the Testing website' ),
+			array( 'Hi !!user_login!!! Welcome to the !!sitename!! website', $wp_user, array( 'sitename' => 'Testing' ), 'Hi ! Welcome to the Testing website' ),
+		);
+	}
 	/**
 	 * Create mocked WP_User objects
 	 *
@@ -234,7 +275,8 @@ class Email_Templates_UnitTest extends \Codeception\Test\Unit {
 			$id = ( $base_id + $i );
 
 			if ( class_exists( '\WP_User' ) ) {
-				$user = $this->construct( WP_User::class,
+				$user = $this->construct(
+					WP_User::class,
 					array( $id )
 				);
 			} else {
