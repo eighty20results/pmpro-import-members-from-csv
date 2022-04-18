@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -36,8 +36,7 @@ use E20R\Licensing\License;
 
 if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 	/**
-	 * Class Import_Members
-	 * @package E20R\Import_Members
+	 * Class Import
 	 */
 	class Import {
 
@@ -162,6 +161,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param null|Data            $data
 		 * @param null|Import_User     $import_user
 		 * @param null|Import_Member   $import_member
+		 * @param null|Validate_Data   $validate_data
 		 * @param null|CSV             $csv
 		 * @param null|Email_Templates $email_templates
 		 * @param null|Page            $page
