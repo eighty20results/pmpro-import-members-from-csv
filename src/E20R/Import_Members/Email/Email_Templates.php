@@ -61,12 +61,12 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Email_Templates constructor.
 		 *
-		 * @param Variables|null $variables Instance of the Variables() class
-		 * @param Error_Log|null $error_log Instance of the Error_Log() class
+		 * @param Import|null $import Instance of the Import() class
 		 *
-		 * @throws InvalidInstantiation Thrown if the Import() class isn't present and instantiated when creating this class
+		 * @throws InvalidInstantiation Thrown when the Import() class isn't present and instantiated when creating this class
+		 * @throws InvalidSettingsKey Thrown when the Import::get() method attempts to access an invalid class property
 		 */
-		public function __construct( $import = null, $variables = null, $error_log = null ) {
+		public function __construct( $import = null ) {
 			if ( null === $import ) {
 				throw new InvalidInstantiation(
 					esc_attr__(
@@ -76,28 +76,20 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				);
 			}
 
-			$this->import = $import;
-
-			if ( null === $variables ) {
-				$variables = new Variables();
-			}
-			$this->variables = $variables;
-
-			if ( null === $error_log ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				$error_log = new Error_Log();
-			}
-			$this->error_log = $error_log;
+			$this->import    = $import;
+			$this->variables = $this->import->get( 'variables' );
+			$this->error_log = $this->import->get( 'error_log' );
 		}
 
 		/**
 		 * Load Action and Filter hooks for this class
 		 */
 		public function load_hooks() {
+			$this->error_log->debug( 'Loading action/filter hooks' );
 			add_action( 'wp_loaded', array( $this, 'add_email_templates' ), 11 );
-			add_action( 'wp_mail_failed', array( $this, 'mail_failure_handler' ) );
-			add_filter( 'e20r_import_message_body', array( $this, 'substitute_data' ), - 1, 3 );
-			add_filter( 'e20r_import_message_subject', array( $this, 'substitute_data' ), - 1, 3 );
+			add_action( 'wp_mail_failed', array( $this, 'mail_failure_handler' ), 10 );
+			add_filter( 'e20r_import_message_body', array( $this, 'substitute_data' ), 1, 3 );
+			add_filter( 'e20r_import_message_subject', array( $this, 'substitute_data' ), 1, 3 );
 		}
 
 		/**
@@ -147,7 +139,10 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				$subject = pmpro_getOption( "email_{$template_name}_subject" );
 
 				if ( empty( $subject ) ) {
-					$subject = $pmpro_email_templates_defaults[ $template_name ]['subject'] ?? __( 'Your membership to !!sitename!! has been activated', 'pmpro-import-members-from-csv' );
+					$subject = $pmpro_email_templates_defaults[ $template_name ]['subject'] ?? esc_attr__(
+						'Your membership to !!sitename!! has been activated',
+						'pmpro-import-members-from-csv'
+					);
 				}
 			}
 
@@ -159,7 +154,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			$email           = new \PMProEmail();
 			$email->email    = $user->user_email; // @phpstan-ignore-line
 			$email->data     = apply_filters( 'e20r_import_message_data', $user, $fields ); // @phpstan-ignore-line
-			$email->subject  = apply_filters( 'e20r_import_message_subject', $subject, $email->data ); // @phpstan-ignore-line
+			$email->subject  = apply_filters( 'e20r_import_message_subject', $subject, $user, $fields ); // @phpstan-ignore-line
 			$email->template = $template_name; // @phpstan-ignore-line
 
 			if ( ! empty( $body ) ) {
@@ -171,7 +166,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			$email->body    = apply_filters( 'pmp_im_imported_member_message_body', $email->body );
 			$email->body    = apply_filters( 'e20r_import_message_body', $email->body, $user, $fields );
 			$email->subject = apply_filters( 'pmp_im_imported_member_message_subject', $email->subject, $user, $fields );
-			$email->subject = apply_filters( 'e20r_import_message_subject', $email->subject );
+			$email->subject = apply_filters( 'e20r_import_message_subject', $email->subject, $user, $fields );
 
 			// Process and send Email
 			$email->sendEmail();
@@ -194,7 +189,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				return $substitution_text;
 			}
 
-			if ( 1 !== preg_match( '/!![membership|user]_(.*)!!/', $substitution_text ) ) {
+			if ( 1 !== preg_match( '/!![a-zA-Z\-_].*!!/', $substitution_text ) ) {
 				$this->error_log->debug( 'No Metadata substitution data found' );
 			}
 
@@ -211,10 +206,6 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			}
 
 			return $substitution_text;
-		}
-
-		private function variable_reference( $list_of_variables ) {
-
 		}
 
 		/**

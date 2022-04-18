@@ -226,7 +226,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			$this->validate_data = $validate_data;
 
-			$this->plugin_path               = plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
+			$this->plugin_path               = \plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
 			$this->column_validation_classes = apply_filters(
 				'e20r_import_column_validation_class_names',
 				array(
