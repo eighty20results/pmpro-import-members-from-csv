@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,20 +15,53 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Modules\User_ID
  */
 
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
+use E20R\Import_Members\Variables;
 
 if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_ID' ) ) {
 	/**
 	 * Class User_ID
-	 * @package E20R\Import_Members\Modules\Users
 	 */
 	class User_ID {
 
+		/**
+		 * Instance of the Error_Log() class
+		 *
+		 * @var Error_Log|null
+		 */
+		private $error_log = null;
+
+		/**
+		 * Instance of the Variables() class
+		 *
+		 * @var Variables|null
+		 */
+		private $variables = null;
+
+		/**
+		 * Constructor for the User_Update() class
+		 *
+		 * @param Variables|null $variables
+		 * @param Error_Log|null $error_log
+		 */
+		public function __construct( &$variables = null, &$error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			$this->error_log = $error_log;
+
+			if ( null === $variables ) {
+				$variables = new Variables( $this->error_log );
+			}
+			$this->variables = $variables;
+		}
 		/**
 		 * Set the status/error message for the User_ID validation logic
 		 *
@@ -37,7 +70,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_ID' ) ) {
 		 *
 		 * @return string
 		 */
-		public static function status_msg( $status, $allow_updates ) {
+		public function status_msg( $status, $allow_updates ) {
 
 			switch ( $status ) {
 				case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
@@ -65,32 +98,30 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_ID' ) ) {
 		 * Validate user ID data (if present)
 		 *
 		 * @param array $record
-		 * @param bool $allow_update
+		 * @param bool|null $allow_update
 		 *
 		 * @return bool|int
 		 */
-		public static function validate( $record, $allow_update ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			$error_log = new Error_Log();
-			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
+		public function validate( $record, $allow_update = null ) {
 
-			$error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
+			$has_id = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
+			$this->error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
 
 			if ( false === $has_id ) {
 				return false;
 			}
 
 			if ( false === is_int( $record['ID'] ) ) {
-				$error_log->debug( "'ID' column isn't a number" );
+				$this->error_log->debug( "'ID' column isn't a number" );
 				return Status::E20R_ERROR_ID_NOT_NUMBER;
 			}
 
 			if ( false !== get_user_by( 'ID', $record['ID'] ) && false === $allow_update ) {
-				$error_log->debug( "'ID' column is for a current user _AND_ we're not allowing updates" );
+				$this->error_log->debug( "'ID' column is for a current user _AND_ we're not allowing updates" );
 				return Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED;
 			}
 
-			$error_log->debug( 'User ID is present and a number...' );
+			$this->error_log->debug( 'User ID is present and a number...' );
 			return true;
 		}
 	}
