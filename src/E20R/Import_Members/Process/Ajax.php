@@ -275,7 +275,10 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 					array(
 						'status'  => - 1,
 						'message' => sprintf(
-							__( "File (%1\$s) not found in %2\$s\nIs the directory writable by the web server software?", 'pmpro-import-members-from-csv' ),
+							esc_attr__(
+								"File (%1\$s) not found in %2\$s\nIs the directory writable by the web server software?",
+								'pmpro-import-members-from-csv'
+							),
 							$filename,
 							$import_dir
 						),
@@ -309,6 +312,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			try {
 				$results = $this->csv->process( "{$import_dir}/{$filename}", $args );
 			} catch ( \Exception $e ) {
+				// FIXME: No exceptions to catch during CSV::process() call. Need to add exceptions
 				$this->error_log->debug( 'Import Error: ' . $e->getMessage() );
 				$this->error_log->add_error_msg( sprintf( 'Error: %s', $e->getMessage() ) );
 			}
@@ -319,48 +323,39 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			if ( file_exists( $this->variables->get( 'logfile_path' ) ) ) {
 				$error_log_msg = sprintf(
 				// translators: %1$s - HTML, %2$s - HTML
-					__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
+					esc_attr__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
 					sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
 					'</a>'
 				);
 			}
 
 			if ( isset( $_REQUEST['import'] ) ) {
-				$error_log_msg = '';
-
-				if ( file_exists( $this->variables->get( 'logfile_path' ) ) ) {
-					$error_log_msg = sprintf(
-					// translators: %1$s - HTML, %2$s - HTML
-						__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
-						sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
-						'</a>'
-					);
-				}
 
 				switch ( $_REQUEST['import'] ) {
 					case 'file':
 						$status = sprintf(
-							'<div class="error"><p><strong>%s</strong></p></div>',
-							__( 'Error during file upload.', 'pmpro-import-members-from-csv' )
+							'<div class="error"><p><strong>%1$s</strong>%2%s</p></div>',
+							esc_attr__( 'Error during file upload.', 'pmpro-import-members-from-csv' ),
+							$error_log_msg
 						);
 						break;
 					case 'data':
 						$status = sprintf(
-							'<div class="error"><p><strong>%s</strong></p></div>',
-							__(
+							'<div class="error"><p><strong>%1$s</strong>%2$s</p></div>',
+							esc_attr__(
 								'Cannot extract data from uploaded file or no file was uploaded.',
 								'pmpro-import-members-from-csv'
-							)
+							),
+							$error_log_msg
 						);
 						break;
 					case 'success':
 						$status = sprintf(
-							'<div class="updated"><p><strong>%s</strong></p></div>',
-							__( 'Member Import was successful.', 'pmpro-import-members-from-csv' )
+							'<div class="updated"><p><strong>%1$s</strong>%2$s</p></div>',
+							esc_attr__( 'Member Import was successful.', 'pmpro-import-members-from-csv' ),
+							$error_log_msg
 						);
 						break;
-					default:
-						$status = null;
 				}
 			}
 
@@ -399,21 +394,28 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				$msgs = array();
 
 				/**
-				 * @var \WP_Error $error
+				 * @var \WP_Error $wp_error
 				 */
-				foreach ( $results['errors'] as $error ) {
+				foreach ( $results['errors'] as $wp_error ) {
 
-					if ( ! empty( $error ) ) {
+					if ( ! empty( $wp_error ) ) {
 						// phpcs:ignore
-						$this->error_log->debug( 'Type of error info: ' . print_r( $error, true ) );
-						$msgs[] = $error->get_error_message();
+						$this->error_log->debug( 'Error: ' . $wp_error->get_error_message() );
+						$msgs[] = $wp_error->get_error_message();
 					}
 				}
 
 				wp_send_json_error(
 					array(
 						'status'         => false,
-						'message'        => sprintf( __( "Error during Import (# of errors: %1\$d):\n%2\$s", 'pmpro-import-members-from-csv' ), count( $msgs ), implode( "\n", $msgs ) ),
+						'message'        => sprintf(
+							esc_attr__(
+								"Error during Import (# of errors: %1\$d):\n%2\$s",
+								'pmpro-import-members-from-csv'
+							),
+							count( $msgs ),
+							implode( "\n", $msgs )
+						),
 						'display_errors' => ( ! empty( $display_errors ) ? $display_errors : null ),
 					)
 				);
@@ -438,7 +440,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 
 				$status_msg = sprintf(
 				// translators: %s - generated string of '.'s
-					__( "Imported %s\n", 'pmpro-import-members-from-csv' ),
+					esc_attr__( "Imported %s\n", 'pmpro-import-members-from-csv' ),
 					str_pad( '', count( $results['user_ids'] ), '.' )
 				);
 
