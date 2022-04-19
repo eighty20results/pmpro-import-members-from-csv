@@ -16,7 +16,7 @@
 * `e20r_import_modules_pmpro_headers` - List of valid CSV file headers for the import file
 * `e20r_import_welcome_email_template` - The HTML email template (name before the .html extension) to use when sending an imported, active member a welcome email message.
 * `e20r_import_column_validation_class_names` - The list of Column_Validation - and Custom column validation - classes we can/need to use in order to validate import file data (columns). The filter returns the class name and the path to its location in the file system. NOTE: All custom validation classes must be in the `E20R\Import_Members\Validate\Custom` namespace AND be extended from the `E20R\Import_Members\Validate\Base_Validation` base class
-
+* `e20r_import_message_subject` - Filter the email Subject information to let us substitute any variables (data). Accepts WP_User object and the array of fields 
 
 ## Not supported/not in use yet
 
