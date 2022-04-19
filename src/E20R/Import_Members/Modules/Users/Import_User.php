@@ -83,6 +83,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		public function import( $user_data, $user_meta, $headers ) {
 
 			global $e20r_import_err;
+			global $e20r_import_warn;
 			global $active_line_number;
 
 			$user_upd_validator = new User_Update( $this->variables, $this->error_log );

@@ -104,10 +104,15 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 		public function update_field_values( $fields ) {
 
 			global $e20r_import_err;
+			global $e20r_import_warn;
 			global $active_line_number;
 
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
+			}
+
+			if ( ! is_array( $e20r_import_warn ) ) {
+				$e20r_import_warn = array();
 			}
 
 			if ( ! function_exists( 'pmpro_getOption' ) ) {
@@ -122,12 +127,25 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 				isset( $e20r_import_err[ "no_gw_environment_{$active_line_number}" ] ) ||
 				isset( $e20r_import_err[ "correct_gw_env_variable_{$active_line_number}" ] )
 			) {
-				$fields['membership_gateway_environment'] = pmpro_getOption( 'gateway_environment' );
+				$fields['membership_gateway_environment']                           = pmpro_getOption( 'gateway_environment' );
+				$e20r_import_warn[ "setting_default_gw_env_{$active_line_number}" ] = sprintf(
+					// translators: %1$s - Environment (production or test) for payment gateway setting
+					esc_attr__( 'Forcing Payment Gateway environment setting to %1$s for entry on line %2$d', 'pmpro-import-members-from-csv' ),
+					$fields['membership_gateway_environment'],
+					$active_line_number
+				);
+
 			}
 
 			// Doesn't have a supported gateway, so adding it!
 			if ( isset( $e20r_import_err[ "supported_gateway_{$active_line_number}" ] ) ) {
-				$fields['membership_gateway'] = pmpro_getOption( 'gateway' );
+				$fields['membership_gateway']                                   = pmpro_getOption( 'gateway' );
+				$e20r_import_warn[ "setting_default_gw_{$active_line_number}" ] = sprintf(
+				// translators: %1$s - Environment (production or test) for payment gateway setting
+					esc_attr__( 'Forcing Payment Gateway setting to %1$s for entry on line %2$d', 'pmpro-import-members-from-csv' ),
+					$fields['membership_gateway'],
+					$active_line_number
+				);
 			}
 
 			return $fields;

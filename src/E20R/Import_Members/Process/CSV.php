@@ -305,6 +305,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 
 			global $active_line_number;
 			global $e20r_import_err;
+			global $e20r_import_warn;
 
 			$current_blog_id = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 1;
 
@@ -312,6 +313,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$e20r_import_err = array();
 			}
 
+			if ( ! is_array( $e20r_import_warn ) ) {
+				$e20r_import_warn = array();
+			}
 			$warnings = array();
 			$headers  = array();
 
@@ -369,6 +373,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			while ( ( ! $file_object->eof() ) && ( ! ( true === $partial ) || $current_line_number <= $per_partial ) ) {
 				$user_id = null;
 				$active_line_number++;
+				$error_key = null;
 
 				// Read a line from the file and remove the BOM character
 				$line = $file_object->fgetcsv();
@@ -473,7 +478,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 							$user_data['user_login'],
 							$active_line_number
 						);
-						$error_key = "existing_user_login_{$active_line_number}";
+						$warning_key = "existing_user_login_{$active_line_number}";
 						break;
 
 					case Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL:
@@ -486,7 +491,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 							$user_data['user_email'],
 							$active_line_number
 						);
-						$error_key = "existing_user_email_{$active_line_number}";
+						$warning_key = "existing_user_email_{$active_line_number}";
 						break;
 
 					case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
@@ -506,7 +511,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					if ( ! empty( $error_key ) ) {
 						$e20r_import_err[ $error_key ] = new WP_Error( 'e20r_im_missing_data', $msg );
 					}
-
+					if ( ! empty( $warning_key ) ) {
+						$e20r_import_warn[ $error_key ] = new WP_Error( 'e20r_im_missing_data', $msg );
+					}
 					$this->error_log->debug( $msg );
 					$msg = null;
 				}
@@ -531,7 +538,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 						( $active_line_number + 1 )
 					);
 
-					$warnings[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
+					$e20r_import_warn[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
 
 					$this->error_log->debug( $msg );
 				} else {
@@ -577,7 +584,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 
 			// Let's log the errors
 			$this->error_log->log_errors(
-				array_merge( $e20r_import_err, $warnings ),
+				array_merge( $e20r_import_err, $e20r_import_warn ),
 				$this->variables->get( 'logfile_path' ),
 				$this->variables->get( 'logfile_url' )
 			);
@@ -606,7 +613,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			return array(
 				'user_ids' => $user_ids,
 				'errors'   => $e20r_import_err,
-				'warnings' => $warnings,
+				'warnings' => $e20r_import_warn,
 			);
 		}
 
