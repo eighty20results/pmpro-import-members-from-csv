@@ -138,6 +138,7 @@
       <path value="$PROJECT_DIR$/inc/sebastian/resource-operations" />
       <path value="$PROJECT_DIR$/inc/sebastian/environment" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utliities" />
+      <path value="$USER_HOME$/code/WP/WordPress" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1">
