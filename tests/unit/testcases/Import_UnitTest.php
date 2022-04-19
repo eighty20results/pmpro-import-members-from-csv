@@ -231,12 +231,8 @@ class Import_UnitTest extends Unit {
 				'esc_html_e'                 => null,
 				'esc_attr_e'                 => null,
 				'get_transient'              => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
-				'esc_url'                    => function() {
-					return 'https://localhost:7537';
-				},
-				'esc_url_raw'                => function() {
-					return 'https://localhost:7537';
-				},
+				'esc_url'                    => null,
+				'esc_url_raw'                => null,
 				'wp_upload_dir'              => function() {
 					return array(
 						'baseurl' => 'https://localhost:7537/wp-content/uploads/',
