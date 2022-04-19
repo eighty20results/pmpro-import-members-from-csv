@@ -51,18 +51,6 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-.idea/
-.idea/codeStyles/
-.idea/copyright/
-.idea/deployment.xml
-.idea/pmpro-import-members-from-csv.iml
-.idea/encodings.xml
-.idea/inspectionProfiles/
-.idea/misc.xml
-.idea/modules.xml
-.idea/php.xml
-.idea/sqldialects.xml
-.idea/vcs.xml
 /build_readmes/readme_changelog.txt
 /build_readmes/json_changelog.txt
 /build_readmes/

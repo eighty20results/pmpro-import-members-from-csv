@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="44f49c8d-e7e2-449e-8e1d-19659d53bde9" name="docker.local" url="http://development.local/">
+        <fileTransfer rootFolder="/Volumes/Development/www/clean.local/" accessType="SFTP" host="docker.local" port="22" sshConfigId="857bb506-9006-43bb-8176-fda8ec450518" sshConfig="sjolshag@docker.local:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

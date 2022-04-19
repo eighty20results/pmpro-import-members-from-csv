@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="docker.local" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="docker.local">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/wp-content/plugins/pmpro-import-members-from-csv/" local="$PROJECT_DIR$" web="/wp-content/plugins/pmpro-import-members-from-csv/" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/tests" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.cvsignore" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.gitignore" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.editorconfig" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.dockerignore" />
+            <excludedPath local="true" path="$PROJECT_DIR$/action.yml" />
+            <excludedPath local="true" path="$PROJECT_DIR$/codeception.dist.yml" />
+            <excludedPath local="true" path="$PROJECT_DIR$/composer.lock" />
+            <excludedPath local="true" path="$PROJECT_DIR$/docker.hub.key" />
+            <excludedPath local="true" path="$PROJECT_DIR$/docker-compose.yml" />
+            <excludedPath local="true" path="$PROJECT_DIR$/Dockerfile" />
+            <excludedPath local="true" path="$PROJECT_DIR$/Makefile" />
+            <excludedPath local="true" path="$PROJECT_DIR$/patchwork.json" />
+            <excludedPath local="true" path="$PROJECT_DIR$/phpcs.xml" />
+            <excludedPath local="true" path="$PROJECT_DIR$/phpstan.dist.neon" />
+            <excludedPath local="true" path="$PROJECT_DIR$/phpunit.xml" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.codecov.yml" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.gitattributes" />
+            <excludedPath local="true" path="$PROJECT_DIR$/.distignore" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

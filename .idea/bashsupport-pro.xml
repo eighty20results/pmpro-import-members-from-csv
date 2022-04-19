@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="bashsupport-pro.project">
+    <globalVariables>
+      <var name="include" />
+      <var name="exclude" />
+      <var name="build" />
+      <var name="remote_server" />
+      <var name="short_name" />
+      <var name="version" />
+      <var name="wordpress_version" />
+    </globalVariables>
+  </component>
+</project>
