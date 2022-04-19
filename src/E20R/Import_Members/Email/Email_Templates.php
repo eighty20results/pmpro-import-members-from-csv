@@ -26,6 +26,8 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Variables;
+use PMProEmail;
+use WP_User;
 
 if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 	/**
@@ -97,12 +99,13 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Maybe send the Import 'welcome imported user' Email message
 		 *
-		 * @param \WP_User $user
-		 * @param array $fields
+		 * @param WP_User $user The User to whom we'll be sending the email
+		 * @param array $fields The Metadata fields and their values we may need to update the email template
+		 * @param PMProEmail|null $email For unit-testing purposes (Passing the PMPro Email class to this function)
 		 *
 		 * @throws InvalidSettingsKey Thrown if the specified settings key is undefined
 		 */
-		public function maybe_send_email( $user, $fields ) {
+		public function maybe_send_email( $user, $fields, $email = null ) {
 			$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
 			if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) { // @phpstan-ignore-line
@@ -150,7 +153,10 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			// The authors of PMPro are not good at defining properties in classes (badly reliant on the historically dynamic nature of PHP)
 			// so will have PHPStan ignore these lines until PMPro cleans up their stuff
 			// (i.e. TODO when PMPro takes better advantage of PHP)
-			$email           = new \PMProEmail();
+			if ( null === $email ) {
+				$email = new PMProEmail();
+			}
+
 			$email->email    = $user->user_email; // @phpstan-ignore-line
 			$email->data     = apply_filters( 'e20r_import_message_data', $fields, $user ); // @phpstan-ignore-line
 			$email->subject  = apply_filters( 'e20r_import_message_subject', $subject, $user, $fields ); // @phpstan-ignore-line
@@ -175,7 +181,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 * Substitute all in-message (body) !!something!! variables from the imported data
 		 *
 		 * @param string|null|false $substitution_text The text to perform substitution on
-		 * @param \WP_User $user WP_User data fields to substitute
+		 * @param WP_User $user WP_User data fields to substitute
 		 * @param array $fields Metadata fields to substitute (key/value)
 		 *
 		 * @return string
@@ -299,13 +305,14 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			$locale = apply_filters( 'plugin_locale', get_locale(), 'pmpro-import-members-from-csv' );
 			$body   = null;
 
-			// Load template from PMPro Email Templates Admin add-on
+			// Load template from PMPro's Email Templates settings
 			if (
 				isset( $pmpro_email_templates_defaults[ $template ]['body'] ) &&
 				! empty( $pmpro_email_templates_defaults[ $template ]['body'] )
 			) {
 				$body = $pmpro_email_templates_defaults[ $template ]['body'];
 			} else {
+				// Or from the file system if someone created a special template
 				$locations = array(
 					get_stylesheet_directory() . "/pmpro-import-members-from-csv/{$locale}/{$template}.html",
 					get_stylesheet_directory() . "/pmpro-import-members-from-csv/{$template}.html",
