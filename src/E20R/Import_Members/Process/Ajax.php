@@ -82,7 +82,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		 *
 		 * @param null|Import $import
 		 */
-		public function __construct( &$import ) {
+		public function __construct( $import ) {
 			$this->import    = $import;
 			$this->error_log = $this->import->get( 'error_log' );
 			$this->variables = $this->import->get( 'variables' );

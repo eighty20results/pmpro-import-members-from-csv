@@ -41,7 +41,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 		 *
 		 * @param Import|null $import Instance of the main Import() class
 		 */
-		public function __construct( &$import ) {
+		public function __construct( $import ) {
 			parent::__construct( $import );
 
 			add_filter(

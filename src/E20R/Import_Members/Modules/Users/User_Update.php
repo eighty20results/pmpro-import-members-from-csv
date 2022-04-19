@@ -52,7 +52,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\User_Update' ) ) {
 		 * @param Variables|null $variables
 		 * @param Error_Log|null $error_log
 		 */
-		public function __construct( &$variables = null, &$error_log = null ) {
+		public function __construct( $variables = null, $error_log = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}

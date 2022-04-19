@@ -75,7 +75,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 		 *
 		 * @access private
 		 */
-		public function __construct( &$import = null ) {
+		public function __construct( $import = null ) {
 			$this->import    = $import;
 			$this->data      = $import->get( 'data' );
 			$this->error_log = $import->get( 'error_log' );

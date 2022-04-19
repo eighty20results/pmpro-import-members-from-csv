@@ -174,17 +174,17 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @filter e20r_import_column_validation_classes - Add to/remove Column Validation classes
 		 */
 		public function __construct(
-			&$variables = null,
-			&$pmpro = null,
-			&$data = null,
-			&$import_user = null,
-			&$import_member = null,
-			&$csv = null,
-			&$email_templates = null,
-			&$validate_data = null,
-			&$page = null,
-			&$ajax = null,
-			&$error_log = null
+			$variables = null,
+			$pmpro = null,
+			$data = null,
+			$import_user = null,
+			$import_member = null,
+			$csv = null,
+			$email_templates = null,
+			$validate_data = null,
+			$page = null,
+			$ajax = null,
+			$error_log = null
 		) {
 			if ( empty( $error_log ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore
@@ -308,7 +308,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 
 					// Then instantiate the class
 					$new_class                               = new $class_name( $this->error_log );
-					$this->validators[ strtolower( $name ) ] = &$new_class;
+					$this->validators[ strtolower( $name ) ] = $new_class;
 
 					// And add its load_actions() method to the plugins_loaded
 					add_action( 'plugins_loaded', array( $this->validators[ strtolower( $name ) ], 'load_actions' ), 99 );

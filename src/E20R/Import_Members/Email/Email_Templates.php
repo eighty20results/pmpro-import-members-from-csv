@@ -70,7 +70,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 * @throws InvalidInstantiation Thrown when the Import() class isn't present and instantiated when creating this class
 		 * @throws InvalidSettingsKey Thrown when the Import::get() method attempts to access an invalid class property
 		 */
-		public function __construct( &$import = null ) {
+		public function __construct( $import = null ) {
 			if ( null === $import ) {
 				throw new InvalidInstantiation(
 					esc_attr__(
