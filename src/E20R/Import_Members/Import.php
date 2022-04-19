@@ -34,6 +34,8 @@ use E20R\Import_Members\Validate\Column_Values\BuddyPress_Validation;
 use E20R\Import_Members\Validate\Validate;
 use E20R\Licensing\License;
 
+use function esc_url_raw;
+
 if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 	/**
 	 * Class Import
@@ -448,7 +450,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 */
 		public function load_i18n() {
 			// Use filtering, etc, to select appropriate locale for this installation
-			$locale = apply_filters( 'plugin_locale', get_user_locale(), 'pmpro-import-members-from-csv' );
+			$locale  = apply_filters( 'plugin_locale', get_user_locale(), 'pmpro-import-members-from-csv' );
 			$mo_file = sprintf( 'pmpro-import-members-from-csv-%1$s.mo', $locale );
 
 			//paths to local (plugin) and global (WP) language files
@@ -456,12 +458,12 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			$mo_file_global = sprintf( '%1$s/pmpro-import-members-from-csv/%2$s', WP_LANG_DIR, $mo_file );
 
 			//load global first
-			if ( file_exists($mo_file_global ) ) {
-				load_textdomain("pmpro-import-members-from-csv", $mo_file_global);
+			if ( file_exists( $mo_file_global ) ) {
+				load_textdomain( 'pmpro-import-members-from-csv', $mo_file_global );
 			}
 
 			//load local second
-			load_textdomain("paid-memberships-pro", $mo_file_local );
+			load_textdomain( 'paid-memberships-pro', $mo_file_local );
 
 			load_plugin_textdomain(
 				'pmpro-import-members-from-csv',
@@ -619,13 +621,13 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 					),
 					'filters'       => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
-						esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/FILTERS.md' ),
+						esc_url_raw( plugin_dir_url( E20R_IMPORT_PLUGIN_FILE ) . 'docs/FILTERS.md' ),
 						esc_attr__( 'View the Filter documentation', 'pmpro-import-members-from-csv' ),
 						esc_attr__( 'Filters', 'pmpro-import-members-from-csv' )
 					),
 					'actions'       => sprintf(
 						'<a href="%1$s" title="%2$s">%3$s</a>',
-						esc_url_raw( plugin_dir_url( __FILE__ ) . '../docs/ACTIONS.md' ),
+						esc_url_raw( plugin_dir_url( E20R_IMPORT_PLUGIN_FILE ) . 'docs/ACTIONS.md' ),
 						esc_attr__( 'View the Actions documentation', 'pmpro-import-members-from-csv' ),
 						esc_attr__( 'Actions', 'pmpro-import-members-from-csv' )
 					),
@@ -638,8 +640,8 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 					'issues'        => sprintf(
 						'<a href="%1$s" title="%2$s" target="_blank">%3$s</a>',
 						esc_url_raw( 'https://github.com/eighty20results/pmpro-import-members-from-csv/issues' ),
-						esc_attr__( 'Report issues with this plugin', 'pmpro-import-members-from-csv' ),
-						esc_attr__( 'Report Issues', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'Report bugs for this plugin', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Report Bugs', 'pmpro-import-members-from-csv' )
 					),
 				);
 
