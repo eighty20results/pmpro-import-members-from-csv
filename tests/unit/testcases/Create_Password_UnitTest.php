@@ -20,42 +20,159 @@ namespace E20R\Test\Unit;
 
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
+use E20R\Import_Members\Data;
+use E20R\Import_Members\Email\Email_Templates;
+use E20R\Import_Members\Import;
+use E20R\Import_Members\Modules\PMPro\Import_Member;
+use E20R\Import_Members\Modules\PMPro\PMPro;
+use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Create_Password;
+use E20R\Import_Members\Process\Page;
+use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
 use Brain\Monkey;
-use Exception;
-use Mockery;
+use MemberOrder;
 
 // Functions to Import from other namespaces
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WP_Mock;
 
 class Create_Password_UnitTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
 
 	/**
-	 * Codeception _before() method
+	 * Mocked Error_Log() class
+	 *
+	 * @var null|Error_Log
 	 */
-	public function setUp() : void {  //phpcs:ignore
+	private $mocked_errorlog = null;
+
+	/**
+	 * Mocked Variables() class
+	 *
+	 * @var null|Variables
+	 */
+	private $mocked_variables = null;
+
+	/**
+	 * Mocked Import() class
+	 *
+	 * @var null|Import
+	 */
+	private $mocked_import = null;
+
+	/**
+	 * Mocked PMPro MemberOrder()
+	 *
+	 * @var null|MemberOrder
+	 */
+	private $mock_order = null;
+
+	/**
+	 * Codeception setUp method
+	 *
+	 * @return void
+	 */
+	public function setUp() : void {
 		parent::setUp();
+		WP_Mock::setUp();
 		Monkey\setUp();
-		$this->loadMocks();
+		$this->load_stubs();
+		$this->load_mocks();
 	}
 
 	/**
-	 * Codeception _after() method
+	 * Codeception tearDown() method
+	 *
+	 * @return void
 	 */
-	public function tearDown() : void { //phpcs:ignore
+	public function tearDown() : void {
+		WP_Mock::tearDown();
 		Monkey\tearDown();
 		parent::tearDown();
 	}
 
 	/**
+	 * Load all class mocks we need (with namespaces)
+	 */
+	public function load_mocks() : void {
+
+		$this->mocked_errorlog = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Mocked log: {$msg}" );
+				},
+			)
+		);
+
+		$mocked_variables = $this->makeEmpty(
+			Variables::class
+		);
+
+		$mocked_pmpro = $this->makeEmpty(
+			PMPro::class
+		);
+
+		$mocked_data = $this->makeEmpty(
+			Data::class
+		);
+
+		$mocked_import_user = $this->makeEmpty(
+			Import_User::class
+		);
+
+		$mocked_import_member = $this->makeEmpty(
+			Import_Member::class
+		);
+
+		$mocked_csv = $this->makeEmpty(
+			CSV::class
+		);
+
+		$mocked_email_templates = $this->makeEmpty(
+			Email_Templates::class
+		);
+
+		$mocked_validate_data = $this->makeEmpty(
+			Validate_Data::class
+		);
+
+		$mocked_page = $this->makeEmpty(
+			Page::class
+		);
+
+		$mocked_ajax = $this->makeEmpty(
+			Ajax::class
+		);
+
+		$this->mocked_import = $this->constructEmpty(
+			Import::class,
+			array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
+			array(
+				'get' => function( $key ) use ( $mocked_variables ) {
+					if ( 'variables' === $key ) {
+						return $mocked_variables;
+					}
+					if ( 'error_log' === $key ) {
+						return $this->mocked_errorlog;
+					}
+
+					return null;
+				},
+			)
+		);
+	}
+
+	/**
 	 * Load all function mocks we need (with namespaces)
 	 */
-	public function loadMocks() : void {
+	public function load_stubs() : void {
 
 		Functions\when( 'esc_url' )
 			->justReturn( 'https://localhost:7537' );
@@ -73,6 +190,9 @@ class Create_Password_UnitTest extends Unit {
 					'basedir' => '/var/www/html/wp-content/uploads',
 				)
 			);
+		Functions\when( 'plugin_dir_path' )
+			->justReturn( '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv' );
+
 		Functions\when( 'get_option' )
 			->justReturn( 'https://www.paypal.com/cgi-bin/webscr' );
 
@@ -91,7 +211,8 @@ class Create_Password_UnitTest extends Unit {
 	 * @test
 	 */
 	public function it_should_validate_the_created_password( $user_record, $update_user, $user, $expected_result ) {
-		$result = Create_Password::validate( $user_record, $update_user, $user );
+		$validate = new Create_Password( $this->mocked_variables, $this->mocked_errorlog );
+		$result   = $validate->validate( $user_record, $update_user, $user );
 		$this->assertEquals( $expected_result, $result );
 	}
 
