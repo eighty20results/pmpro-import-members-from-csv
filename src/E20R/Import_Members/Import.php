@@ -447,11 +447,26 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * Load translation (glotPress friendly)
 		 */
 		public function load_i18n() {
+			// Use filtering, etc, to select appropriate locale for this installation
+			$locale = apply_filters( 'plugin_locale', get_user_locale(), 'pmpro-import-members-from-csv' );
+			$mo_file = sprintf( 'pmpro-import-members-from-csv-%1$s.mo', $locale );
+
+			//paths to local (plugin) and global (WP) language files
+			$mo_file_local  = sprintf( '%1$s/languages/%2$s', dirname( E20R_IMPORT_PLUGIN_FILE ), $mo_file );
+			$mo_file_global = sprintf( '%1$s/pmpro-import-members-from-csv/%2$s', WP_LANG_DIR, $mo_file );
+
+			//load global first
+			if ( file_exists($mo_file_global ) ) {
+				load_textdomain("pmpro-import-members-from-csv", $mo_file_global);
+			}
+
+			//load local second
+			load_textdomain("paid-memberships-pro", $mo_file_local );
 
 			load_plugin_textdomain(
 				'pmpro-import-members-from-csv',
 				false,
-				basename( dirname( __FILE__ ) ) . '/languages'
+				sprintf( '%1$s/languages', dirname( E20R_IMPORT_PLUGIN_FILE ) )
 			);
 		}
 
@@ -584,7 +599,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 */
 		public function plugin_row_meta( $links, $file ) {
 
-			if ( false !== stripos( $file, 'class.pmpro-Import-members.php' ) ) {
+			if ( false !== stripos( $file, 'class.pmpro-import-members.php' ) ) {
 				// Add (new) 'Import Users from CSV' links to plugin listing
 				$new_links = array(
 					'donate'        => sprintf(
