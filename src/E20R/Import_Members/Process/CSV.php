@@ -607,9 +607,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				delete_option( 'e20r_import_errors' );
 			}
 
-			// phpcs:ignore
-			// delete_option( "e20rcsv_{$file}" );
+			restore_current_blog();
 
+			// todo: Return from multisite
 			return array(
 				'user_ids' => $user_ids,
 				'errors'   => $e20r_import_err,
