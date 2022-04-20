@@ -107,7 +107,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
 			do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
-			$user_id                  = null;
+			$user_id                  = 0;
 			$user                     = $user_id;
 			$allow_update             = (bool) $this->variables->get( 'update_users' );
 			$user_exists_needs_update = false;
@@ -243,7 +243,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			} else {
 				$active_line_number ++;
 
-				$e20r_import_err[ "user_not_imported_{$active_line_number}" ] =
+				$e20r_import_warn[ "user_not_imported_{$active_line_number}" ] =
 					new WP_Error(
 						'e20r_im_account',
 						sprintf(
