@@ -45,3 +45,7 @@ if ( class_exists( '\WP_Mock' ) ) {
 	error_log( 'Loading the WP_Mock settings' );
 	WP_Mock::setUsePatchwork( true );
 }
+
+if ( file_exists( __DIR__ . '/inc/csv-fixtures.php' ) ) {
+	require_once __DIR__ . '/inc/csv-fixtures.php';
+}
