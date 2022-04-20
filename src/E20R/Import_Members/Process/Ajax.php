@@ -334,7 +334,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				switch ( $_REQUEST['import'] ) {
 					case 'file':
 						$status = sprintf(
-							'<div class="error"><p><strong>%1$s</strong>%2%s</p></div>',
+							'<div class="error"><p><strong>%1$s</strong>%2$s</p></div>',
 							esc_attr__( 'Error during file upload.', 'pmpro-import-members-from-csv' ),
 							$error_log_msg
 						);
