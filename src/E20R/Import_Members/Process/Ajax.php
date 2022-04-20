@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\PMPro\Import_Sponsors;
+use WP_Error;
 
 if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 	/**
@@ -394,7 +395,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				$msgs = array();
 
 				/**
-				 * @var \WP_Error $wp_error
+				 * @var WP_Error $wp_error
 				 */
 				foreach ( $results['errors'] as $wp_error ) {
 
@@ -429,7 +430,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				if ( ! empty( $results['warnings'] ) ) {
 
 					/**
-					 * @var \WP_Error $error
+					 * @var WP_Error $error
 					 */
 					foreach ( $results['warnings'] as $error ) {
 						$msgs[] = $error->get_error_message();
