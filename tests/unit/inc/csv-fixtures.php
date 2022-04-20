@@ -25,9 +25,7 @@
  * @return array
  */
 function fixture_read_from_user_csv( $line_id ) {
-	$user_info                  = array();
-	list( $header, $user_info ) = read_from_csv( './csv_files/user_meta', $line_id );
-
+	list( $header, $user_info ) = read_from_csv( __DIR__ . '/csv_files/user_data.csv', $line_id );
 	return array( $header, $user_info );
 }
 
@@ -39,9 +37,7 @@ function fixture_read_from_user_csv( $line_id ) {
  * @return array
  */
 function fixture_read_from_meta_csv( $line_id ) {
-	$meta_info                  = array();
-	list( $header, $meta_info ) = read_from_csv( './csv_files/user_meta', $line_id );
-
+	list( $header, $meta_info ) = read_from_csv( __DIR__ . '/csv_files/user_meta.csv', $line_id );
 	return array( $header, $meta_info );
 }
 
@@ -49,7 +45,7 @@ function fixture_read_from_meta_csv( $line_id ) {
  * Read from the specific CSV file (with path)
  *
  * @param string $file_name Name of the CSV file to read from
- * @param int $line_id The Line # to read from (line # 0 = header)
+ * @param int    $line_id The Line # to read from (line # 0 = header)
  *
  * @return mixed
  */
@@ -98,14 +94,6 @@ function read_from_csv( $file_name, $line_id ) {
  */
 function make_header_array( $line ) {
 	$headers = fixture_strip_bom( $line );
-
-	// Remove empty/blank headers
-	foreach ( $headers as $hk => $hdr ) {
-		if ( empty( $hdr ) ) {
-			unset( $headers[ $hk ] );
-		}
-	}
-
 	return $headers;
 }
 
