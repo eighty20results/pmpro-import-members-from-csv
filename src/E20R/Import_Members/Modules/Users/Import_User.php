@@ -107,26 +107,34 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
 			do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
-			$user_id      = 0;
-			$user         = $user_id;
-			$allow_update = (bool) $this->variables->get( 'update_users' );
-
+			$user_id                  = null;
+			$user                     = $user_id;
+			$allow_update             = (bool) $this->variables->get( 'update_users' );
+			$user_exists_needs_update = false;
 			/**
 			 * BUG FIX: Didn't ensure the ID column contained an integer
 			 */
 			$user_id_exists = $user_id_validator->validate( $user_data, $allow_update );
 
 			if ( true === $user_id_exists ) {
-				$user = get_user_by( 'ID', $user_data['ID'] );
+				$user                     = get_user_by( 'ID', $user_data['ID'] );
+				$user_exists_needs_update = true;
 			} else {
 				$status_msg = $user_id_validator->status_msg( $user_id_exists, $allow_update );
-				$this->error_log->debug( 'User ID exists? -> ' . ( empty( $status_msg ) ? 'No' : 'Yes' ) );
+				$this->error_log->debug( 'User ID in import file? -> ' . ( empty( $status_msg ) ? 'No' : 'Yes' ) );
 				if ( ! empty( $status_msg ) ) {
+					$this->error_log->debug( 'Adding error message about User ID' );
 					$e20r_import_err[] = $status_msg;
 				}
 			}
 
 			if ( empty( $user ) && true === $allow_update ) {
+				$this->error_log->debug(
+					'Checking if the user exists. Can we use user_email? ' .
+					( isset( $user_data['user_email'] ) ? 'Yes' : 'No' ) .
+					'. Or maybe use user_login? ' .
+					( isset( $user_data['user_login'] ) ? 'Yes' : 'No' )
+				);
 
 				if ( isset( $user_data['user_email'] ) ) {
 					$user = get_user_by( 'email', $user_data['user_email'] );
@@ -135,13 +143,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				if ( isset( $user_data['user_login'] ) ) {
 					$user = get_user_by( 'login', $user_data['user_login'] );
 				}
-			}
 
-			$user_exists_needs_update = false;
-
-			if ( ! empty( $user ) ) {
-				$user_data['ID']          = $user->ID;
-				$user_exists_needs_update = true;
+				if ( isset( $user->ID ) ) {
+					$user_data['ID']          = $user->ID;
+					$user_exists_needs_update = true;
+				}
 			}
 
 			if (
@@ -230,7 +236,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$user_id = wp_update_user( $user_data );
 			} elseif ( false === $user_exists_needs_update && true === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
-				$user_id = $this->insert_disabled_hashing_user( $user_data );
+				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
 			} elseif ( false === $user_exists_needs_update && false === $allow_update && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding new user record...' );
 				$user_id = wp_insert_user( $user_data );
@@ -359,7 +365,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @since 2.0.1
 		 *
 		 **/
-		public function insert_disabled_hashing_user( $userdata ) {
+		public function insert_or_update_disabled_hashing_user( $userdata ) {
 
 			global $wpdb;
 
@@ -416,7 +422,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					'existing_user_login',
 					sprintf(
 					// translators: %s username (login name)
-						__( 'Sorry, that username (%s) already exists!', 'pmpro-import-members-from-csv' ),
+						__( 'Sorry, that username (%1$s) already exists!', 'pmpro-import-members-from-csv' ),
 						$user_login
 					)
 				);
