@@ -86,7 +86,6 @@ class Import_User_UnitTest extends Unit {
 		parent::setUp();
 		WP_Mock::setUp();
 		Monkey\setUp();
-		$this->load_stubs();
 		$this->load_mocks();
 	}
 
@@ -156,22 +155,22 @@ class Import_User_UnitTest extends Unit {
 			Ajax::class
 		);
 
-		$this->mocked_import = $this->constructEmpty(
-			Import::class,
-			array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
-			array(
-				'get' => function( $key ) use ( $mocked_variables ) {
-					if ( 'variables' === $key ) {
-						return $mocked_variables;
-					}
-					if ( 'error_log' === $key ) {
-						return $this->mocked_errorlog;
-					}
-
-					return null;
-				},
-			)
-		);
+//		$this->mocked_import = $this->constructEmpty(
+//			Import::class,
+//			array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
+//			array(
+//				'get' => function( $key ) use ( $mocked_variables ) {
+//					if ( 'variables' === $key ) {
+//						return $mocked_variables;
+//					}
+//					if ( 'error_log' === $key ) {
+//						return $this->mocked_errorlog;
+//					}
+//
+//					return null;
+//				},
+//			)
+//		);
 	}
 
 	/**
@@ -183,12 +182,6 @@ class Import_User_UnitTest extends Unit {
 
 		stubs(
 			array(
-				'__'                         => null,
-				'_e'                         => null,
-				'_ex'                        => null,
-				'_x'                         => null,
-				'_n'                         => null,
-				'_nx'                        => null,
 				'translate'                  => null,
 				'esc_html__'                 => null,
 				'esc_html_x'                 => null,
@@ -208,11 +201,9 @@ class Import_User_UnitTest extends Unit {
 				'register_deactivation_hook' => '__return_true',
 				'get_option'                 => 'https://www.paypal.com/cgi-bin/webscr',
 				'update_option'              => true,
+				'plugin_dir_path'            => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
 			)
 		);
-
-		Functions\when( 'plugin_dir_path' )
-			->justReturn( '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv' );
 	}
 
 	/**
@@ -226,7 +217,6 @@ class Import_User_UnitTest extends Unit {
 	 * @test
 	 */
 	public function it_should_create_new_user( $user_line, $meta_line, $expected ) {
-
 		$meta_headers = array();
 		$data_headers = array();
 		$import_data  = array();
@@ -240,6 +230,8 @@ class Import_User_UnitTest extends Unit {
 		if ( null !== $meta_line ) {
 			list( $import_meta, $meta_headers ) = fixture_read_from_meta_csv( $meta_line );
 		}
+
+		$this->load_stubs();
 
 		$import_user = new Import_User( $this->mocked_variables, $this->mocked_errorlog );
 		$result      = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ) );

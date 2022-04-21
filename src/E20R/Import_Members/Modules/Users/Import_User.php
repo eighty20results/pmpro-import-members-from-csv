@@ -73,18 +73,21 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		/**
 		 * Process and Import user data/user meta data
 		 *
-		 * @param array    $user_data Array of data from the CSV file we will import as WP_User data
-		 * @param array    $user_meta Array of metadata for the user being imported
-		 * @param string[] $headers   The file headers/import headers supplied
+		 * @param array         $user_data Array of data from the CSV file we will import as WP_User data
+		 * @param array         $user_meta Array of metadata for the user being imported
+		 * @param string[]      $headers The file headers/import headers supplied
+		 * @param WP_Error|null $wp_error For unit testing. Default and expected received value should be null.
 		 *
 		 * @return int
 		 * @throws InvalidSettingsKey Thrown when we specify an invalid setting (variable)
 		 */
-		public function import( $user_data, $user_meta, $headers ) {
+		public function import( $user_data, $user_meta, $headers, $wp_error = null ) {
 
 			global $e20r_import_err;
 			global $e20r_import_warn;
 			global $active_line_number;
+
+			// TODO: Refactor to use a single WP_Error() class for the warn & err globals
 
 			$user_upd_validator = new User_Update( $this->variables, $this->error_log );
 			$user_id_validator  = new User_ID( $this->variables, $this->error_log );
@@ -159,7 +162,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				$msg = sprintf(
 				// translators: %d row number
-					__(
+					esc_attr__(
 						'Created user login field for record at row %d',
 						'pmpro-import-members-from-csv'
 					),
