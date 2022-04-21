@@ -57,6 +57,7 @@
 		"spatie/phpunit-snapshot-assertions": "^4.2.5",
 		"lucatume/wp-browser": "^3.0",
 		"brain/monkey": ">=2.3.0",
+	  	"brain/faker": "dev-master",
 		"szepeviktor/phpstan-wordpress": "^v0.7",
 		"mikey179/vfsstream": "~1",
 		"phpstan/extension-installer": "^1.1",

@@ -180,11 +180,9 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function load_stubs() : void {
 
-		stubs(
+		/*stubs(
 			array(
 				'translate'                  => null,
-				'esc_html__'                 => null,
-				'esc_html_x'                 => null,
 				'esc_attr__'                 => null,
 				'esc_attr_x'                 => null,
 				'esc_html_e'                 => null,
@@ -203,7 +201,7 @@ class Import_User_UnitTest extends Unit {
 				'update_option'              => true,
 				'plugin_dir_path'            => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
 			)
-		);
+		);*/
 	}
 
 	/**
@@ -217,6 +215,26 @@ class Import_User_UnitTest extends Unit {
 	 * @test
 	 */
 	public function it_should_create_new_user( $user_line, $meta_line, $expected ) {
+
+		Functions\expect( 'wp_upload_dir' )->andReturnUsing(
+			function() {
+				return array(
+					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+					'basedir' => '/var/www/html/wp-content/uploads',
+				);
+			}
+		);
+		Functions\when( 'wp_insert_user' )->justReturn( 1001 );
+		Functions\stubs(
+			array(
+				'get_option'      => 'https://www.paypal.com/cgi-bin/webscr',
+				'update_option'   => true,
+				'plugin_dir_path' => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
+			)
+		);
+		$mocked_wp_error = $this->makeEmpty( \WP_Error::class );
+		// Functions\when( 'esc_attr__' )->returnArg( 1 );
+
 		$meta_headers = array();
 		$data_headers = array();
 		$import_data  = array();
@@ -234,7 +252,7 @@ class Import_User_UnitTest extends Unit {
 		$this->load_stubs();
 
 		$import_user = new Import_User( $this->mocked_variables, $this->mocked_errorlog );
-		$result      = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ) );
+		$result      = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $mocked_wp_error );
 
 		self::assertSame( $expected, $result );
 	}
