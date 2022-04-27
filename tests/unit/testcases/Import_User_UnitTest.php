@@ -30,15 +30,21 @@ use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
 use E20R\Import_Members\Modules\PMPro\PMPro;
+use E20R\Import_Members\Modules\Users\Create_Password;
 use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Modules\Users\User_Present;
+use E20R\Import_Members\Modules\Users\User_Update;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
+use E20R\Import_Members\Validate\Column_Values\Users_Validation;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+
+use WP_Error;
 use WP_Mock;
 
 use stdClass;
@@ -102,21 +108,37 @@ class Import_User_UnitTest extends Unit {
 
 	/**
 	 * Load all class mocks we need (with namespaces)
+	 * @throws \Exception
 	 */
 	public function load_mocks() : void {
 
-		$this->mocked_errorlog = $this->makeEmpty(
-			Error_Log::class,
-			array(
-				'debug' => function( $msg ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( "Mocked log: {$msg}" );
-				},
-			)
-		);
+		try {
+			$this->mocked_errorlog = $this->makeEmpty(
+				Error_Log::class,
+				array(
+					'debug' => function( $msg ) {
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo 'Mocked log: ' . $msg;
+					},
+				)
+			);
+		} catch ( \Exception $e ) {
+			$this->fail( 'Exception: ' . $e->getMessage() );
+		}
 
 		$mocked_variables = $this->makeEmpty(
-			Variables::class
+			Variables::class,
+			array(
+				'get' => function( $param ) {
+					if ( 'site_id' === $param ) {
+						return 0;
+					}
+
+					if ( '' === $param ) {
+
+					}
+				},
+			)
 		);
 
 		$mocked_pmpro = $this->makeEmpty(
@@ -155,22 +177,22 @@ class Import_User_UnitTest extends Unit {
 			Ajax::class
 		);
 
-//		$this->mocked_import = $this->constructEmpty(
-//			Import::class,
-//			array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
-//			array(
-//				'get' => function( $key ) use ( $mocked_variables ) {
-//					if ( 'variables' === $key ) {
-//						return $mocked_variables;
-//					}
-//					if ( 'error_log' === $key ) {
-//						return $this->mocked_errorlog;
-//					}
-//
-//					return null;
-//				},
-//			)
-//		);
+		//      $this->mocked_import = $this->constructEmpty(
+		//          Import::class,
+		//          array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
+		//          array(
+		//              'get' => function( $key ) use ( $mocked_variables ) {
+		//                  if ( 'variables' === $key ) {
+		//                      return $mocked_variables;
+		//                  }
+		//                  if ( 'error_log' === $key ) {
+		//                      return $this->mocked_errorlog;
+		//                  }
+		//
+		//                  return null;
+		//              },
+		//          )
+		//      );
 	}
 
 	/**
@@ -214,7 +236,48 @@ class Import_User_UnitTest extends Unit {
 	 * @dataProvider fixture_create_user_import
 	 * @test
 	 */
-	public function it_should_create_new_user( $user_line, $meta_line, $expected ) {
+	public function it_should_create_new_user( $allow_update, $user_line, $meta_line, $expected ) {
+
+		$mocked_variables = $this->makeEmpty(
+			Variables::class,
+			array(
+				'get' => function( $param ) use ( $allow_update ) {
+					if ( 'site_id' === $param ) {
+						return 0;
+					}
+
+					if ( 'update_users' === $param ) {
+						return $allow_update;
+					}
+
+					if ( 'password_hashing_disabled' === $param ) {
+						return false;
+					}
+				},
+			)
+		);
+
+		$mocked_user_present_validator = $this->makeEmptyExcept(
+			User_Present::class,
+			'status_msg',
+			array(
+				'validate' => false,
+			)
+		);
+
+		$mocked_upd_validator = $this->makeEmpty(
+			User_Update::class,
+			array(
+				'validate' => true,
+			)
+		);
+
+		$mocked_passwd_validator = $this->makeEmpty(
+			Create_Password::class,
+			array(
+				'validate' => true,
+			)
+		);
 
 		Functions\expect( 'wp_upload_dir' )->andReturnUsing(
 			function() {
@@ -227,13 +290,19 @@ class Import_User_UnitTest extends Unit {
 		Functions\when( 'wp_insert_user' )->justReturn( 1001 );
 		Functions\stubs(
 			array(
-				'get_option'      => 'https://www.paypal.com/cgi-bin/webscr',
-				'update_option'   => true,
-				'plugin_dir_path' => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
+				'get_option'           => 'https://www.paypal.com/cgi-bin/webscr',
+				'update_option'        => true,
+				'plugin_dir_path'      => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
+				'is_email'             => true,
+				'wp_generate_password' => 'dummy_password_string',
+				'sanitize_user'        => null,
+				'username_exists'      => false, // To ensure we create a new user, not update and existing one
+				'sanitize_title'       => null,
+				'email_exists'         => false, // To ensure we create a new user, not update and existing one
 			)
 		);
-		$mocked_wp_error = $this->makeEmpty( \WP_Error::class );
-		// Functions\when( 'esc_attr__' )->returnArg( 1 );
+
+		$mocked_wp_error = $this->makeEmpty( WP_Error::class );
 
 		$meta_headers = array();
 		$data_headers = array();
@@ -242,17 +311,50 @@ class Import_User_UnitTest extends Unit {
 
 		// Read from one of the test file(s)
 		if ( null !== $user_line ) {
-			list( $import_data, $data_headers ) = fixture_read_from_user_csv( $user_line );
+			list( $data_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
 		}
 
 		if ( null !== $meta_line ) {
-			list( $import_meta, $meta_headers ) = fixture_read_from_meta_csv( $meta_line );
+			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
+
+		Functions\when( 'get_user_by' )->alias(
+			function( $type, $value ) use ( $import_data ) {
+
+				$id   = null;
+				$name = null;
+
+				if ( 'ID' !== $type ) {
+					$this->fail( 'We should only call get_user_by() with an ID parameter for this test' );
+				}
+
+				if ( ! empty( $import_data['ID'] ) ) {
+					$this->fail( 'Should not have an ID of an existing user when calling get_user_by() during this test!' );
+				}
+
+				return $this->constructEmpty(
+					WP_Error::class,
+					array( 'Returning user not found error object as expected' )
+				);
+
+			}
+		);
+
+		Functions\when( 'wp_update_user' )
+			->justReturn(
+				function( $userdata ) {
+					$this->fail( 'Should never call wp_update_user()' );
+				}
+			);
 
 		$this->load_stubs();
 
-		$import_user = new Import_User( $this->mocked_variables, $this->mocked_errorlog );
-		$result      = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $mocked_wp_error );
+		$import_user = new Import_User( $mocked_variables, $this->mocked_errorlog, $mocked_upd_validator, $mocked_user_present_validator, $mocked_passwd_validator );
+		try {
+			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $mocked_wp_error );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		}
 
 		self::assertSame( $expected, $result );
 	}
@@ -265,12 +367,13 @@ class Import_User_UnitTest extends Unit {
 	public function fixture_create_user_import() {
 		return array(
 			array(
-				1,
+				false,
+				0,
 				null,
 				array(
 					'user_login'   => 'test_user_1',
 					'user_email'   => 'test_user_1@example.com',
-					'user_pass'    => '',
+					'user_pass'    => 'dummy_password_string',
 					'first_name'   => 'Thomas',
 					'last_name'    => 'Example',
 					'display_name' => 'Thomas Example',
