@@ -141,6 +141,7 @@
       <path value="$USER_HOME$/code/WP/WordPress" />
       <path value="$PROJECT_DIR$/inc/fzaninotto/faker" />
       <path value="$PROJECT_DIR$/inc/brain/faker" />
+      <path value="$PROJECT_DIR$/../WordPress/" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1">
