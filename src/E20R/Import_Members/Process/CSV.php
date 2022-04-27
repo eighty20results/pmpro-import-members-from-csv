@@ -316,8 +316,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			if ( ! is_array( $e20r_import_warn ) ) {
 				$e20r_import_warn = array();
 			}
-			$warnings = array();
-			$headers  = array();
+
+			$headers = array();
 
 			if ( null === $import_user ) {
 				$import_user = new Import_User();
@@ -393,7 +393,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 
 				// If we are on the first line, the columns are the headers
 				if ( true === $first ) {
-
 					$headers = $this->process_header( $line );
 					$first   = false;
 
@@ -607,9 +606,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				delete_option( 'e20r_import_errors' );
 			}
 
-			restore_current_blog();
-
-			// todo: Return from multisite
 			return array(
 				'user_ids' => $user_ids,
 				'errors'   => $e20r_import_err,
