@@ -140,7 +140,7 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 			$time        = gmdate( 'H:m:s', $req_time );
 
 			// Save to the HTTP server error log as a Notice (not a warning/error)
-			// phpcs:ignore
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log(
 				sprintf( '[%1$s](%2$s) %3$s - %4$s', $tid, $time, $from, $msg ),
 				E_USER_NOTICE
