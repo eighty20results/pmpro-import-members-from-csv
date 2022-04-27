@@ -21,6 +21,7 @@
 
 namespace E20R\Import_Members\Modules\Users;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
@@ -38,7 +39,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 *
 		 * @var Error_Log|null
 		 */
-		private $error_log = null;
+		protected $error_log = null;
 
 		/**
 		 * Instance of the Variables() class
@@ -55,7 +56,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		private $wp_error = null;
 
 		/**
-		 * Constructor for the User_Update() class
+		 * Constructor for the User_Present() class
 		 *
 		 * @param Variables|null $variables
 		 * @param Error_Log|null $error_log
@@ -108,7 +109,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					);
 					$new_error = $this->wp_error;
 					$new_error->add( 'e20r_im_ident', $msg );
-					$e20r_import_err[] = $new_error;
+					$e20r_import_err[ "no_identifying_info_{$active_line_number}" ] = $new_error;
 					break;
 
 				case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
@@ -120,9 +121,10 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						),
 						$active_line_number
 					);
+
 					$new_error = $this->wp_error;
 					$new_error->add( 'e20r_im_noupd', $msg );
-					$e20r_import_warn[] = $new_error;
+					$e20r_import_warn[ "cannot_update_{$active_line_number}" ] = $new_error;
 					break;
 
 				case Status::E20R_ERROR_ID_NOT_NUMBER:
@@ -134,9 +136,37 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						),
 						$active_line_number
 					);
+
 					$new_error = $this->wp_error;
 					$new_error->add( 'e20r_im_id', $msg );
-					$e20r_import_err[] = $new_error;
+					$e20r_import_err[ "error_invalid_user_id_{$active_line_number}" ] = $new_error;
+					break;
+
+				case Status::E20R_ERROR_NO_EMAIL:
+					$msg = sprintf(
+						// translators: %1$d: The line number from the CSV import file
+						esc_attr__( 'Invalid email in row %1$d (Not imported).', 'pmpro-import-members-from-csv' ),
+						$active_line_number
+					);
+
+					$new_error = $this->wp_error;
+					$new_error->add( 'e20r_im_email', $msg, $user_data['user_email'] ?? null );
+					$e20r_import_warn[ "warn_invalid_email_{$active_line_number}" ] = $new_error;
+					break;
+
+				case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
+					$msg = sprintf(
+						// translators: %1$s column name, %2$s: row number
+						esc_attr__(
+							'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected (row: %1$d). Will not import/update user.',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number++
+					);
+
+					$new_error = $this->wp_error;
+					$new_error->add( 'e20r_im_email_login', $msg );
+					$e20r_import_warn[ "warn_invalid_email_login_{$active_line_number}" ] = $new_error;
 					break;
 			}
 		}
@@ -164,29 +194,50 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				return Status::E20R_USER_IDENTIFIER_MISSING;
 			}
 
+			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
+			if ( ! $has_login && ! $has_email ) {
+				$this->error_log->debug( 'Need either user_login or user_email to be present!' );
+				return Status::E20R_ERROR_NO_EMAIL_OR_LOGIN;
+			}
+
+			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
 			if ( true === $has_id && false === is_int( $record['ID'] ) ) {
 				$this->error_log->debug( "'ID' column isn't a number" );
 				return Status::E20R_ERROR_ID_NOT_NUMBER;
 			}
 
+			// Is the user_email supplied and is it a valid email address
 			if ( true === $has_email && false === is_email( $record['user_email'] ) ) {
-				$this->error_log->debug( "'user_email' column isn't a valid email address" );
+				$this->error_log->debug( "'user_email' column doesn't contain a valid email address" );
 				return Status::E20R_ERROR_NO_EMAIL;
 			}
 
-			// Check if user exists on the system
-			$user = $has_id ? get_user_by( 'ID', $record['ID'] ) : false;
+			// Figure out if we allow updates since we didn't receive the value from the calling method
+			if ( null === $allow_update ) {
+				try {
+					$allow_update = (bool) $this->variables->get( 'update_users' );
+				} catch ( InvalidSettingsKey $e ) {
+					$this->error_log->add_error_msg(
+						sprintf(
+						// translators: %1$s: Exception message
+							esc_attr__( 'Unexpected error: %1$s', 'pmpro-import-members-from-csv' ),
+							$e->getMessage()
+						)
+					);
+				}
+			}
 
+			// Check if user exists on the system based on the supplied WP_User->ID
+			$user = $has_id ? get_user_by( 'ID', $record['ID'] ) : false;
 			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
 			if ( true === ( $id_status = $this->user_data_can_be_imported( $has_id, $user, $allow_update ) ) ) {
 				$this->error_log->debug( 'User found using the ID value' );
 				return $id_status;
 			}
-
 			$this->status_msg( $id_status, $allow_update );
 
+			// Check if the user exists based on the user_login info
 			$user = $has_login ? get_user_by( 'login', $record['user_login'] ) : false;
-
 			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
 			if ( true === ( $login_status = $this->user_data_can_be_imported( $has_login, $user, $allow_update ) ) ) {
 				$this->error_log->debug( 'User found using the user_login value' );
@@ -195,15 +246,15 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			$this->status_msg( $login_status, $allow_update );
 
+			// Check if the user exists on the system based on the supplied user_email data
 			$user = $has_email ? get_user_by( 'email', $record['user_email'] ) : false;
-
 			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
 			if ( true === ( $email_status = $this->user_data_can_be_imported( $has_email, $user, $allow_update ) ) ) {
 				$this->error_log->debug( 'User found using the user_email value' );
 				return $email_status;
 			}
-
 			$this->status_msg( $email_status, $allow_update );
+
 			return false;
 		}
 
@@ -214,7 +265,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 * @param false|WP_User $user The WP_User record for the import data (if it exists)
 		 * @param bool          $allow_update Whether the admin set the 'allow updates' flag to true or not
 		 *
-		 * @return false|int
+		 * @return true|int
 		 */
 		private function user_data_can_be_imported( $field_exists, $user, $allow_update ) {
 

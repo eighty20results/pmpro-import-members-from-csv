@@ -45,18 +45,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		private $error_log = null;
 
 		/**
-		 * Class to manage User update validation
-		 *
-		 * @var User_Update|null
-		 */
-		private $user_upd_validator = null;
-
-		/**
 		 * Class used to check if the user exists on the system already (validation)
 		 *
 		 * @var null|User_Present
 		 */
-		private $user_presence_validator = null;
+		private $user_presence = null;
 
 		/**
 		 * Class to check validity of the password record (if it is included)
@@ -70,11 +63,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @param null|Variables $variables Instance of the Variables() class
 		 * @param null|Error_Log $error_log Instance of the Error_Log() class
-		 * @param null|User_Update $user_upd_validator Validator for whether to allow
+		 * @param null|User_Present $user_presence Instance of the tests for user existence on the system
+		 * @param null|Create_Password $passwd_validator Instance of the tests for the user password
 		 *
 		 * @access private
 		 */
-		public function __construct( $variables = null, $error_log = null, $user_upd_validator = null, $user_presence_validator = null, $passwd_validator = null ) {
+		public function __construct( $variables = null, $error_log = null, $user_presence = null, $passwd_validator = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
@@ -85,15 +79,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 			$this->variables = $variables;
 
-			if ( null === $user_upd_validator ) {
-				$user_upd_validator = new User_Update( $this->variables, $this->error_log );
+			if ( null === $user_presence ) {
+				$user_presence = new User_Present( $this->variables, $this->error_log );
 			}
-			$this->user_upd_validator = $user_upd_validator;
-
-			if ( null === $user_presence_validator ) {
-				$user_presence_validator = new User_Present( $this->variables, $this->error_log );
-			}
-			$this->user_presence_validator = $user_presence_validator;
+			$this->user_presence = $user_presence;
 
 			if ( null === $passwd_validator ) {
 				$passwd_validator = new Create_Password( $this->variables, $this->error_log );
@@ -152,13 +141,13 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
 			$user_id                  = 0;
-			$user                     = null;
+			$user                     = false;
 			$user_exists_needs_update = false;
 
 			/**
 			 * Can the user from the import data be found on the system
 			 */
-			$user_exists = $this->user_presence_validator->validate( $user_data, $allow_update );
+			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
 
 			if ( true === $user_exists && true === $allow_update ) {
 				$this->error_log->debug(
@@ -170,90 +159,16 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				if ( isset( $user_data['ID'] ) && ! empty( $user_data['ID'] ) ) {
 					$user = get_user_by( 'ID', $user_data['user_email'] );
-				} elseif ( isset( $user_data['user_email'] ) && ! empty( $user_data['user_email'] ) ) {
-					$user = get_user_by( 'email', $user_data['user_email'] );
 				} elseif ( isset( $user_data['user_login'] ) && ! empty( $user_data['user_login'] ) ) {
 					$user = get_user_by( 'login', $user_data['user_login'] );
+				} elseif ( isset( $user_data['user_email'] ) && ! empty( $user_data['user_email'] ) ) {
+					$user = get_user_by( 'email', $user_data['user_email'] );
 				}
 
 				if ( isset( $user->ID ) ) {
-					$user_id         = $user->ID;
+					$user_id                  = $user->ID;
 					$user_exists_needs_update = true;
 				}
-			}
-
-			if (
-				! in_array( 'user_login', $headers, true ) &&
-				empty( $user ) &&
-				! empty( $user_data['user_email'] ) &&
-				is_email( $user_data['user_email'] )
-			) {
-
-				$msg = sprintf(
-				// translators: %d row number
-					esc_attr__(
-						'Created user login field for record at row %d',
-						'pmpro-import-members-from-csv'
-					),
-					$active_line_number
-				);
-
-				$login                   = preg_replace( '/@.*/', '', $user_data['user_email'] );
-				$user_data['user_login'] = preg_replace( '/-|\.|_|\+/', '', $login );
-
-				$new_error = $wp_error;
-				$new_error->add( 'e20r_im_login', $msg );
-				$e20r_import_warn[ "warn_login_created_{$active_line_number}" ] = $new_error;
-			}
-
-			if ( empty( $user_data['user_email'] ) || ! is_email( $user_data['user_email'] ) ) {
-
-				$msg = sprintf(
-				// translators: %d row number
-					__( 'Invalid email in row %d (Not imported).', 'pmpro-import-members-from-csv' ),
-					( $active_line_number )
-				);
-
-				$new_error = $wp_error;
-				$new_error->add( 'e20r_im_email', $msg, $user_data['user_email'] ?? null );
-				$e20r_import_warn[ "warn_invalid_email_{$active_line_number}" ] = $new_error;
-
-				return $user_id;
-			}
-
-			$user_identifier = $this->user_upd_validator->validate( $user_data, $allow_update );
-
-			if ( true === $user_exists_needs_update && true !== $user_identifier ) {
-
-				switch ( $user_identifier ) {
-					case Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL:
-						$missing_column = 'user_email';
-						break;
-					case Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN:
-						$missing_column = 'user_login';
-						break;
-					case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
-						$missing_column = 'user_email or user_login';
-						break;
-					default:
-						$missing_column = 'unknown';
-				}
-
-				$msg = sprintf(
-				// translators: %1$s column name, %2$s: row number
-					__(
-						'No "%1$s" column found, or the "%1$s" was/were included, the user exists and the "Update user record" option was NOT selected (row: %2$d). Will not import/update user.',
-						'pmpro-import-members-from-csv'
-					),
-					$missing_column,
-					$active_line_number ++
-				);
-
-				$new_error = $wp_error;
-				$new_error->add( 'e20r_im_login', $msg );
-				$e20r_import_err[ "user_update_not_allowed_{$active_line_number}" ] = $new_error;
-
-				return $user_id;
 			}
 
 			$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
@@ -273,26 +188,23 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			if ( false === $user && false === $user_exists_needs_update && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding new user record' );
 				$user_id = wp_insert_user( $user_data );
-			}
-
-			if ( false === $user && false === $user_exists_needs_update && true === $password_hashing_disabled ) {
+				// FIXME: insert_or_update..() needs to support update with a pre-hashed password as well
+			} elseif ( false === $user && false === $user_exists_needs_update && true === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
-			}
-
-			// Insert, Update or insert without (re) hashing the password
-			if ( true === $user_exists_needs_update && true === $allow_update && false === $password_hashing_disabled ) {
+			} elseif ( true === $user_exists_needs_update && true === $allow_update ) {
+				// Insert, Update or insert without (re) hashing the password
 				$this->error_log->debug( 'Updating an existing user record...' );
 				$user_id = wp_update_user( $user_data );
 			} else {
-				$active_line_number ++;
 				$new_error = $wp_error;
 				$new_error->add(
-					'e20r_im_account',
+					"e20r_im_account_{$active_line_number}",
 					sprintf(
-							// translators: %s Email address
-						esc_attr__( 'No update/insert action taken for %s', 'pmpro-import-members-from-csv' ),
-						$user_data['user_email']
+							// translators: %1$s: Email address, %2$d: Row number from CSV file
+						esc_attr__( 'No update/insert action taken for %1$s, on row %2$d', 'pmpro-import-members-from-csv' ),
+						$user_data['user_email'],
+						$active_line_number
 					)
 				);
 				$e20r_import_warn[ "user_not_imported_{$active_line_number}" ] = $new_error;
@@ -330,29 +242,22 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 
 				// If we created a new user, send new user notification?
-				if ( false === $user_exists_needs_update ) {
+				$new_user_notification       = (bool) $this->variables->get( 'new_user_notification' );
+				$admin_new_user_notification = (bool) $this->variables->get( 'admin_new_user_notification' );
 
-					$new_user_notification       = (bool) $this->variables->get( 'new_user_notification' );
-					$admin_new_user_notification = (bool) $this->variables->get( 'admin_new_user_notification' );
-
-					// Only to the user?
-					if ( true === $new_user_notification && false === $admin_new_user_notification ) {
-						$msg_target = 'user';
-					}
-
+				// Only to the user?
+				if ( true === $new_user_notification && false === $admin_new_user_notification ) {
+					$msg_target = 'user';
+				} elseif ( false === $new_user_notification && true === $admin_new_user_notification ) {
 					// Only to the admin?
-					if ( false === $new_user_notification && true === $admin_new_user_notification ) {
-						$msg_target = 'admin';
-					}
-
+					$msg_target = 'admin';
+				} elseif ( true === $new_user_notification && true === $admin_new_user_notification ) {
 					// To the user _and_ the admin?
-					if ( true === $new_user_notification && true === $admin_new_user_notification ) {
-						$msg_target = 'both';
-					}
+					$msg_target = 'both';
+				}
 
-					if ( true === $new_user_notification || true === $admin_new_user_notification ) {
-						wp_new_user_notification( $user_id, null, $msg_target );
-					}
+				if ( true === $new_user_notification || true === $admin_new_user_notification ) {
+					wp_new_user_notification( $user_id, null, $msg_target );
 				}
 
 				if ( ! empty( $user_data['user_registered'] ) && true === Time::validate( $user_data['user_registered'] ) ) {
@@ -715,15 +620,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			return $user_meta;
-		}
-
-		/**
-		 * Hide/protect the __clone() magic method for this class (singleton pattern)
-		 *
-		 * @access private
-		 */
-		private function __clone() {
-			// TODO: Implement __clone() method.
 		}
 	}
 }

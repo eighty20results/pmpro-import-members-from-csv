@@ -44,6 +44,8 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
+use Codeception\Extension\Logger;
+
 use WP_Error;
 use WP_Mock;
 
@@ -117,8 +119,9 @@ class Import_User_UnitTest extends Unit {
 				Error_Log::class,
 				array(
 					'debug' => function( $msg ) {
-						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						echo 'Mocked log: ' . $msg;
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						error_log( 'Mocked debug: ' . $msg );
+
 					},
 				)
 			);
@@ -257,21 +260,6 @@ class Import_User_UnitTest extends Unit {
 			)
 		);
 
-		$mocked_user_present_validator = $this->makeEmptyExcept(
-			User_Present::class,
-			'status_msg',
-			array(
-				'validate' => false,
-			)
-		);
-
-		$mocked_upd_validator = $this->makeEmpty(
-			User_Update::class,
-			array(
-				'validate' => true,
-			)
-		);
-
 		$mocked_passwd_validator = $this->makeEmpty(
 			Create_Password::class,
 			array(
@@ -287,7 +275,16 @@ class Import_User_UnitTest extends Unit {
 				);
 			}
 		);
-		Functions\when( 'wp_insert_user' )->justReturn( 1001 );
+
+		Functions\expect( 'wp_insert_user' )
+			->once()
+			->andReturnUsing(
+				function( $data ) use ( $expected ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					return $expected;
+				}
+			);
+
 		Functions\stubs(
 			array(
 				'get_option'           => 'https://www.paypal.com/cgi-bin/webscr',
@@ -299,10 +296,14 @@ class Import_User_UnitTest extends Unit {
 				'username_exists'      => false, // To ensure we create a new user, not update and existing one
 				'sanitize_title'       => null,
 				'email_exists'         => false, // To ensure we create a new user, not update and existing one
+				'is_multisite'         => false,
 			)
 		);
 
-		$mocked_wp_error = $this->makeEmpty( WP_Error::class );
+		$mocked_wp_error = $this->makeEmptyExcept(
+			WP_Error::class,
+			'add'
+		);
 
 		$meta_headers = array();
 		$data_headers = array();
@@ -317,6 +318,14 @@ class Import_User_UnitTest extends Unit {
 		if ( null !== $meta_line ) {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
+
+		$mocked_user_present_validator = $this->makeEmptyExcept(
+			User_Present::class,
+			'status_msg',
+			array(
+				'validate' => isset( $import_data['ID'] ) && ! empty( $import_data['ID'] ),
+			)
+		);
 
 		Functions\when( 'get_user_by' )->alias(
 			function( $type, $value ) use ( $import_data ) {
@@ -349,13 +358,25 @@ class Import_User_UnitTest extends Unit {
 
 		$this->load_stubs();
 
-		$import_user = new Import_User( $mocked_variables, $this->mocked_errorlog, $mocked_upd_validator, $mocked_user_present_validator, $mocked_passwd_validator );
+		$import_user = $this->constructEmptyExcept(
+			Import_User::class,
+			'import',
+			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator ),
+			array(
+				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
+					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
+				},
+			)
+		);
+
+		// $import_user = new Import_User( $mocked_variables, $this->mocked_errorlog,  );
 		try {
 			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $mocked_wp_error );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
-
+		global $e20r_import_warn;
+		error_log( 'Warnings: ' . print_r( $e20r_import_warn, true ) );
 		self::assertSame( $expected, $result );
 	}
 
@@ -370,15 +391,13 @@ class Import_User_UnitTest extends Unit {
 				false,
 				0,
 				null,
-				array(
-					'user_login'   => 'test_user_1',
-					'user_email'   => 'test_user_1@example.com',
-					'user_pass'    => 'dummy_password_string',
-					'first_name'   => 'Thomas',
-					'last_name'    => 'Example',
-					'display_name' => 'Thomas Example',
-					'role'         => 'subscriber',
-				),
+				1001,
+			),
+			array(
+				true,
+				1,
+				null,
+				1002,
 			),
 		);
 	}
