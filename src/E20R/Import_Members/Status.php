@@ -26,10 +26,11 @@ if ( ! class_exists( '\E20R\Import_Members\Status' ) ) {
 	 */
 	class Status {
 
-		const E20R_ERROR_NO_USER_ID     = 4;
-		const E20R_ERROR_NO_EMAIL       = 3;
-		const E20R_ERROR_NO_LOGIN       = 2;
-		const E20R_ERROR_USER_NOT_FOUND = 10;
+		const E20R_ERROR_NO_USER_ID        = 4;
+		const E20R_ERROR_NO_EMAIL          = 3;
+		const E20R_ERROR_NO_LOGIN          = 2;
+		const E20R_ERROR_USER_NOT_FOUND    = 10;
+		const E20R_USER_IDENTIFIER_MISSING = 11;
 
 		const E20R_ERROR_NO_UPDATE_FROM_EMAIL  = 100;
 		const E20R_ERROR_NO_UPDATE_FROM_LOGIN  = 101;
