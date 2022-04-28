@@ -297,6 +297,8 @@ class Import_User_UnitTest extends Unit {
 				'sanitize_title'       => null,
 				'email_exists'         => false, // To ensure we create a new user, not update and existing one
 				'is_multisite'         => false,
+				'maybe_unserialize'    => null,
+				'update_user_meta'     => true,
 			)
 		);
 
@@ -390,13 +392,13 @@ class Import_User_UnitTest extends Unit {
 			array(
 				false,
 				0,
-				null,
+				0,
 				1001,
 			),
 			array(
-				true,
-				1,
-				null,
+				false,
+				2,
+				2,
 				1002,
 			),
 		);
