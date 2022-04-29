@@ -33,7 +33,6 @@ use E20R\Import_Members\Modules\PMPro\PMPro;
 use E20R\Import_Members\Modules\Users\Create_Password;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Modules\Users\User_Present;
-use E20R\Import_Members\Modules\Users\User_Update;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
@@ -84,6 +83,14 @@ class Import_User_UnitTest extends Unit {
 	 * @var null|MemberOrder
 	 */
 	private $mock_order = null;
+
+	/**
+	 * Mocked Error class for WordPress
+	 *
+	 * @var null|WP_Error
+	 *
+	 */
+	private $mocked_wp_error = null;
 
 	/**
 	 * Codeception setUp method
@@ -180,22 +187,10 @@ class Import_User_UnitTest extends Unit {
 			Ajax::class
 		);
 
-		//      $this->mocked_import = $this->constructEmpty(
-		//          Import::class,
-		//          array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
-		//          array(
-		//              'get' => function( $key ) use ( $mocked_variables ) {
-		//                  if ( 'variables' === $key ) {
-		//                      return $mocked_variables;
-		//                  }
-		//                  if ( 'error_log' === $key ) {
-		//                      return $this->mocked_errorlog;
-		//                  }
-		//
-		//                  return null;
-		//              },
-		//          )
-		//      );
+		$this->mocked_wp_error = $this->makeEmptyExcept(
+			WP_Error::class,
+			'add'
+		);
 	}
 
 	/**
@@ -204,37 +199,38 @@ class Import_User_UnitTest extends Unit {
 	 * @return void
 	 */
 	public function load_stubs() : void {
-
-		/*stubs(
+		Functions\stubs(
 			array(
-				'translate'                  => null,
-				'esc_attr__'                 => null,
-				'esc_attr_x'                 => null,
-				'esc_html_e'                 => null,
-				'esc_attr_e'                 => null,
-				'get_transient'              => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
-				'esc_url'                    => null,
-				'esc_url_raw'                => null,
-				'wp_upload_dir'              => function() {
-					return array(
-						'baseurl' => 'https://localhost:7537/wp-content/uploads/',
-						'basedir' => '/var/www/html/wp-content/uploads',
-					);
-				},
-				'register_deactivation_hook' => '__return_true',
-				'get_option'                 => 'https://www.paypal.com/cgi-bin/webscr',
-				'update_option'              => true,
-				'plugin_dir_path'            => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
+				'get_option'           => 'https://www.paypal.com/cgi-bin/webscr',
+				'update_option'        => true,
+				'plugin_dir_path'      => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
+				'is_email'             => true,
+				'wp_generate_password' => 'dummy_password_string',
+				'sanitize_user'        => null,
+				'sanitize_title'       => null,
+				'is_multisite'         => false,
+				'maybe_unserialize'    => null,
+				'update_user_meta'     => true,
 			)
-		);*/
+		);
+
+		Functions\expect( 'wp_upload_dir' )->andReturnUsing(
+			function() {
+				return array(
+					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+					'basedir' => '/var/www/html/wp-content/uploads',
+				);
+			}
+		);
 	}
 
 	/**
 	 * Test of the happy-path when importing a user who doesn't exist in the DB already
 	 *
-	 * @param int $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
-	 * @param int $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
-	 * @param int $expected Result we expect to see from the test execution
+	 * @param bool $allow_update We can/can not update existing user(s)
+	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
+	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
+	 * @param int  $expected Result we expect to see from the test execution
 	 *
 	 * @dataProvider fixture_create_user_import
 	 * @test
@@ -267,15 +263,6 @@ class Import_User_UnitTest extends Unit {
 			)
 		);
 
-		Functions\expect( 'wp_upload_dir' )->andReturnUsing(
-			function() {
-				return array(
-					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
-					'basedir' => '/var/www/html/wp-content/uploads',
-				);
-			}
-		);
-
 		Functions\expect( 'wp_insert_user' )
 			->once()
 			->andReturnUsing(
@@ -284,28 +271,6 @@ class Import_User_UnitTest extends Unit {
 					return $expected;
 				}
 			);
-
-		Functions\stubs(
-			array(
-				'get_option'           => 'https://www.paypal.com/cgi-bin/webscr',
-				'update_option'        => true,
-				'plugin_dir_path'      => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
-				'is_email'             => true,
-				'wp_generate_password' => 'dummy_password_string',
-				'sanitize_user'        => null,
-				'username_exists'      => false, // To ensure we create a new user, not update and existing one
-				'sanitize_title'       => null,
-				'email_exists'         => false, // To ensure we create a new user, not update and existing one
-				'is_multisite'         => false,
-				'maybe_unserialize'    => null,
-				'update_user_meta'     => true,
-			)
-		);
-
-		$mocked_wp_error = $this->makeEmptyExcept(
-			WP_Error::class,
-			'add'
-		);
 
 		$meta_headers = array();
 		$data_headers = array();
@@ -320,6 +285,13 @@ class Import_User_UnitTest extends Unit {
 		if ( null !== $meta_line ) {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
+
+		Functions\stubs(
+			array(
+				'username_exists' => isset( $import_data['user_login'] ), // To ensure we create a new user, not update and existing one
+				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we create a new user, not update and existing one
+			)
+		);
 
 		$mocked_user_present_validator = $this->makeEmptyExcept(
 			User_Present::class,
@@ -371,14 +343,12 @@ class Import_User_UnitTest extends Unit {
 			)
 		);
 
-		// $import_user = new Import_User( $mocked_variables, $this->mocked_errorlog,  );
 		try {
-			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $mocked_wp_error );
+			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
-		global $e20r_import_warn;
-		error_log( 'Warnings: ' . print_r( $e20r_import_warn, true ) );
+
 		self::assertSame( $expected, $result );
 	}
 
@@ -400,6 +370,149 @@ class Import_User_UnitTest extends Unit {
 				2,
 				2,
 				1002,
+			),
+		);
+	}
+
+	/**
+	 * Test of the happy-path when importing a user who exist in the DB already _and_ we want to update them
+	 *
+	 * @param bool $allow_update We can/can not update existing user(s)
+	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
+	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
+	 * @param int  $expected Result we expect to see from the test execution
+	 *
+	 * @dataProvider fixture_create_user_import
+	 * @test
+	 */
+	public function it_should_update_user( $allow_update, $user_line, $meta_line, $expected ) {
+
+		$mocked_variables        = $this->makeEmpty(
+			Variables::class,
+			array(
+				'get' => function( $param ) use ( $allow_update ) {
+					if ( 'site_id' === $param ) {
+						return 0;
+					}
+
+					if ( 'update_users' === $param ) {
+						return $allow_update;
+					}
+
+					if ( 'password_hashing_disabled' === $param ) {
+						return false;
+					}
+				},
+			)
+		);
+		$mocked_passwd_validator = $this->makeEmpty(
+			Create_Password::class,
+			array(
+				'validate' => true,
+			)
+		);
+
+		Functions\stubs(
+			array(
+				'username_exists' => isset( $import_data['user_login'] ), // To ensure we update an existing user
+				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we update an existing user
+			)
+		);
+
+		Functions\expect( 'wp_update_user' )
+			->once()
+			->andReturnUsing(
+				function( $data ) use ( $expected ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					return $expected;
+				}
+			);
+
+		$meta_headers = array();
+		$data_headers = array();
+		$import_data  = array();
+		$import_meta  = array();
+
+		// Read from one of the test file(s)
+		if ( null !== $user_line ) {
+			list( $data_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
+		}
+
+		if ( null !== $meta_line ) {
+			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
+		}
+
+		$mocked_user_present_validator = $this->makeEmptyExcept(
+			User_Present::class,
+			'status_msg',
+			array(
+				'validate' => isset( $import_data['ID'] ) && ! empty( $import_data['ID'] ),
+			)
+		);
+
+		Functions\when( 'get_user_by' )->alias(
+			function( $type, $value ) use ( $import_data ) {
+
+				$id   = null;
+				$name = null;
+
+				if ( 'ID' !== $type ) {
+					$this->fail( 'We should only call get_user_by() with an ID parameter for this test' );
+				}
+
+				if ( ! empty( $import_data['ID'] ) ) {
+					$this->fail( 'Should not have an ID of an existing user when calling get_user_by() during this test!' );
+				}
+
+				return $this->constructEmpty(
+					WP_Error::class,
+					array( 'Returning user not found error object as expected' )
+				);
+
+			}
+		);
+
+		Functions\when( 'wp_insert_user' )
+			->justReturn(
+				function( $userdata ) {
+					$this->fail( 'Should never call wp_insert_user()' );
+				}
+			);
+
+		$this->load_stubs();
+
+		$import_user = $this->constructEmptyExcept(
+			Import_User::class,
+			'import',
+			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator ),
+			array(
+				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
+					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
+				},
+			)
+		);
+
+		try {
+			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		}
+
+		self::assertSame( $expected, $result );
+	}
+
+	/**
+	 * Fixture generator for the it_should_update_user() test method
+	 *
+	 * @return array
+	 */
+	public function fixture_update_user_import() {
+		return array(
+			array(
+				true,
+				1,
+				1,
+				1001,
 			),
 		);
 	}
