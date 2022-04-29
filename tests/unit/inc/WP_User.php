@@ -236,6 +236,10 @@ if ( ! class_exists( 'WP_User' ) ) {
 				return;
 			}
 
+			if ( ! isset( $this->data ) && empty( $this->data ) ) {
+				$this->data = new stdClass();
+			}
+
 			$this->data->$key = $value;
 		}
 
