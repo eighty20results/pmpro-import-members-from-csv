@@ -136,21 +136,6 @@ class Import_User_UnitTest extends Unit {
 			$this->fail( 'Exception: ' . $e->getMessage() );
 		}
 
-		$mocked_variables = $this->makeEmpty(
-			Variables::class,
-			array(
-				'get' => function( $param ) {
-					if ( 'site_id' === $param ) {
-						return 0;
-					}
-
-					if ( '' === $param ) {
-
-					}
-				},
-			)
-		);
-
 		$mocked_pmpro = $this->makeEmpty(
 			PMPro::class
 		);
@@ -252,6 +237,8 @@ class Import_User_UnitTest extends Unit {
 					if ( 'password_hashing_disabled' === $param ) {
 						return false;
 					}
+
+					return null;
 				},
 			)
 		);
@@ -402,6 +389,8 @@ class Import_User_UnitTest extends Unit {
 					if ( 'password_hashing_disabled' === $param ) {
 						return false;
 					}
+
+					return null;
 				},
 			)
 		);
