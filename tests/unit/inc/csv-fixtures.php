@@ -25,7 +25,10 @@
  * @return array
  */
 function fixture_read_from_user_csv( $line_id ) {
-	list( $header, $user_info ) = read_from_csv( __DIR__ . '/csv_files/user_data.csv', $line_id );
+	list( $header, $user_info ) = read_from_csv(
+		dirname( E20R_IMPORT_PLUGIN_FILE ) . '/tests/_data/csv_files/user_data.csv',
+		$line_id
+	);
 	return array( $header, $user_info );
 }
 
@@ -37,7 +40,10 @@ function fixture_read_from_user_csv( $line_id ) {
  * @return array
  */
 function fixture_read_from_meta_csv( $line_id ) {
-	list( $header, $meta_info ) = read_from_csv( __DIR__ . '/csv_files/user_meta.csv', $line_id );
+	list( $header, $meta_info ) = read_from_csv(
+		dirname( E20R_IMPORT_PLUGIN_FILE ) . '/tests/_data/csv_files/user_meta.csv',
+		$line_id
+	);
 	return array( $header, $meta_info );
 }
 
