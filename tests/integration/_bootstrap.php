@@ -36,12 +36,31 @@ if ( file_exists( __DIR__ . '/inc/fixture_clear_test_data.php' ) ) {
 if ( ! defined( 'AUTH_KEY' ) ) {
 	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	error_log( 'Defining AUTH_KEY' );
-	define( 'AUTH_KEY', rand_str( 32 ) );
+	define( 'AUTH_KEY', rand_string( 32 ) );
 }
 
 // pmpro_next_payment() assumes AUTH_KEY and SECURE_AUTH_KEY will always be defined
 if ( ! defined( 'SECURE_AUTH_KEY' ) ) {
 	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	error_log( 'Defining SECURE_AUTH_KEY' );
-	define( 'SECURE_AUTH_KEY', rand_str( 32 ) );
+	define( 'SECURE_AUTH_KEY', rand_string( 32 ) );
+}
+
+/**
+ * Create a semi-randomized string to use for the test versions of the *AUTH_KEY constants
+ *
+ * @param int $length
+ *
+ * @return string|null
+ */
+function rand_string( $length ) {
+	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz@#$&*';
+	$size  = strlen( $chars );
+	$str   = null;
+
+	for ( $i = 0; $i < $length; $i++ ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rand_rand
+		$str = $chars[ rand( 0, $size - 1 ) ];
+	}
+	return $str;
 }
