@@ -22,8 +22,8 @@ modules:
             plugins:
               - '00-e20r-utilities/class-loader.php'
               - 'paid-memberships-pro/paid-memberships-pro.php'
-              - 'pmpro-import-members-from-csv/class.pmpro-Import-members.php'
+              - 'pmpro-import-members-from-csv/class.pmpro-import-members.php'
             activatePlugins:
               - '00-e20r-utilities/class-loader.php'
               - 'paid-memberships-pro/paid-memberships-pro.php'
-              - 'pmpro-import-members-from-csv/class.pmpro-Import-members.php'
+              - 'pmpro-import-members-from-csv/class.pmpro-import-members.php'
