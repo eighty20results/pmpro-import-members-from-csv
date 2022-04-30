@@ -22,7 +22,6 @@
 namespace E20R\Tests\Unit;
 
 use Codeception\Test\Unit;
-use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Email\Email_Templates;
@@ -36,14 +35,12 @@ use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
-use E20R\Import_Members\Validate\Column_Values\Users_Validation;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-
-use Codeception\Extension\Logger;
+use Brain\Monkey\Actions;
 
 use WP_Error;
 use WP_Mock;
@@ -52,6 +49,7 @@ use stdClass;
 use MemberOrder;
 use WP_User;
 use function Brain\Monkey\Functions\stubs;
+use function Brain\Monkey\Actions\did;
 
 class Import_User_UnitTest extends Unit {
 	use MockeryPHPUnitIntegration;
@@ -369,11 +367,10 @@ class Import_User_UnitTest extends Unit {
 	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
 	 * @param int  $expected Result we expect to see from the test execution
 	 *
-	 * @dataProvider fixture_create_user_import
+	 * @dataProvider fixture_update_user_import
 	 * @test
 	 */
 	public function it_should_update_user( $allow_update, $user_line, $meta_line, $expected ) {
-
 		$mocked_variables        = $this->makeEmpty(
 			Variables::class,
 			array(
@@ -435,29 +432,28 @@ class Import_User_UnitTest extends Unit {
 			User_Present::class,
 			'status_msg',
 			array(
-				'validate' => isset( $import_data['ID'] ) && ! empty( $import_data['ID'] ),
+				'validate' => true,
 			)
 		);
 
 		Functions\when( 'get_user_by' )->alias(
-			function( $type, $value ) use ( $import_data ) {
-
-				$id   = null;
-				$name = null;
-
-				if ( 'ID' !== $type ) {
-					$this->fail( 'We should only call get_user_by() with an ID parameter for this test' );
-				}
-
-				if ( ! empty( $import_data['ID'] ) ) {
-					$this->fail( 'Should not have an ID of an existing user when calling get_user_by() during this test!' );
-				}
-
-				return $this->constructEmpty(
-					WP_Error::class,
-					array( 'Returning user not found error object as expected' )
+			function( $field, $data ) use ( $import_data ) {
+				$this->mocked_errorlog->debug( "Using: {$field}" );
+				$m_user = $this->makeEmpty(
+					WP_User::class
 				);
 
+				$m_user->__set( 'ID', $import_data['ID'] );
+				$m_user->__set( 'user_email', $import_data['user_email'] );
+				$m_user->__set( 'user_login', $import_data['user_login'] );
+				$m_user->__set( 'user_pass', $import_data['user_pass'] );
+				$m_user->__set( 'first_name', $import_data['first_name'] );
+				$m_user->__set( 'last_name', $import_data['last_name'] );
+				$m_user->__set( 'display_name', $import_data['display_name'] );
+				if ( ! empty( $import_data['role'] ) ) {
+					$m_user->add_role( $import_data['role'] );
+				}
+				return $m_user;
 			}
 		);
 
