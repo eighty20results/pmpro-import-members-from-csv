@@ -24,8 +24,8 @@
 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 error_log( 'Loading fixture definitions for integration tests' );
 
-if ( file_exists( __DIR__ . '/inc/csv-fixtures.php' ) ) {
-	require_once __DIR__ . '../unit/inc/csv-fixtures.php';
+if ( file_exists( __DIR__ . '/../unit/inc/csv-fixtures.php' ) ) {
+	require_once __DIR__ . '/../unit/inc/csv-fixtures.php';
 }
 
 if ( file_exists( __DIR__ . '/inc/fixture_insert_test_data.php' ) ) {
