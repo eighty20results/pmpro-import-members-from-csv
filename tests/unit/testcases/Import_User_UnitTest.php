@@ -51,6 +51,9 @@ use WP_User;
 use function Brain\Monkey\Functions\stubs;
 use function Brain\Monkey\Actions\did;
 
+use function fixture_read_from_user_csv;
+use function fixture_read_from_meta_csv;
+
 class Import_User_UnitTest extends Unit {
 	use MockeryPHPUnitIntegration;
 
