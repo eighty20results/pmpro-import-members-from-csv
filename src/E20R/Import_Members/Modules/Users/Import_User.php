@@ -128,7 +128,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			$display_errors = $this->variables->get( 'display_errors' );
 			$allow_update   = (bool) $this->variables->get( 'update_users' );
-			$msg_target     = 'admin';
+			$msg_target     = '';
 			$site_id        = $this->variables->get( 'site_id' );
 
 			if ( empty( $display_errors ) ) {
@@ -182,6 +182,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			$default_password_length = apply_filters( 'e20r_import_password_length', 12 );
 
 			if ( true === $create_password && empty( $user_data['user_pass'] ) ) {
+				$this->error_log->debug( 'Generating new password for user' );
 				$user_data['user_pass'] = wp_generate_password( $default_password_length, false );
 			}
 
@@ -212,13 +213,41 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				return $user_id;
 			}
 
-			$default_role = apply_filters( 'pmp_im_import_default_user_role', 'subscriber', $user_id, $site_id );
-			$default_role = apply_filters( 'e20r_import_default_user_role', $default_role, $user_id, $site_id );
-
 			// Is there an error?
 			if ( is_wp_error( $user_id ) ) {
 				$e20r_import_err[ $active_line_number ] = $user_id;
 			} else {
+
+				/**
+				 * Identify any new roles to add for the user (and add them)
+				 */
+				$default_role = 'subscriber';
+				$default_role = apply_filters( 'pmp_im_import_default_user_role', $default_role, $user_id, $site_id );
+				$default_role = apply_filters( 'e20r_import_default_user_role', $default_role, $user_id, $site_id );
+				$all_roles    = array( $default_role );
+
+				if ( ! empty( $user_data['role'] ) ) {
+					$role = $user_data['role'];
+					$this->error_log->debug( "Update role(s) for user with ID {$user_id}:" . $user_data['role'] );
+					$roles     = array_map( 'trim', explode( ',', $role ) );
+					$all_roles = $all_roles + $roles;
+				}
+
+				if ( empty( $user_data['role'] ) && ! empty( $default_role ) ) {
+					$this->error_log->debug( "Setting the default role for the user to {$default_role}" );
+					$user = new WP_User( $user_id );
+					$user->set_role( $default_role );
+				}
+
+				if ( ! empty( $all_roles ) ) {
+					foreach ( $all_roles as $role_name ) {
+						if ( $default_role === $role_name ) {
+							continue;
+						}
+						$this->error_log->debug( "Adding role {$role_name} to user with ID {$user_id}" );
+						$user->add_role( $role_name );
+					}
+				}
 
 				// If no error, let's update the user meta too!
 				if ( ! empty( $user_meta ) ) {
