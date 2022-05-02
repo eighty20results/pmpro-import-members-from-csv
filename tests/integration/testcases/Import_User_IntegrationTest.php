@@ -28,11 +28,13 @@ use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Variables;
 
-
 use WP_Error;
 use stdClass;
 use MemberOrder;
 use WP_User;
+
+use function fixture_read_from_user_csv;
+use function fixture_read_from_meta_csv;
 
 class Import_User_IntegrationTest extends WPTestCase {
 
@@ -112,6 +114,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 * Test of the happy-path when importing a user who doesn't exist in the DB already
 	 *
 	 * @param bool $allow_update We can/can not update existing user(s)
+	 * @param bool $clear_user  Whether we should attempt to delete any existing user record before importing
 	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
 	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
 	 * @param int  $expected Result we expect to see from the test execution
@@ -119,7 +122,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_create_user_import
 	 * @test
 	 */
-	public function it_should_create_new_user( $allow_update, $user_line, $meta_line, $expected ) {
+	public function it_should_create_new_user( $allow_update, $clear_user, $user_line, $meta_line, $expected ) {
 
 		$meta_headers = array();
 		$data_headers = array();
@@ -134,6 +137,9 @@ class Import_User_IntegrationTest extends WPTestCase {
 		if ( null !== $meta_line ) {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
+
+		$this->variables->set( 'update_users', $allow_update );
+		$this->fixture_maybe_delete_user( $clear_user );
 
 		$import_user = new Import_User( $this->variables, $this->errorlog );
 
@@ -153,25 +159,43 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_create_user_import() {
 		return array(
-			array(
-				false,
-				0,
-				0,
-				1001,
-			),
-			array(
-				false,
-				2,
-				2,
-				1002,
-			),
+			array( false, false, 0, 0, 2 ),
+			array( false, false, 2, 2, 3 ),
 		);
 	}
 
 	/**
+	 * Maybe delete pre-existing users who may have been added by another test
+	 *
+	 * @param bool       $clear_user Whether to delete a pre-existing user record (or not)
+	 * @param array|null $import_data The wp_users data to identify and delete the user (if we're supposed to delete them)
+	 *
+	 * @return void
+	 */
+	private function fixture_maybe_delete_user( $clear_user = false, $import_data = null ) {
+		// Let us test with/without deleting existing users
+		if ( true === $clear_user && null !== $import_data ) {
+			$user_to_delete = null;
+
+			if ( ! empty( $import_data['user_email'] ) ) {
+				$user_to_delete = get_user_by( 'email', $import_data['user_email'] );
+			} elseif ( ! empty( $import_data['user_login'] ) ) {
+				$user_to_delete = get_user_by( 'login', $import_data['user_login'] );
+			} elseif ( ! empty( $import_data['ID'] ) ) {
+				$user_to_delete = get_user_by( 'ID', $import_data['ID'] );
+			}
+
+			if ( ! empty( $user_to_delete ) ) {
+				$this->errorlog->debug( "Removing a pre-existing user with ID {$user_to_delete->get('ID')} from the WP database" );
+				wp_delete_user( $user_to_delete->ID );
+			}
+		}
+	}
+	/**
 	 * Test of the happy-path when importing a user who exist in the DB already _and_ we want to update them
 	 *
 	 * @param bool $allow_update We can/can not update existing user(s)
+	 * @param bool $clear_user  Whether we should attempt to delete any existing user record before importing
 	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
 	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
 	 * @param int  $expected Result we expect to see from the test execution
@@ -179,7 +203,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_update_user_import
 	 * @test
 	 */
-	public function it_should_update_user( $allow_update, $user_line, $meta_line, $expected ) {
+	public function it_should_update_user( $allow_update, $clear_user, $user_line, $meta_line, $expected ) {
 
 		$meta_headers = array();
 		$data_headers = array();
@@ -195,6 +219,11 @@ class Import_User_IntegrationTest extends WPTestCase {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
 
+		$this->fixture_maybe_delete_user( $clear_user, $import_data );
+		$expected_id = $this->fixture_create_user_to_update( $import_data );
+
+		$this->variables->set( 'update_users', $allow_update );
+
 		$import_user = new Import_User( $this->variables, $this->errorlog );
 
 		try {
@@ -203,7 +232,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
 
-		self::assertSame( $expected, $result );
+		self::assertSame( $expected_id, $result );
 	}
 
 	/**
@@ -215,11 +244,65 @@ class Import_User_IntegrationTest extends WPTestCase {
 		return array(
 			array(
 				true,
+				false,
+				0,
+				0,
+				2,
+			),
+			array(
+				true,
+				false,
 				1,
 				1,
-				1001,
+				4,
+			),
+			array(
+				true,
+				false,
+				2,
+				2,
+				3,
+			),
+			array(
+				true,
+				false,
+				3,
+				3,
+				4,
 			),
 		);
+	}
+
+	/**
+	 * Create a user record we can update
+	 *
+	 * @param array $import_data The WP_User data to use
+	 *
+	 * @return int
+	 */
+	private function fixture_create_user_to_update( $import_data ) {
+
+		$user_id = 0;
+		if ( ! empty( $import_data['ID'] ) ) {
+			$user_id = $import_data['ID'];
+		}
+		$m_user = new WP_User( $user_id );
+		$m_user->__set( 'user_email', $import_data['user_email'] ?? '' );
+		$m_user->__set( 'user_login', $import_data['user_login'] ?? '' );
+		$m_user->__set( 'user_pass', $import_data['user_pass'] ?? '' );
+		$m_user->__set( 'first_name', $import_data['first_name'] ?? '' );
+		$m_user->__set( 'last_name', $import_data['last_name'] ?? '' );
+		$m_user->__set( 'display_name', $import_data['display_name'] ?? '' );
+		if ( ! empty( $import_data['role'] ) ) {
+			$m_user->add_role( $import_data['role'] );
+		}
+		$user_id = wp_insert_user( $m_user );
+		if ( ! is_wp_error( $user_id ) ) {
+			$this->errorlog->debug( "Created user to update. Has ID: {$user_id}" );
+			return $user_id;
+		}
+
+		$this->fail( 'Error attempting to create test user to update!' );
 	}
 
 	/**
