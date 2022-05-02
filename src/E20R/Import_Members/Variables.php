@@ -243,6 +243,13 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 			$this->delayed_sponsor_link = get_option( 'e20r_link_for_sponsor', array() );
 		}
 
+		/**
+		 * Add all import headers we`re supposed to import
+		 *
+		 * @param string[] $field_list List of fields to import
+		 *
+		 * @return void
+		 */
 		public function add_fields( $field_list = array() ) {
 
 			$this->fields = array_merge_recursive(
