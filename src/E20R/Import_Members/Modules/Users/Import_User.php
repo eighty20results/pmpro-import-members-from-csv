@@ -157,12 +157,18 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					( isset( $user_data['user_login'] ) ? 'Yes' : 'No' )
 				);
 
-				if ( isset( $user_data['ID'] ) && ! empty( $user_data['ID'] ) ) {
-					$user = get_user_by( 'ID', $user_data['user_email'] );
-				} elseif ( isset( $user_data['user_login'] ) && ! empty( $user_data['user_login'] ) ) {
-					$user = get_user_by( 'login', $user_data['user_login'] );
-				} elseif ( isset( $user_data['user_email'] ) && ! empty( $user_data['user_email'] ) ) {
-					$user = get_user_by( 'email', $user_data['user_email'] );
+				$id_fields = array( 'ID', 'user_login', 'user_email' );
+				foreach ( $id_fields as $field_name ) {
+
+					if ( isset( $user_data[ $field_name ] ) && ! empty( $user_data[ $field_name ] ) ) {
+						$this->error_log->debug( "Search for user record using '{$field_name}' with value: {$user_data[ $field_name ]}" );
+						$user = get_user_by( $field_name, $user_data[ $field_name ] );
+
+						if ( false !== $user ) {
+							$this->error_log->debug( 'Found user: ' . $user->ID );
+							break;
+						}
+					}
 				}
 
 				if ( ! empty( $user->ID ) ) {
@@ -200,7 +206,15 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				if ( empty( $user_data['ID'] ) ) {
 					$user_data['ID'] = $user_id;
 				}
+
 				$user_id = wp_update_user( $user_data );
+				if ( is_wp_error( $user_id ) ) {
+					$this->error_log->debug( "Error updating user ID {$user_data['ID']}}" );
+					$e20r_import_err[ "user_not_imported_{$active_line_number}" ] = $user_id;
+					return null;
+				}
+				$this->error_log->debug( "Existing user with ID {$user_id} has been updated" );
+
 			} else {
 				$new_error = $wp_error;
 				$new_error->add(
@@ -289,7 +303,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$msg_target = 'both';
 				}
 
-				if ( true === $new_user_notification || true === $admin_new_user_notification ) {
+				if ( false === $user_exists_needs_update && true === $new_user_notification || true === $admin_new_user_notification ) {
+					$this->error_log->debug( 'Sending new user notification message to user' );
 					wp_new_user_notification( $user_id, null, $msg_target );
 				}
 
@@ -332,7 +347,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			$this->variables->set( 'display_errors', $display_errors );
-
+			$this->error_log->debug( "Attempted import of user data complete for user with ID: " . print_r( $user_id,true ) );
 			return $user_id;
 		}
 
