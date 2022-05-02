@@ -20,6 +20,7 @@
 namespace E20R\Import_Members;
 
 use E20R\Import_Members\Process\CSV;
+use E20R\Utilities\Utilities;
 use Exception;
 
 if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
@@ -89,11 +90,11 @@ if ( ! class_exists( '\E20R\Import_Members\Data' ) ) {
 				$user = get_user_by( 'Email', $user_key );
 			}
 
-			if ( is_int( $user_key ) ) {
+			if ( Utilities::is_integer( $user_key ) ) {
 				$user = get_user_by( 'ID', $user_key );
 			}
 
-			if ( ! is_email( $user_key ) && ! is_int( $user_key ) && is_string( $user_key ) ) {
+			if ( ! is_email( $user_key ) && ! Utilities::is_integer( $user_key ) && is_string( $user_key ) ) {
 				$user = get_user_by( 'login', $user_key );
 			}
 
