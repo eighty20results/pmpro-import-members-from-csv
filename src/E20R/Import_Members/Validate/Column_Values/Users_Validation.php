@@ -26,6 +26,7 @@ use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
+use E20R\Utilities\Utilities;
 
 if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validation' ) ) {
 	/**
@@ -153,7 +154,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 			}
 
 			$allow_update = (bool) $this->variables->get( 'update_users' );
-			$has_id       = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && is_int( $record['ID'] ) );
+			$has_id       = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
 			$has_email    = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
 			$has_login    = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 
