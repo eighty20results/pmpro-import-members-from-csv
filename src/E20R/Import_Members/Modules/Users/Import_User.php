@@ -165,7 +165,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$user = get_user_by( 'email', $user_data['user_email'] );
 				}
 
-				if ( isset( $user->ID ) ) {
+				if ( ! empty( $user->ID ) ) {
 					$user_id                  = $user->ID;
 					$user_exists_needs_update = true;
 				}
@@ -193,9 +193,13 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			} elseif ( false === $user && false === $user_exists_needs_update && true === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
-			} elseif ( true === $user_exists_needs_update && true === $allow_update ) {
+			} elseif ( ! empty( $user_id ) && true === $user_exists_needs_update && true === $allow_update ) {
 				// Insert, Update or insert without (re) hashing the password
 				$this->error_log->debug( 'Updating an existing user record...' );
+
+				if ( empty( $user_data['ID'] ) ) {
+					$user_data['ID'] = $user_id;
+				}
 				$user_id = wp_update_user( $user_data );
 			} else {
 				$new_error = $wp_error;
@@ -228,7 +232,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				if ( ! empty( $user_data['role'] ) ) {
 					$role = $user_data['role'];
-					$this->error_log->debug( "Update role(s) for user with ID {$user_id}:" . $user_data['role'] );
+					$this->error_log->debug( "Update role(s) for user with ID {$user_id}: {$user_data['role']}" );
 					$roles     = array_map( 'trim', explode( ',', $role ) );
 					$all_roles = $all_roles + $roles;
 				}
