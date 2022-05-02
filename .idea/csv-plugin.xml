@@ -24,20 +24,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/tests/unit/inc/csv_files/user_data.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="/tests/unit/inc/csv_files/user_meta.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
       </map>
     </option>
   </component>
