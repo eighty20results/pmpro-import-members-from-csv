@@ -25,6 +25,7 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
+use E20R\Utilities\Utilities;
 use WP_Error;
 use WP_User;
 
@@ -98,6 +99,19 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			}
 
 			switch ( $status ) {
+				case Status::E20R_ERROR_USER_NOT_FOUND:
+					$msg = sprintf(
+					// translators: %1$d: The line number in the CSV import file
+						esc_attr__(
+							"Error: Expected to find user from information in record, but didn't succeed! (line: %1\$d)",
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'e20r_im_ident', $msg );
+					$e20r_import_err[ "user_not_found_{$active_line_number}" ] = $new_error;
+					break;
 				case Status::E20R_USER_IDENTIFIER_MISSING:
 					$msg = sprintf(
 						// translators: %1$d: The line number in the CSV import file
@@ -181,37 +195,6 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 */
 		public function validate( $record, $allow_update = null ) {
 
-			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
-			$has_email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
-			$has_login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
-			$this->error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
-			$this->error_log->debug( "The user's email value is present? " . ( $has_email ? 'Yes' : 'No' ) );
-			$this->error_log->debug( "The user's login value is present? " . ( $has_login ? 'Yes' : 'No' ) );
-
-			// None of the user identifiers (username or user ID) are set in import data so can't determine that user is persent
-			if ( false === $has_id && false === $has_login && false === $has_email ) {
-				$this->error_log->debug( 'Neither of the user identification keys exist in import data' );
-				return Status::E20R_USER_IDENTIFIER_MISSING;
-			}
-
-			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
-			if ( ! $has_login && ! $has_email ) {
-				$this->error_log->debug( 'Need either user_login or user_email to be present!' );
-				return Status::E20R_ERROR_NO_EMAIL_OR_LOGIN;
-			}
-
-			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
-			if ( true === $has_id && false === is_int( $record['ID'] ) ) {
-				$this->error_log->debug( "'ID' column isn't a number" );
-				return Status::E20R_ERROR_ID_NOT_NUMBER;
-			}
-
-			// Is the user_email supplied and is it a valid email address
-			if ( true === $has_email && false === is_email( $record['user_email'] ) ) {
-				$this->error_log->debug( "'user_email' column doesn't contain a valid email address" );
-				return Status::E20R_ERROR_NO_EMAIL;
-			}
-
 			// Figure out if we allow updates since we didn't receive the value from the calling method
 			if ( null === $allow_update ) {
 				try {
@@ -227,8 +210,40 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				}
 			}
 
+			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
+			$has_email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
+			$has_login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
+			$this->error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
+			$this->error_log->debug( "The user's email value is present? " . ( $has_email ? 'Yes' : 'No' ) );
+			$this->error_log->debug( "The user's login value is present? " . ( $has_login ? 'Yes' : 'No' ) );
+
+			// None of the user identifiers (username or user ID) are set in import data so can't determine that user is persent
+			if ( false === $has_id && false === $has_login && false === $has_email ) {
+				$this->error_log->debug( 'Neither of the user identification keys exist in import data' );
+				$this->status_msg( Status::E20R_USER_IDENTIFIER_MISSING, $allow_update );
+			}
+
+			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
+			if ( ! $has_login && ! $has_email ) {
+				$this->error_log->debug( 'Need either user_login or user_email to be present!' );
+				$this->status_msg( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, $allow_update );
+			}
+
+			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
+			if ( true === $has_id && false === Utilities::is_integer( $record['ID'] ) ) {
+				$this->error_log->debug( "'ID' column isn't a number" );
+				$this->status_msg( Status::E20R_ERROR_ID_NOT_NUMBER, $allow_update );
+			}
+
+			// Is the user_email supplied and is it a valid email address
+			if ( true === $has_email && false === is_email( $record['user_email'] ) ) {
+				$this->error_log->debug( "'user_email' column doesn't contain a valid email address" );
+				$this->status_msg( Status::E20R_ERROR_NO_EMAIL, $allow_update );
+			}
+
 			// Check if user exists on the system based on the supplied WP_User->ID
 			$user = $has_id ? get_user_by( 'ID', $record['ID'] ) : false;
+			$this->error_log->debug( 'Looking for user from ID' );
 			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
 			if ( true === ( $id_status = $this->user_data_can_be_imported( $has_id, $user, $allow_update ) ) ) {
 				$this->error_log->debug( 'User found using the ID value' );
@@ -238,6 +253,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			// Check if the user exists based on the user_login info
 			$user = $has_login ? get_user_by( 'login', $record['user_login'] ) : false;
+			$this->error_log->debug( 'Looking for user from user_login' );
 			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
 			if ( true === ( $login_status = $this->user_data_can_be_imported( $has_login, $user, $allow_update ) ) ) {
 				$this->error_log->debug( 'User found using the user_login value' );
@@ -248,6 +264,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			// Check if the user exists on the system based on the supplied user_email data
 			$user = $has_email ? get_user_by( 'email', $record['user_email'] ) : false;
+			$this->error_log->debug( 'Looking for user from user_email' );
 			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
 			if ( true === ( $email_status = $this->user_data_can_be_imported( $has_email, $user, $allow_update ) ) ) {
 				$this->error_log->debug( 'User found using the user_email value' );
@@ -268,6 +285,11 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 * @return true|int
 		 */
 		private function user_data_can_be_imported( $field_exists, $user, $allow_update ) {
+
+			if ( true === $field_exists && false === $user ) {
+				$this->error_log->debug( 'Specified column exists, but could not find user from the import record' );
+				return Status::E20R_ERROR_USER_NOT_FOUND;
+			}
 
 			// The user identifying field is not present in import data
 			if ( false === $field_exists ) {
