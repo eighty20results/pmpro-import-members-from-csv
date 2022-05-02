@@ -559,7 +559,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					}
 
 					/** BUG FIX: Didn't save the created user's ID and added empty user IDs*/
-					if ( ! empty( $user_id ) ) {
+					if ( ! empty( $user_id ) && ! is_wp_error( $user_id ) ) {
 						$user_ids[] = $user_id;
 					}
 				}
