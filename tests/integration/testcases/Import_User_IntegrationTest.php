@@ -150,6 +150,10 @@ class Import_User_IntegrationTest extends WPTestCase {
 		}
 
 		self::assertSame( $expected, $result );
+		$real_user = new WP_User( $result );
+		self::assertSame( $expected, $real_user->ID );
+		self::assertSame( $import_data['user_email'], $real_user->user_email );
+		self::assertSame( $import_data['user_login'], $real_user->user_login );
 	}
 
 	/**
@@ -233,6 +237,10 @@ class Import_User_IntegrationTest extends WPTestCase {
 		}
 
 		self::assertSame( $expected_id, $result );
+		$real_user = new WP_User( $result );
+		self::assertSame( $expected_id, $real_user->ID );
+		self::assertSame( $import_data['user_email'], $real_user->user_email );
+		self::assertSame( $import_data['user_login'], $real_user->user_login );
 	}
 
 	/**
