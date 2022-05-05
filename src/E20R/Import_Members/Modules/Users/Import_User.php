@@ -175,17 +175,18 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				$e20r_import_warn[ "id_mismatch_{$active_line_number}" ] = new WP_Error( $msg );
 				$this->error_log->debug( $msg );
-				return null;
+				return 0;
+
 			} elseif ( true === $allow_id_update && ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) {
 				$this->error_log->debug( 'Warning: Updating the user ID in the WordPress Users DB table!' );
 				try {
 					$user = $this->update_user_id( $user, $user_data );
 				} catch ( InvalidSettingsKey $e ) {
 					$this->error_log->debug( $e->getMessage() );
-					return null;
+					return 0;
 				} catch ( UserIDAlreadyExists $e ) {
 					$e20r_import_err[ "preexisting_user_id_{$active_line_number}" ] = $e;
-					return null;
+					return 0;
 				}
 
 				if ( ! empty( $user->ID ) ) {
@@ -229,7 +230,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				if ( is_wp_error( $user_id ) ) {
 					$this->error_log->debug( "Error updating user ID {$user_data['ID']}" );
 					$e20r_import_err[ "user_not_imported_{$active_line_number}" ] = $user_id;
-					return null;
+					return 0;
 				}
 				$this->error_log->debug( "Existing user with ID {$user_id} has been updated" );
 
