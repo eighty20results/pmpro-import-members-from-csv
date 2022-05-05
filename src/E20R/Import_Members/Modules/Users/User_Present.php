@@ -297,7 +297,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			}
 
 			// User doesn't exist
-			if ( false === $user ) {
+			if ( false === $user ) { // @phpstan-ignore-line
 				$this->error_log->debug( 'User does not exist on this system' );
 				return Status::E20R_ERROR_USER_NOT_FOUND;
 			}
