@@ -111,14 +111,6 @@ class Template_Data_UnitTest extends Unit {
 		Functions\when( 'esc_attr__' )
 			->returnArg( 1 );
 
-		Functions\when( 'wp_upload_dir' )
-			->justReturn(
-				array(
-					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
-					'basedir' => '/var/www/html/wp-content/uploads',
-				)
-			);
-
 	}
 
 	/**
