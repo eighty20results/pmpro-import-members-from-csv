@@ -223,6 +223,14 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function it_should_create_new_user( $allow_update, $user_line, $meta_line, $expected ) {
 
+		Functions\stubs(
+			array(
+				'username_exists' => isset( $import_data['user_login'] ), // To ensure we create a new user, not update and existing one
+				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we create a new user, not update and existing one
+				'esc_attr__'      => null,
+			)
+		);
+
 		$mocked_variables = $this->makeEmpty(
 			Variables::class,
 			array(
@@ -235,11 +243,15 @@ class Import_User_UnitTest extends Unit {
 						return $allow_update;
 					}
 
+					if ( 'update_id' === $param ) {
+						return $allow_update;
+					}
+
 					if ( 'password_hashing_disabled' === $param ) {
 						return false;
 					}
 
-					return null;
+					return false;
 				},
 			)
 		);
@@ -273,13 +285,6 @@ class Import_User_UnitTest extends Unit {
 		if ( null !== $meta_line ) {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
-
-		Functions\stubs(
-			array(
-				'username_exists' => isset( $import_data['user_login'] ), // To ensure we create a new user, not update and existing one
-				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we create a new user, not update and existing one
-			)
-		);
 
 		$mocked_user_present_validator = $this->makeEmptyExcept(
 			User_Present::class,
@@ -355,8 +360,8 @@ class Import_User_UnitTest extends Unit {
 			),
 			array(
 				false,
-				2,
-				2,
+				1,
+				1,
 				1002,
 			),
 		);
@@ -386,11 +391,15 @@ class Import_User_UnitTest extends Unit {
 						return $allow_update;
 					}
 
+					if ( 'update_id' === $param ) {
+						return $allow_update;
+					}
+
 					if ( 'password_hashing_disabled' === $param ) {
 						return false;
 					}
 
-					return null;
+					return false;
 				},
 			)
 		);
@@ -498,8 +507,8 @@ class Import_User_UnitTest extends Unit {
 		return array(
 			array(
 				true,
-				1,
-				1,
+				2,
+				2,
 				1001,
 			),
 		);
