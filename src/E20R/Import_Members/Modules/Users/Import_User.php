@@ -246,7 +246,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					)
 				);
 				$e20r_import_warn[ "user_not_imported_{$active_line_number}" ] = $new_error;
-
+				$this->error_log->debug( $new_error->get_error_message() );
 				return $user_id;
 			}
 
