@@ -524,6 +524,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 						'background_import'           => intval( $this->variables->get( 'background_import' ) ),
 						'filename'                    => $this->variables->get( 'filename' ),
 						'update_users'                => intval( $this->variables->get( 'update_users' ) ),
+						'update_id'                   => intval( $this->variables->get( 'update_id' ) ),
 						'deactivate_old_memberships'  => intval( $this->variables->get( 'deactivate_old_memberships' ) ),
 						'new_user_notification'       => intval( $this->variables->get( 'new_user_notification' ) ),
 						'create_order'                => intval( $this->variables->get( 'create_order' ) ),

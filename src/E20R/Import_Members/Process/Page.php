@@ -499,6 +499,25 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							</td>
 						</tr>
 						<tr class="e20r-import-row">
+							<th scope="row"><?php esc_attr_e( 'Update the WP User Id', 'pmpro-import-members-from-csv' ); ?></th>
+							<td>
+								<fieldset>
+									<legend class="screen-reader-text">
+										<span><?php esc_attr_e( "Update the member's WordPress User ID number", 'pmpro-import-members-from-csv' ); ?></span>
+									</legend>
+									<label for="update_id">
+										<input id="update_id" name="update_id" type="checkbox" value="1" checked=""/>
+										<?php
+										esc_attr_e(
+											'If the WP User record exists, and the import file specifies an ID number value in an ID column, we should update the existing user record and set its ID to the ID being imported unless the proposed ID number already exists. (NOT recommended!)',
+											'pmpro-import-members-from-csv'
+										);
+										?>
+									</label>
+								</fieldset>
+							</td>
+						</tr>
+						<tr class="e20r-import-row">
 							<th scope="row"><?php esc_attr_e( 'Deactivate any existing memberships', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>

@@ -72,6 +72,13 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		private $update_users = false;
 
 		/**
+		 * Do we allow the import to change existing user's ID
+		 *
+		 * @var bool
+		 */
+		private $update_id = false;
+
+		/**
 		 * Set the password nag message when user logs in for the first time?
 		 *
 		 * @var bool $password_nag
@@ -163,11 +170,15 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		private $partial = false;
 
 		/**
+		 * The CSV file object
+		 *
 		 * @var null|\SplFileObject
 		 */
 		private $file_object = null;
 
 		/**
+		 * Should we send the welcome email to the new user
+		 *
 		 * @var null|string
 		 */
 		private $welcome_mail_warning = null;
@@ -346,6 +357,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 			// @codingStandardsIgnoreStart
 			$this->update_users                = ! empty( $_REQUEST['update_users'] ) ? ( 1 === intval( $_REQUEST['update_users'] ) ) : $this->update_users;
+			$this->update_id                   = ! empty( $_REQUEST['update_id'] ) ? ( 1 === intval( $_REQUEST['update_id'] ) ) : $this->update_id;
 			$this->background_import           = ! empty( $_REQUEST['background_import'] ) ? ( 1 === intval( $_REQUEST['background_import'] ) ) : $this->background_import;
 			$this->deactivate_old_memberships  = ! empty( $_REQUEST['deactivate_old_memberships'] ) ? ( 1 === intval( $_REQUEST['deactivate_old_memberships'] ) ) : $this->deactivate_old_memberships;
 			$this->create_order                = ! empty( $_REQUEST['create_order'] ) ? ( 1 === intval( $_REQUEST['create_order'] ) ) : $this->create_order;
@@ -412,13 +424,17 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		/**
 		 * Save the value to the class variable
 		 *
-		 * @param string $variable_name
-		 * @param mixed $value
+		 * @param string $variable_name The name of the variable to save/update
+		 * @param mixed $value The value to set it to
+		 *
+		 * @throws InvalidSettingsKey Thrown if this Variables() class lacks the specified parameter
 		 */
 		public function set( $variable_name, $value ) {
-			if ( isset( $this->{$variable_name} ) ) {
-				$this->{$variable_name} = $value;
+			if ( ! property_exists( $this, $variable_name ) ) {
+				throw new InvalidSettingsKey();
 			}
+
+			$this->{$variable_name} = $value;
 		}
 
 		/**

@@ -294,6 +294,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				'password_nag'                => $this->variables->get( 'password_nag' ),
 				'password_hashing_disabled'   => $this->variables->get( 'password_hashing_disabled' ),
 				'update_users'                => $this->variables->get( 'update_users' ),
+				'update_id'                   => $this->variables->get( 'update_id' ),
 				'new_user_notification'       => $this->variables->get( 'new_user_notification' ),
 				'new_member_notification'     => $this->variables->get( 'new_member_notification' ),
 				'admin_new_user_notification' => $this->variables->get( 'admin_new_user_notification' ),
