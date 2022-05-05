@@ -223,10 +223,15 @@ class Import_User_IntegrationTest extends WPTestCase {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
 
-		$this->fixture_maybe_delete_user( $clear_user, $import_data );
-		$expected_id = $this->fixture_create_user_to_update( $import_data );
+		try {
+			$this->variables->set( 'update_id', $allow_update );
+			$this->variables->set( 'update_users', $allow_update );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		}
 
-		$this->variables->set( 'update_users', $allow_update );
+		$this->fixture_maybe_delete_user( $clear_user, $import_data );
+		$this->fixture_create_user_to_update( $import_data );
 
 		$import_user = new Import_User( $this->variables, $this->errorlog );
 
@@ -236,9 +241,9 @@ class Import_User_IntegrationTest extends WPTestCase {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
 
-		self::assertSame( $expected_id, $result );
+		self::assertSame( $expected, $result );
 		$real_user = new WP_User( $result );
-		self::assertSame( $expected_id, $real_user->ID );
+		self::assertSame( $expected, $real_user->ID );
 		self::assertSame( $import_data['user_email'], $real_user->user_email );
 		self::assertSame( $import_data['user_login'], $real_user->user_login );
 	}
@@ -255,28 +260,28 @@ class Import_User_IntegrationTest extends WPTestCase {
 				false,
 				0,
 				0,
-				2,
+				4,
 			),
 			array(
 				true,
 				false,
 				1,
 				1,
-				4,
+				1002,
 			),
 			array(
 				true,
 				false,
 				2,
 				2,
-				3,
+				1003,
 			),
 			array(
 				true,
 				false,
 				3,
 				3,
-				4,
+				1004,
 			),
 		);
 	}
@@ -290,21 +295,15 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 */
 	private function fixture_create_user_to_update( $import_data ) {
 
-		$user_id = 0;
-		if ( ! empty( $import_data['ID'] ) ) {
-			$user_id = $import_data['ID'];
+		$user_id      = 0;
+		$my_user_data = $import_data;
+
+		if ( ! empty( $my_user_data['ID'] ) ) {
+			$user_id = $my_user_data['ID'];
+			unset( $my_user_data['ID'] );
 		}
-		$m_user = new WP_User( $user_id );
-		$m_user->__set( 'user_email', $import_data['user_email'] ?? '' );
-		$m_user->__set( 'user_login', $import_data['user_login'] ?? '' );
-		$m_user->__set( 'user_pass', $import_data['user_pass'] ?? '' );
-		$m_user->__set( 'first_name', $import_data['first_name'] ?? '' );
-		$m_user->__set( 'last_name', $import_data['last_name'] ?? '' );
-		$m_user->__set( 'display_name', $import_data['display_name'] ?? '' );
-		if ( ! empty( $import_data['role'] ) ) {
-			$m_user->add_role( $import_data['role'] );
-		}
-		$user_id = wp_insert_user( $m_user );
+		$user_id = wp_insert_user( $my_user_data );
+
 		if ( ! is_wp_error( $user_id ) ) {
 			$this->errorlog->debug( "Created user to update. Has ID: {$user_id}" );
 			return $user_id;
