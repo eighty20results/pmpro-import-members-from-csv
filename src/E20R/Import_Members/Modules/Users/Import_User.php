@@ -20,6 +20,7 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
@@ -126,10 +127,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$e20r_import_warn = array();
 			}
 
-			$display_errors = $this->variables->get( 'display_errors' );
-			$allow_update   = (bool) $this->variables->get( 'update_users' );
-			$msg_target     = '';
-			$site_id        = $this->variables->get( 'site_id' );
+			$display_errors  = $this->variables->get( 'display_errors' );
+			$allow_update    = (bool) $this->variables->get( 'update_users' );
+			$allow_id_update = (bool) $this->variables->get( 'update_id' );
+			$msg_target      = '';
+			$site_id         = $this->variables->get( 'site_id' );
 
 			if ( empty( $display_errors ) ) {
 				$display_errors = array();
@@ -150,28 +152,44 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
 
 			if ( true === $user_exists && true === $allow_update ) {
-				$this->error_log->debug(
-					'Checking if the user exists. Can we use user_email? ' .
-					( isset( $user_data['user_email'] ) ? 'Yes' : 'No' ) .
-					'. Or maybe use user_login? ' .
-					( isset( $user_data['user_login'] ) ? 'Yes' : 'No' )
+
+				$user = $this->find_user( $user_data );
+
+				if ( ! empty( $user->ID ) ) {
+					$user_id                  = $user->ID;
+					$user_exists_needs_update = true;
+				}
+			}
+
+			if ( false === $allow_id_update && ( ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) ) {
+				$msg = sprintf(
+					// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
+					esc_attr__(
+						'The import data and the WP User data are different. Not allowed to update %1$d to %2$d (line: %3$d)',
+						'pmpro-import-members-from-csv'
+					),
+					$user_id,
+					$user_data['ID'],
+					$active_line_number
 				);
 
-				$id_fields = array( 'ID', 'user_login', 'user_email' );
-				foreach ( $id_fields as $field_name ) {
-
-					if ( isset( $user_data[ $field_name ] ) && ! empty( $user_data[ $field_name ] ) ) {
-						$this->error_log->debug( "Search for user record using '{$field_name}' with value: {$user_data[ $field_name ]}" );
-						$user = get_user_by( $field_name, $user_data[ $field_name ] );
-
-						if ( false !== $user ) {
-							$this->error_log->debug( 'Found user: ' . $user->ID );
-							break;
-						}
-					}
+				$e20r_import_warn[ "id_mismatch_{$active_line_number}" ] = new WP_Error( $msg );
+				$this->error_log->debug( $msg );
+				return null;
+			} elseif ( true === $allow_id_update && ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) {
+				$this->error_log->debug( 'Warning: Updating the user ID in the WordPress Users DB table!' );
+				try {
+					$user = $this->update_user_id( $user, $user_data );
+				} catch ( InvalidSettingsKey $e ) {
+					$this->error_log->debug( $e->getMessage() );
+					return null;
+				} catch ( UserIDAlreadyExists $e ) {
+					$e20r_import_err[ "preexisting_user_id_{$active_line_number}" ] = $e;
+					return null;
 				}
 
 				if ( ! empty( $user->ID ) ) {
+					$this->error_log->debug( "Setting updated user's ID to {$user->ID}" );
 					$user_id                  = $user->ID;
 					$user_exists_needs_update = true;
 				}
@@ -209,7 +227,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				$user_id = wp_update_user( $user_data );
 				if ( is_wp_error( $user_id ) ) {
-					$this->error_log->debug( "Error updating user ID {$user_data['ID']}}" );
+					$this->error_log->debug( "Error updating user ID {$user_data['ID']}" );
 					$e20r_import_err[ "user_not_imported_{$active_line_number}" ] = $user_id;
 					return null;
 				}
@@ -267,6 +285,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					}
 				}
 
+				// Adds the user to the specified blog ID if we're in a multi-site configuration
+				$site_id = (int) $this->variables->get( 'site_id' );
+
+				if ( is_multisite() && ! empty( $site_id ) ) {
+					$this->error_log->debug( "Adding user with ID {$user_id} to {$site_id} (blog id) as a {$default_role} (role)" );
+					add_user_to_blog( $site_id, $user_id, $default_role );
+				}
+
 				// If no error, let's update the user meta too!
 				if ( ! empty( $user_meta ) ) {
 					foreach ( $user_meta as $meta_key => $meta_value ) {
@@ -278,14 +304,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				// Set the password nag as needed
 				if ( true === (bool) $this->variables->get( 'password_nag' ) ) {
 					update_user_option( $user_id, 'default_password_nag', true, true );
-				}
-
-				// Adds the user to the specified blog ID if we're in a multi-site configuration
-				$site_id = (int) $this->variables->get( 'site_id' );
-
-				if ( is_multisite() && ! empty( $site_id ) ) {
-					$this->error_log->debug( "Adding user with ID {$user_id} to {$site_id} (blog id) as a {$default_role} (role)" );
-					add_user_to_blog( $site_id, $user_id, $default_role );
 				}
 
 				// If we created a new user, send new user notification?
@@ -347,8 +365,80 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			$this->variables->set( 'display_errors', $display_errors );
-			$this->error_log->debug( "Attempted import of user data complete for user with ID: " . print_r( $user_id,true ) );
 			return $user_id;
+		}
+
+		/**
+		 * Locate the user based on the import data (if present on the system)
+		 *
+		 * @param array $user_data The data from the row being imported from the CSV file
+		 *
+		 * @return false|WP_User
+		 */
+		private function find_user( $user_data ) {
+			$user = false;
+
+			$this->error_log->debug(
+				'User exists. Could have searched by user_email - ' .
+				( isset( $user_data['user_email'] ) ? 'Yes' : 'No' ) .
+				'. Or maybe use user_login? ' .
+				( isset( $user_data['user_login'] ) ? 'Yes' : 'No' )
+			);
+
+			$id_fields = array(
+				'ID'         => 'ID',
+				'user_login' => 'login',
+				'user_email' => 'email',
+			);
+
+			foreach ( $id_fields as $field_name => $user_by_field ) {
+				if ( isset( $user_data[ $field_name ] ) && ! empty( $user_data[ $field_name ] ) ) {
+					$user = get_user_by( $user_by_field, $user_data[ $field_name ] );
+					if ( isset( $user->ID ) && ! empty( $user->ID ) ) {
+						$this->error_log->debug( 'Found user: ' . $user->ID );
+						break;
+					}
+				}
+			}
+
+			return $user;
+		}
+
+
+		/**
+		 * Change the user ID to match the import data
+		 *
+		 * @param WP_User $wp_user User record currently on the system
+		 * @param array $user_data The data we're going to be importing
+		 *
+		 * @return WP_User|false
+		 *
+		 * @throws UserIDAlreadyExists Thrown if the "target" local User ID already has a user
+		 * @throws InvalidSettingsKey Thrown if the 'update_id' variable, for some inexplicable reason, no longer exists
+		 */
+		private function update_user_id( $wp_user, $user_data ) {
+
+			$wp_user_id     = $wp_user->ID;
+			$import_user_id = (int) $user_data['ID'];
+
+			if ( $wp_user_id === $import_user_id ) {
+				return $wp_user;
+			}
+
+			if ( false !== get_user_by( 'ID', $import_user_id ) && true === (bool) $this->variables->get( 'update_id' ) ) {
+				throw new UserIDAlreadyExists();
+			}
+
+			global $wpdb;
+			$result = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->users} SET ID = %d WHERE `ID` = %d",
+					$import_user_id,
+					$wp_user_id
+				)
+			);
+
+			return get_user_by( 'ID', $import_user_id );
 		}
 
 		/**
