@@ -293,7 +293,6 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			// The user identifying field is not present in import data
 			if ( false === $field_exists ) {
-				$this->error_log->debug( 'Specified column does not exist in the import record' );
 				return Status::E20R_USER_IDENTIFIER_MISSING;
 			}
 
