@@ -106,7 +106,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @param string[]      $headers The file headers/import headers supplied
 		 * @param WP_Error|null $wp_error For unit testing. Default and expected received value should be null.
 		 *
-		 * @return int
+		 * @return int|null
 		 * @throws InvalidSettingsKey Thrown when we specify an invalid setting (variable)
 		 */
 		public function import( $user_data, $user_meta, $headers, $wp_error = null ) {
@@ -152,7 +152,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
 
 			if ( true === $user_exists && true === $allow_update ) {
-
 				$user = $this->find_user( $user_data );
 
 				if ( ! empty( $user->ID ) ) {
@@ -175,18 +174,23 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				$e20r_import_warn[ "id_mismatch_{$active_line_number}" ] = new WP_Error( $msg );
 				$this->error_log->debug( $msg );
-				return 0;
+				return null;
 
 			} elseif ( true === $allow_id_update && ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) {
 				$this->error_log->debug( 'Warning: Updating the user ID in the WordPress Users DB table!' );
 				try {
-					$user = $this->update_user_id( $user, $user_data );
+					$new_error = $wp_error;
+					$user      = $this->update_user_id( $user, $user_data );
 				} catch ( InvalidSettingsKey $e ) {
 					$this->error_log->debug( $e->getMessage() );
-					return 0;
+					$new_error->add( 'unexpected_key', $e->getMessage() );
+					$e20r_import_err[ "unexpected_key_{$active_line_number}" ] = $new_error;
+					return null;
 				} catch ( UserIDAlreadyExists $e ) {
-					$e20r_import_err[ "preexisting_user_id_{$active_line_number}" ] = $e;
-					return 0;
+					$new_error->add( 'preexisting_user_id', $e->getMessage() );
+					$e20r_import_err[ "preexisting_user_id_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $e->getMessage() );
+					return null;
 				}
 
 				if ( ! empty( $user->ID ) ) {
@@ -230,14 +234,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				if ( is_wp_error( $user_id ) ) {
 					$this->error_log->debug( "Error updating user ID {$user_data['ID']}" );
 					$e20r_import_err[ "user_not_imported_{$active_line_number}" ] = $user_id;
-					return 0;
+					return null;
 				}
 				$this->error_log->debug( "Existing user with ID {$user_id} has been updated" );
 
 			} else {
 				$new_error = $wp_error;
 				$new_error->add(
-					"e20r_im_account_{$active_line_number}",
+					'e20r_im_account',
 					sprintf(
 							// translators: %1$s: Email address, %2$d: Row number from CSV file
 						esc_attr__( 'No update/insert action taken for %1$s, on row %2$d', 'pmpro-import-members-from-csv' ),
@@ -246,8 +250,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					)
 				);
 				$e20r_import_warn[ "user_not_imported_{$active_line_number}" ] = $new_error;
-				$this->error_log->debug( $new_error->get_error_message() );
-				return $user_id;
+				return null;
 			}
 
 			// Is there an error?
@@ -376,7 +379,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @return false|WP_User
 		 */
-		private function find_user( $user_data ) {
+		public function find_user( $user_data ) {
 			$user = false;
 
 			$this->error_log->debug(
@@ -417,7 +420,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @throws UserIDAlreadyExists Thrown if the "target" local User ID already has a user
 		 * @throws InvalidSettingsKey Thrown if the 'update_id' variable, for some inexplicable reason, no longer exists
 		 */
-		private function update_user_id( $wp_user, $user_data ) {
+		public function update_user_id( $wp_user, $user_data ) {
+			global $active_line_number;
 
 			$wp_user_id     = $wp_user->ID;
 			$import_user_id = (int) $user_data['ID'];
@@ -426,8 +430,20 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				return $wp_user;
 			}
 
-			if ( false !== get_user_by( 'ID', $import_user_id ) && true === (bool) $this->variables->get( 'update_id' ) ) {
-				throw new UserIDAlreadyExists();
+			$existing_user = get_user_by( 'ID', $import_user_id );
+			if ( false !== $existing_user && true === (bool) $this->variables->get( 'update_id' ) ) {
+				throw new UserIDAlreadyExists(
+					sprintf(
+						// translators: %1$d: line number in CSV import file %2$d: email address of existing user with same user ID
+						esc_attr__(
+							'The expected user ID from line %1$d in the CSV file already exists but belongs to a different user (%2$s)!',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number,
+						$existing_user->user_email
+					)
+				);
+
 			}
 
 			global $wpdb;
