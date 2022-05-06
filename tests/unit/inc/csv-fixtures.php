@@ -88,8 +88,6 @@ function read_from_csv( $file_name, $line_id ) {
 			$data_array[ $column_name ] = $column;
 		}
 	}
-	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-	error_log( 'Returning user info: ' . print_r( $data_array, true ) );
 
 	return array( $headers, $data_array );
 }
