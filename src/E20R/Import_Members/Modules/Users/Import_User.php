@@ -459,10 +459,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		}
 
 		/**
-		 * Insert an user into the database.
+		 * Custom import function for adding/updating a WordPress user to the database (with a pre-hashed password)
+		 *
 		 * Copied from wp-include/user.php and commented wp_hash_password part
 		 *
-		 * @param mixed[]|WP_User $userdata
+		 * @param array|WP_User $userdata
 		 *
 		 * @return int|WP_Error
 		 *
@@ -764,7 +765,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 */
 		public function import_usermeta( $user_meta, $user_data, $headers ) {
 
-			$meta_keys = $this->variables->get( 'fields' );
+			try {
+				$meta_keys = $this->variables->get( 'fields' );
+			} catch ( InvalidSettingsKey $e ) {
+				$this->error_log->debug( 'Unexpected: ' . $e->getMessage() );
+				return $user_meta;
+			}
 
 			foreach ( $user_meta as $key => $value ) {
 				if ( in_array( $key, array_keys( $meta_keys ), true ) ) {
