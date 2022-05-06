@@ -491,7 +491,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 										<input id="update_users" name="update_users" type="checkbox" value="1" checked="checked"/>
 										<?php
 										esc_attr_e(
-											'If the WP User record exists, based on the user_login or user_email fields specified in the .csv file, update the existing user record with the data being imported. (Recommended) Not checking this box will cause the plugin to try and add the user. In that case, should the user actually exists on this site, we should not attempt to update any information for this user from the .csv file',
+											'If the WP User record exists, based on the user_login or user_email fields specified in the .csv file, update the existing user record with the data being imported. (Recommended) Not checking this box will cause the plugin to only try and add the user. In that case, should the user already exists on this site, we will not attempt to update any information for this user from the .csv file',
 											'pmpro-import-members-from-csv'
 										);
 										?>
