@@ -372,6 +372,8 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 			$this->site_id                     = ! empty( $_REQUEST['site_id'] ) ? intval( $_REQUEST['site_id'] ) : $this->site_id;
 			$this->partial                     = $this->background_import; // Partial is true if background Import is true
 			// @codingStandardsIgnoreEnd
+
+			$this->update_id = apply_filters( 'e20r_import_enable_user_id_override', $this->update_id );
 		}
 
 		/**
