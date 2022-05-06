@@ -548,8 +548,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 						$user_id = $import_user->import( $user_data, $user_meta, $headers );
 					} catch ( InvalidSettingsKey $e ) {
 						$msg = sprintf(
-						// translators: %d - Line number in the CSV file being imported
-							esc_attr__( 'Cannot import user data from row %d', 'pmpro-import-members-from-csv' ),
+						// translators: %1$d - Line number in the CSV file being imported
+							esc_attr__( 'Cannot import user data from row %1$d', 'pmpro-import-members-from-csv' ),
 							$active_line_number
 						);
 
@@ -559,7 +559,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					}
 
 					/** BUG FIX: Didn't save the created user's ID and added empty user IDs*/
-					if ( ! empty( $user_id ) ) {
+					if ( null !== $user_id ) {
 						$user_ids[] = $user_id;
 					}
 				}
