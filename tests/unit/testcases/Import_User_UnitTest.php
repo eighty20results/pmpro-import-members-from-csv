@@ -324,6 +324,13 @@ class Import_User_UnitTest extends Unit {
 			);
 
 		$this->load_stubs();
+		Actions\expectDone( 'e20r_before_user_import' );
+		Actions\expectDone( 'pmp_im_pre_member_import' );
+		Actions\expectDone( 'is_iu_pre_user_import' );
+
+		Actions\expectDone( 'e20r_after_user_import' );
+		Actions\expectDone( 'pmp_im_post_member_import' );
+		Actions\expectDone( 'is_iu_post_user_import' );
 
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
@@ -360,8 +367,8 @@ class Import_User_UnitTest extends Unit {
 			),
 			array(
 				false,
-				1,
-				1,
+				2,
+				2,
 				1002,
 			),
 		);
@@ -414,6 +421,7 @@ class Import_User_UnitTest extends Unit {
 			array(
 				'username_exists' => isset( $import_data['user_login'] ), // To ensure we update an existing user
 				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we update an existing user
+				'esc_attr__'      => null,
 			)
 		);
 
@@ -451,11 +459,12 @@ class Import_User_UnitTest extends Unit {
 		Functions\when( 'get_user_by' )->alias(
 			function( $field, $data ) use ( $import_data ) {
 				$this->mocked_errorlog->debug( "Using: {$field}" );
-				$m_user = $this->makeEmpty(
-					WP_User::class
+				$m_user = $this->constructEmpty(
+					WP_User::class,
+					array( $import_data['ID'] )
 				);
-
 				$m_user->__set( 'ID', $import_data['ID'] );
+				$m_user->ID = $import_data['ID'];
 				$m_user->__set( 'user_email', $import_data['user_email'] );
 				$m_user->__set( 'user_login', $import_data['user_login'] );
 				$m_user->__set( 'user_pass', $import_data['user_pass'] );
@@ -477,6 +486,13 @@ class Import_User_UnitTest extends Unit {
 			);
 
 		$this->load_stubs();
+		Actions\expectDone( 'e20r_before_user_import' );
+		Actions\expectDone( 'pmp_im_pre_member_import' );
+		Actions\expectDone( 'is_iu_pre_user_import' );
+
+		Actions\expectDone( 'e20r_after_user_import' );
+		Actions\expectDone( 'pmp_im_post_member_import' );
+		Actions\expectDone( 'is_iu_post_user_import' );
 
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
@@ -485,6 +501,32 @@ class Import_User_UnitTest extends Unit {
 			array(
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
 					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
+				},
+				'find_user'                              => function( $user_data ) use ( $expected ) {
+					$this->mocked_errorlog->debug( 'Running mocked find_user() method' );
+
+					$user_id = 2;
+					if ( ! empty( $user_data['ID'] ) ) {
+						$this->mocked_errorlog->debug( 'Setting user ID to the supplied value' );
+						$user_id = $user_data['ID'];
+					}
+
+					$m_user = $this->constructEmpty(
+						WP_User::class,
+						array( $user_id )
+					);
+					$m_user->__set( 'ID', $user_id );
+					$m_user->ID = $user_id;
+					$m_user->__set( 'user_email', $user_data['user_email'] );
+					$m_user->__set( 'user_login', $user_data['user_login'] );
+					$m_user->__set( 'user_pass', $user_data['user_pass'] );
+					$m_user->__set( 'first_name', $user_data['first_name'] );
+					$m_user->__set( 'last_name', $user_data['last_name'] );
+					$m_user->__set( 'display_name', $user_data['display_name'] );
+					if ( ! empty( $user_data['role'] ) ) {
+						$m_user->add_role( $user_data['role'] );
+					}
+					return $m_user;
 				},
 			)
 		);
@@ -507,9 +549,9 @@ class Import_User_UnitTest extends Unit {
 		return array(
 			array(
 				true,
-				2,
-				2,
-				1001,
+				1,
+				1,
+				1002,
 			),
 		);
 	}
@@ -555,5 +597,15 @@ class Import_User_UnitTest extends Unit {
 		}
 
 		return $user_list;
+	}
+
+	/**
+	 * Unit test validates the insert_or_update_disabled_hashing_user() method (Skipped on purpose)
+	 *
+	 * @return void
+	 * @test
+	 */
+	public function it_should_create_new_user_with_pre_hashed_password() {
+		$this->markTestSkipped( 'Using the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method' );
 	}
 }
