@@ -336,8 +336,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						<a id="pauseimport" href="#"><?php esc_attr_e( 'Click here to pause.', 'pmpro-import-members-from-csv' ); ?></a>
 						<a id="resumeimport" href="#" style="display:none;"><?php esc_attr_e( 'Paused. Click here to resume.', 'pmpro-import-members-from-csv' ); ?></a>
 					</p>
-
-					<textarea id="importstatus" rows="10" cols="60"><?php esc_attr_e( 'Loading...', 'pmpro-import-members-from-csv' ); ?></textarea>
+					<label for="importstatus">
+						<textarea id="importstatus" rows="10" cols="60"><?php esc_attr_e( 'Loading...', 'pmpro-import-members-from-csv' ); ?></textarea>
+					</label>
 					<p class="complete_btn">
 						<?php printf( '%s', $nonce ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						<input type="button" class="button-primary" id="completed_import" value="<?php esc_attr_e( 'Finished', 'pmpro-import-members-from-csv' ); ?>" style="display:none;"/>
@@ -429,8 +430,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 						<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" id="e20r-import-donation">
 							<input type="hidden" name="cmd" value="_s-xclick">
 							<input type="hidden" name="hosted_button_id" value="YR423UJ7AZJFJ">
-							<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" id="e20r_donation_button">
-							<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+							<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" name="submit" alt="PayPal - The safer, easier way to pay online!" id="e20r_donation_button">
+							<img alt="" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
 						</form>
 					</div>
 					<p class="e20r-donation-text"><?php esc_attr_e( 'PS: If you click the "Donate" button, this reminder will disappear for a while', 'pmpro-import-members-from-csv' ); ?></p>
@@ -438,7 +439,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				</div>
 				<hr/>
 				<form method="post" action="" id="e20r-import-form" enctype="multipart/form-data">
-					<?php printf( '%s', $nonce ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php printf( '%1$s', $nonce ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<table class="form-table">
 						<tr class="e20r-import-row">
 							<th scope="row">
@@ -499,32 +500,13 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							</td>
 						</tr>
 						<tr class="e20r-import-row">
-							<th scope="row"><?php esc_attr_e( 'Update the WP User Id', 'pmpro-import-members-from-csv' ); ?></th>
-							<td>
-								<fieldset>
-									<legend class="screen-reader-text">
-										<span><?php esc_attr_e( "Update the member's WordPress User ID number", 'pmpro-import-members-from-csv' ); ?></span>
-									</legend>
-									<label for="update_id">
-										<input id="update_id" name="update_id" type="checkbox" value="1" checked=""/>
-										<?php
-										esc_attr_e(
-											'If the WP User record exists, and the import file specifies an ID number value in an ID column, we should update the existing user record and set its ID to the ID being imported unless the proposed ID number already exists. (NOT recommended!)',
-											'pmpro-import-members-from-csv'
-										);
-										?>
-									</label>
-								</fieldset>
-							</td>
-						</tr>
-						<tr class="e20r-import-row">
 							<th scope="row"><?php esc_attr_e( 'Deactivate any existing memberships', 'pmpro-import-members-from-csv' ); ?></th>
 							<td>
 								<fieldset>
 									<legend class="screen-reader-text">
 										<span><?php esc_attr_e( 'Deactivate any existing memberships', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
-									<label for="deactivate_">
+									<label for="deactivate_old_memberships">
 										<input id="deactivate_old_memberships" name="deactivate_old_memberships"  type="checkbox" value="1" checked="checked"/>
 										<?php
 										esc_attr_e( 'For existing members, update the membership information by deactivating their pre-import (existing) active membership levels (Recommended to help avoid duplicate member status records in the database)', 'pmpro-import-members-from-csv' );
@@ -540,7 +522,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 									<legend class="screen-reader-text">
 										<span><?php esc_attr_e( 'Try to create a Paid Memberships Pro order record', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
-									<label for="update_users">
+									<label for="create_order">
 										<input id="create_order" name="create_order" type="checkbox" value="1"/>
 										<?php
 										esc_attr_e( 'Try to add a PMPro order record when the required order data is included in the data from the .csv file', 'pmpro-import-members-from-csv' );
@@ -681,15 +663,17 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 									<legend class="screen-reader-text">
 										<span><?php esc_attr_e( 'Select the multisite instance to import these members to.', 'pmpro-import-members-from-csv' ); ?></span>
 									</legend>
-									<select id="site_id" name="site_id">
-								<?php
-								foreach ( $site_list as $site ) {
-								 	// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText ?>
-									<option value="<?php esc_attr_e( $site->blog_id ); ?>" <?php selected( $site->blog_id, $current_blog_id ); ?>><?php esc_html_e( $site->blogname ); ?></option>
-										<?php
-								}
-								?>
-									</select>
+									<label for="background_import">
+										<select id="site_id" name="site_id">
+									<?php
+									foreach ( $site_list as $site ) {
+										// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText ?>
+										<option value="<?php esc_attr_e( $site->blog_id ); ?>" <?php selected( $site->blog_id, $current_blog_id ); ?>><?php esc_html_e( $site->blogname ); ?></option>
+											<?php
+									}
+									?>
+										</select>
+									</label>
 								</fieldset>
 							</td>
 							</tr>
