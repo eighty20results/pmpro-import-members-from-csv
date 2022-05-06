@@ -284,6 +284,11 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				);
 			}
 
+			// BUG FIX: PHP Warning during PHPStan testing
+			if ( ! is_array( $this->column_validation_classes ) ) {
+				$this->column_validation_classes = array();
+			}
+
 			// Iterate through the list of Column Validation classes and add them to the autoloader as needed
 			foreach ( $this->column_validation_classes as $name => $path ) {
 
