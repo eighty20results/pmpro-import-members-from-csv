@@ -119,8 +119,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		/**
 		 * Delete all import_ meta fields before an Import in case the user has been imported in the past.
 		 *
-		 * @param array $user_data
-		 * @param array $user_meta
+		 * @param array $user_data User specific import data from the CSV file
+		 * @param array $user_meta Usermeta import data from the CSV file
 		 *
 		 * @since v3.0 - Renamed function and removed duplicate code in CSV()
 		 *
@@ -182,6 +182,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 			global $wpdb;
 			global $e20r_import_err;
+			global $e20r_import_warn;
 			global $active_line_number;
 
 			if ( ! is_array( $e20r_import_err ) ) {
@@ -198,7 +199,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			$user = get_userdata( $user_id );
 
 			if ( empty( $user ) ) {
-				$e20r_import_err[ "no_user_found_$active_line_number" ] = new WP_Error(
+				$e20r_import_warn[ "no_user_found_$active_line_number" ] = new WP_Error(
 					'e20r_im_member',
 					sprintf(
 					// translators: %d the user id we're skipping
@@ -252,7 +253,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				true === $send_email &&
 				(
 					! isset( $user_data['membership_status'] ) ||
-					( isset( $user_data['membership_status'] ) && 'active' !== trim( $user_data['membership_status'] ) )
+					( 'active' !== trim( $user_data['membership_status'] ) )
 				)
 			) {
 				$welcome_warning = esc_attr__(
@@ -276,7 +277,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				$user_meta['membership_code_id'] = $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT dc.id
-                              FROM {$wpdb->prefix}pmpro_discount_codes AS dc
+                              FROM {$wpdb->pmpro_discount_codes} AS dc
                               WHERE dc.code = %s
                               LIMIT 1",
 						$user_data['membership_discount_code']
@@ -301,7 +302,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 					// Update all currently active memberships with the specified ID for the specified user
 					$updated = $wpdb->update(
-						"{$wpdb->prefix}pmpro_memberships_users",
+						$wpdb->pmpro_memberships_users,
 						array( 'status' => 'admin_cancelled' ),
 						array(
 							'user_id'       => $user_id,
@@ -402,7 +403,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					$record_id = $wpdb->get_var(
 						$wpdb->prepare(
 							"SELECT mt.id
-                                      FROM {$wpdb->prefix}pmpro_memberships_users AS mt
+                                      FROM {$wpdb->pmpro_memberships_users} AS mt
                                       WHERE mt.user_id = %d AND mt.membership_id = %d AND mt.status = %s
                                       ORDER BY mt.id DESC LIMIT 1",
 							$user_id,
@@ -414,7 +415,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					$record_id = $wpdb->get_var(
 						$wpdb->prepare(
 							"SELECT mt.id
-                                      FROM {$wpdb->prefix}pmpro_memberships_users AS mt
+                                      FROM {$wpdb->pmpro_memberships_users} AS mt
                                       WHERE mt.user_id = %d AND mt.membership_id = %d
                                       ORDER BY mt.id DESC LIMIT 1",
 							$user_id,
@@ -482,7 +483,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				) {
 
 					if ( false === $wpdb->update(
-						"{$wpdb->prefix}pmpro_memberships_users",
+						$wpdb->pmpro_memberships_users,
 						array(
 							'status'  => 'active',
 							'enddate' => $user_meta['membership_enddate'],
@@ -554,9 +555,9 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		/**
 		 * Add order for the user if applicable
 		 *
-		 * @param int $user_id
-		 * @param array $record
-		 * @param bool $membership_in_the_past
+		 * @param int $user_id The (new?) ID of the user we've imported data for
+		 * @param array $record The import data we're using for that user
+		 * @param bool $membership_in_the_past Did the member have a previous membership level
 		 *
 		 * @return bool
 		 */
@@ -589,7 +590,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				return false;
 			}
 
-			if ( isset( $record['membership_id'] ) && empty( $record['membership_id'] ) ) {
+			if ( empty( $record['membership_id'] ) ) {
 				$msg = sprintf(
 				// translators: %1$d - User ID
 					esc_attr__( 'Membership ID header found, but no ID value for (ID: %1$d).', 'pmpro-import-members-from-csv' ),
@@ -624,10 +625,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			foreach ( $default_level as $property => $value ) {
 				$header_name = "membership_${property}";
 
-				if (
-					! isset( $record[ $header_name ] ) ||
-					( isset( $record[ $header_name ] ) && empty( $record[ $header_name ] ) )
-				) {
+				if ( empty( $record[ $header_name ] ) ) {
 					$this->error_log->debug( "Saving default level value {$value} to {$header_name}" );
 					$record[ $header_name ] = $value;
 				}
