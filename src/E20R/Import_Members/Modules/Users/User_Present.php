@@ -188,13 +188,14 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		/**
 		 * Validate user presence on system
 		 *
-		 * @param array $record
-		 * @param bool|null $allow_update
+		 * @param array $record User data being imported from CSV file
+		 * @param bool|null $allow_update Whether the admin is allowing updates to already present user-data
 		 *
 		 * @return bool|int
 		 */
 		public function validate( $record, $allow_update = null ) {
 
+			$status = true;
 			// Figure out if we allow updates since we didn't receive the value from the calling method
 			if ( null === $allow_update ) {
 				try {
@@ -210,94 +211,85 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				}
 			}
 
-			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
-			$has_email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
-			$has_login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
-			$this->error_log->debug( "The user's ID value is present? " . ( $has_id ? 'Yes' : 'No' ) );
-			$this->error_log->debug( "The user's email value is present? " . ( $has_email ? 'Yes' : 'No' ) );
-			$this->error_log->debug( "The user's login value is present? " . ( $has_login ? 'Yes' : 'No' ) );
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+			$ID    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
+			$email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
+			$login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
+
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+			$this->error_log->debug( "The user's ID value is present? " . ( $ID ? 'Yes' : 'No' ) );
+			$this->error_log->debug( "The user's email value is present? " . ( $email ? 'Yes' : 'No' ) );
+			$this->error_log->debug( "The user's login value is present? " . ( $login ? 'Yes' : 'No' ) );
 
 			// None of the user identifiers (username or user ID) are set in import data so can't determine that user is persent
-			if ( false === $has_id && false === $has_login && false === $has_email ) {
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+			if ( false === $ID && false === $login && false === $email ) {
 				$this->error_log->debug( 'Neither of the user identification keys exist in import data' );
 				$this->status_msg( Status::E20R_USER_IDENTIFIER_MISSING, $allow_update );
+				$status = false;
 			}
 
 			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
-			if ( ! $has_login && ! $has_email ) {
+			if ( ! $login && ! $email ) {
 				$this->error_log->debug( 'Need either user_login or user_email to be present!' );
 				$this->status_msg( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, $allow_update );
+				$status = false;
 			}
 
 			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
-			if ( true === $has_id && false === Utilities::is_integer( $record['ID'] ) ) {
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+			if ( true === $ID && false === Utilities::is_integer( $record['ID'] ) ) {
 				$this->error_log->debug( "'ID' column isn't a number" );
 				$this->status_msg( Status::E20R_ERROR_ID_NOT_NUMBER, $allow_update );
 			}
 
 			// Is the user_email supplied and is it a valid email address
-			if ( true === $has_email && false === is_email( $record['user_email'] ) ) {
+			if ( true === $email && false === is_email( $record['user_email'] ) ) {
 				$this->error_log->debug( "'user_email' column doesn't contain a valid email address" );
 				$this->status_msg( Status::E20R_ERROR_NO_EMAIL, $allow_update );
+				$status = false;
 			}
 
-			// Check if user exists on the system based on the supplied WP_User->ID
-			$user = $has_id ? get_user_by( 'ID', $record['ID'] ) : false;
-			$this->error_log->debug( 'Looking for user from ID' );
-			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
-			if ( true === ( $id_status = $this->user_data_can_be_imported( $has_id, $user, $allow_update ) ) ) {
-				$this->error_log->debug( 'User found using the ID value' );
-				return $id_status;
+			$id_fields = array(
+				'ID'         => 'ID',
+				'user_login' => 'login',
+				'user_email' => 'email',
+			);
+
+			foreach ( $id_fields as $field => $type ) {
+				$has_column = ${$type};
+				$exists     = $this->db_user( $field, $record[ $field ] );
+				$status     = $this->user_data_can_be_imported( $has_column, $exists, $allow_update );
+				if ( true === $status ) {
+					$this->error_log->debug( "User found using the {$field} value" );
+					break;
+				} else {
+					$this->status_msg( $status, $allow_update );
+				}
 			}
-			$this->status_msg( $id_status, $allow_update );
 
-			// Check if the user exists based on the user_login info
-			$user = $has_login ? get_user_by( 'login', $record['user_login'] ) : false;
-			$this->error_log->debug( 'Looking for user from user_login' );
-			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
-			if ( true === ( $login_status = $this->user_data_can_be_imported( $has_login, $user, $allow_update ) ) ) {
-				$this->error_log->debug( 'User found using the user_login value' );
-				return $login_status;
-			}
-
-			$this->status_msg( $login_status, $allow_update );
-
-			// Check if the user exists on the system based on the supplied user_email data
-			$user = $has_email ? get_user_by( 'email', $record['user_email'] ) : false;
-			$this->error_log->debug( 'Looking for user from user_email' );
-			// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition, Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure
-			if ( true === ( $email_status = $this->user_data_can_be_imported( $has_email, $user, $allow_update ) ) ) {
-				$this->error_log->debug( 'User found using the user_email value' );
-				return $email_status;
-			}
-			$this->status_msg( $email_status, $allow_update );
-
-			return false;
+			return $status;
 		}
 
 		/**
 		 * Test if the import record can be applied (used to add/update the user)
 		 *
-		 * @param bool          $field_exists The presence of the specified import column (ID, user_login, user_email) in the import data
-		 * @param false|WP_User $user The WP_User record for the import data (if it exists)
-		 * @param bool          $allow_update Whether the admin set the 'allow updates' flag to true or not
+		 * @param bool $has_column The presence of the specified import column with data (ID, user_login, user_email) in the CSV data
+		 * @param bool $user_exists The WP_User record for the import data (if it exists)
+		 * @param bool $allow_update Whether the admin set the 'allow updates' flag to true or not
 		 *
 		 * @return true|int
 		 */
-		private function user_data_can_be_imported( $field_exists, $user, $allow_update ) {
-
-			if ( true === $field_exists && false === $user ) {
-				$this->error_log->debug( 'Specified column exists, but could not find user from the import record' );
-				return Status::E20R_ERROR_USER_NOT_FOUND;
-			}
+		private function user_data_can_be_imported( $has_column, $user_exists, $allow_update ) {
 
 			// The user identifying field is not present in import data
-			if ( false === $field_exists ) {
+			if ( false === $has_column ) {
+				$this->error_log->debug( 'Column does not contain data or is missing' );
 				return Status::E20R_USER_IDENTIFIER_MISSING;
 			}
 
 			// User doesn't exist
-			if ( false === $user ) { // @phpstan-ignore-line
+			if ( false === $user_exists ) {
 				$this->error_log->debug( 'User does not exist on this system' );
 				return Status::E20R_ERROR_USER_NOT_FOUND;
 			}
@@ -309,6 +301,28 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			}
 
 			return true;
+		}
+
+		/**
+		 * Find the user by searching the database (wp_users table)
+		 *
+		 * @param string $column The wp_users table column to search for
+		 * @param string $value The value we're looking for in that column
+		 *
+		 * @return bool
+		 * @access private
+		 */
+		private function db_user( $column, $value ) {
+			global $wpdb;
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->users} WHERE %s = %s",
+					$column,
+					$value
+				)
+			);
+			$this->error_log->debug( "Found {$count} users using {$column} and '{$value}'" );
+			return 1 <= $count;
 		}
 	}
 }

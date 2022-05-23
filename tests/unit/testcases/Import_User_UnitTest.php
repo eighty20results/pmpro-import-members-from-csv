@@ -223,14 +223,6 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function it_should_create_new_user( $allow_update, $user_line, $meta_line, $expected ) {
 
-		Functions\stubs(
-			array(
-				'username_exists' => isset( $import_data['user_login'] ), // To ensure we create a new user, not update and existing one
-				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we create a new user, not update and existing one
-				'esc_attr__'      => null,
-			)
-		);
-
 		$mocked_variables = $this->makeEmpty(
 			Variables::class,
 			array(
@@ -332,6 +324,15 @@ class Import_User_UnitTest extends Unit {
 		Actions\expectDone( 'pmp_im_post_member_import' );
 		Actions\expectDone( 'is_iu_post_user_import' );
 
+		Functions\expect( 'username_exists' )
+			->andReturn( isset( $import_data['user_login'] ) );
+
+		Functions\expect( 'email_exists' )
+			->andReturn( isset( $import_data['user_email'] ) );
+
+		Functions\when( 'esc_attr__' )
+			->returnArg();
+
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
 			'import',
@@ -339,6 +340,33 @@ class Import_User_UnitTest extends Unit {
 			array(
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
 					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
+				},
+				'find_user'                              => function( $user_data ) use ( $expected, $import_data ) {
+					$this->mocked_errorlog->debug( 'Running mocked find_user() method' );
+
+					$user_id = 2;
+					if ( ! empty( $import_data['ID'] ) ) {
+						$this->mocked_errorlog->debug( 'Setting user ID to the supplied value' );
+						$user_id = $import_data['ID'];
+					}
+
+					$m_user = $this->constructEmpty(
+						WP_User::class,
+						array( $user_id )
+					);
+					$m_user->__set( 'ID', $user_id );
+					$m_user->ID = $user_id;
+					$m_user->__set( 'user_email', $import_data['user_email'] );
+					$m_user->__set( 'user_login', $import_data['user_login'] );
+					$m_user->__set( 'user_pass', $import_data['user_pass'] );
+					$m_user->__set( 'first_name', $import_data['first_name'] );
+					$m_user->__set( 'last_name', $import_data['last_name'] );
+					$m_user->__set( 'display_name', $import_data['display_name'] );
+					if ( ! empty( $import_data['role'] ) ) {
+						$m_user->add_role( $import_data['role'] );
+					}
+
+					return $m_user;
 				},
 			)
 		);
@@ -417,16 +445,7 @@ class Import_User_UnitTest extends Unit {
 			)
 		);
 
-		Functions\stubs(
-			array(
-				'username_exists' => isset( $import_data['user_login'] ), // To ensure we update an existing user
-				'email_exists'    => isset( $import_data['user_email'] ), // To ensure we update an existing user
-				'esc_attr__'      => null,
-			)
-		);
-
 		Functions\expect( 'wp_update_user' )
-			->once()
 			->andReturnUsing(
 				function( $data ) use ( $expected ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
@@ -494,6 +513,15 @@ class Import_User_UnitTest extends Unit {
 		Actions\expectDone( 'pmp_im_post_member_import' );
 		Actions\expectDone( 'is_iu_post_user_import' );
 
+		Functions\expect( 'username_exists' )
+			->andReturn( isset( $import_data['user_login'] ) );
+
+		Functions\expect( 'email_exists' )
+			->andReturn( isset( $import_data['user_email'] ) );
+
+		Functions\when( 'esc_attr__' )
+			->returnArg();
+
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
 			'import',
@@ -502,13 +530,13 @@ class Import_User_UnitTest extends Unit {
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
 					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
 				},
-				'find_user'                              => function( $user_data ) use ( $expected ) {
+				'find_user'                              => function( $user_data ) use ( $expected, $import_data ) {
 					$this->mocked_errorlog->debug( 'Running mocked find_user() method' );
 
 					$user_id = 2;
-					if ( ! empty( $user_data['ID'] ) ) {
+					if ( ! empty( $import_data['ID'] ) ) {
 						$this->mocked_errorlog->debug( 'Setting user ID to the supplied value' );
-						$user_id = $user_data['ID'];
+						$user_id = $import_data['ID'];
 					}
 
 					$m_user = $this->constructEmpty(
@@ -517,14 +545,14 @@ class Import_User_UnitTest extends Unit {
 					);
 					$m_user->__set( 'ID', $user_id );
 					$m_user->ID = $user_id;
-					$m_user->__set( 'user_email', $user_data['user_email'] );
-					$m_user->__set( 'user_login', $user_data['user_login'] );
-					$m_user->__set( 'user_pass', $user_data['user_pass'] );
-					$m_user->__set( 'first_name', $user_data['first_name'] );
-					$m_user->__set( 'last_name', $user_data['last_name'] );
-					$m_user->__set( 'display_name', $user_data['display_name'] );
-					if ( ! empty( $user_data['role'] ) ) {
-						$m_user->add_role( $user_data['role'] );
+					$m_user->__set( 'user_email', $import_data['user_email'] );
+					$m_user->__set( 'user_login', $import_data['user_login'] );
+					$m_user->__set( 'user_pass', $import_data['user_pass'] );
+					$m_user->__set( 'first_name', $import_data['first_name'] );
+					$m_user->__set( 'last_name', $import_data['last_name'] );
+					$m_user->__set( 'display_name', $import_data['display_name'] );
+					if ( ! empty( $import_data['role'] ) ) {
+						$m_user->add_role( $import_data['role'] );
 					}
 					return $m_user;
 				},
@@ -606,6 +634,6 @@ class Import_User_UnitTest extends Unit {
 	 * @test
 	 */
 	public function it_should_create_new_user_with_pre_hashed_password() {
-		$this->markTestSkipped( 'Using the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method' );
+		$this->markTestSkipped( 'Must use the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method!' );
 	}
 }

@@ -20,7 +20,7 @@
  * @package E20R\Tests\Fixtures
  */
 
-namespace E20R\Tests\Fixtures;
+namespace E20R\Tests\Integration\Fixtures;
 
 /**
  * Clear DB contents

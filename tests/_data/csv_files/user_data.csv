@@ -2,4 +2,5 @@ ID,user_login,user_email,user_pass,first_name,last_name,display_name,role
 "","test_user_1","test_user_1@example.com","","Thomas","Example","Thomas Example","subscriber"
 "1002","kari_normann","kari_normann@example.com","","Kari","Normann","Kari Normann","subscriber"
 "","olga@owndomain.com","olga@owndomain.com","","Olga","Kvinne","Olga Kvinne","subscriber"
-"","peter@owndomain.com","peter@owndomain.com","","Peter","Mann","Peter Mann","subscriber, admin"
+"","peter@owndomain.com","peter@owndomain.com","","Peter","Mann","Peter Mann","subscriber, administrator"
+"","test_user_1","test_user_1@example.com","","Thomas","Example New","Thomas Example New","subscriber, pmpro_role_1"

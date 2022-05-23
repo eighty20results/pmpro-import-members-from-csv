@@ -151,13 +151,32 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			 */
 			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
 
-			if ( true === $user_exists && true === $allow_update ) {
+			if ( true === $user_exists ) {
+				$this->error_log->debug( 'Loading user because we know it exists already' );
 				$user = $this->find_user( $user_data );
 
 				if ( ! empty( $user->ID ) ) {
-					$user_id                  = $user->ID;
-					$user_exists_needs_update = true;
+					$user_id = $user->ID;
 				}
+			}
+
+			if ( Status::E20R_ERROR_USER_EXISTS_NO_UPDATE === $user_exists ) {
+				$msg = sprintf(
+				// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
+					esc_attr__(
+						'The import data specifies an existing user but the settings disallow updating their record (line: %3$d)',
+						'pmpro-import-members-from-csv'
+					),
+					$user_id,
+					$user_data['ID'],
+					$active_line_number
+				);
+
+				$new_error = $wp_error;
+				$new_error->add( 'user_exists_no_update', $msg );
+				$e20r_import_warn[ "user_exists_cannot_update_{$active_line_number}" ] = $new_error;
+				$this->error_log->debug( $msg );
+				return null;
 			}
 
 			if ( false === $allow_id_update && ( ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) ) {
@@ -172,7 +191,9 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$active_line_number
 				);
 
-				$e20r_import_warn[ "id_mismatch_{$active_line_number}" ] = new WP_Error( $msg );
+				$new_error = $wp_error;
+				$new_error->add( 'id_mismatch', $msg );
+				$e20r_import_warn[ "id_mismatch_{$active_line_number}" ] = $new_error;
 				$this->error_log->debug( $msg );
 				return null;
 
@@ -194,9 +215,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 
 				if ( ! empty( $user->ID ) ) {
-					$this->error_log->debug( "Setting updated user's ID to {$user->ID}" );
-					$user_id                  = $user->ID;
-					$user_exists_needs_update = true;
+					$user_id = $user->ID;
 				}
 			}
 
@@ -215,14 +234,17 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$user_data['user_pass'] = wp_generate_password( $default_password_length, false );
 			}
 
-			if ( false === $user && false === $user_exists_needs_update && false === $password_hashing_disabled ) {
+			if ( false === $user && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding new user record' );
 				$user_id = wp_insert_user( $user_data );
 				// FIXME: insert_or_update..() needs to support update with a pre-hashed password as well
-			} elseif ( false === $user && false === $user_exists_needs_update && true === $password_hashing_disabled ) {
+			} elseif ( // pre-hashed password and we'll allow both updating and adding user if other settings let us
+				( false === $user && true === $password_hashing_disabled ) ||
+				( false !== $user && true === $password_hashing_disabled && true === $allow_update )
+			) {
 				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
-			} elseif ( ! empty( $user_id ) && true === $user_exists_needs_update && true === $allow_update ) {
+			} elseif ( ! empty( $user_id ) && true === $allow_update ) {
 				// Insert, Update or insert without (re) hashing the password
 				$this->error_log->debug( 'Updating an existing user record...' );
 
@@ -233,7 +255,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$user_id = wp_update_user( $user_data );
 				if ( is_wp_error( $user_id ) ) {
 					$this->error_log->debug( "Error updating user ID {$user_data['ID']}" );
-					$e20r_import_err[ "user_not_imported_{$active_line_number}" ] = $user_id;
+					$e20r_import_err[ "data_not_updated_{$active_line_number}" ] = $user_id;
 					return null;
 				}
 				$this->error_log->debug( "Existing user with ID {$user_id} has been updated" );
@@ -258,6 +280,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$e20r_import_err[ $active_line_number ] = $user_id;
 			} else {
 
+				if ( ! empty( $user_id ) ) {
+					$this->error_log->debug( "Loading user record (possibly updated) for: {$user_id}" );
+					$user = $this->find_user( array( 'ID' => $user_id ) );
+				}
+
 				/**
 				 * Identify any new roles to add for the user (and add them)
 				 */
@@ -267,26 +294,26 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$all_roles    = array( $default_role );
 
 				if ( ! empty( $user_data['role'] ) ) {
-					$role = $user_data['role'];
 					$this->error_log->debug( "Update role(s) for user with ID {$user_id}: {$user_data['role']}" );
-					$roles     = array_map( 'trim', explode( ',', $role ) );
-					$all_roles = $all_roles + $roles;
-				}
-
-				if ( empty( $user_data['role'] ) && ! empty( $default_role ) ) {
-					$this->error_log->debug( "Setting the default role for the user to {$default_role}" );
-					$user = new WP_User( $user_id );
-					$user->set_role( $default_role );
+					$roles      = array_map( 'trim', explode( ',', $user_data['role'] ) );
+					$all_roles += $roles;
 				}
 
 				if ( ! empty( $all_roles ) ) {
 					foreach ( $all_roles as $role_name ) {
-						if ( $default_role === $role_name ) {
-							continue;
-						}
 						$this->error_log->debug( "Adding role {$role_name} to user with ID {$user_id}" );
 						$user->add_role( $role_name );
 					}
+				}
+
+				$updated = wp_update_user( $user );
+
+				if ( is_wp_error( $updated ) ) {
+					$e20r_import_err[ "save_error_{$active_line_number}" ] = $updated;
+					$this->error_log->debug( $updated->get_error_message() );
+					return null;
+				} else {
+					$this->error_log->debug( "User {$user_id} is saved..." );
 				}
 
 				// Adds the user to the specified blog ID if we're in a multi-site configuration
@@ -325,7 +352,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$msg_target = 'both';
 				}
 
-				if ( false === $user_exists_needs_update && true === $new_user_notification || true === $admin_new_user_notification ) {
+				if ( ( false !== $user && true === $allow_update ) && ( true === $new_user_notification || true === $admin_new_user_notification ) ) {
 					$this->error_log->debug( 'Sending new user notification message to user' );
 					wp_new_user_notification( $user_id, null, $msg_target );
 				}

@@ -494,22 +494,24 @@ unit-tests: wp-deps
 	@echo "Testing if we need to run unit tests"
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running all unit tests for $(PROJECT)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit --steps --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH); \
+		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit --steps --no-exit --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH); \
 	fi
 
 unit: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" && -n "$(TEST_TO_RUN)" ]]; then \
 		echo "Running Unit tests for $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
+		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit --steps --no-exit --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
   	else \
   	  echo "Error: Either FOUND_UNIT_TESTS is empty or TEST_TO_RUN is empty. Exiting!" ; \
   	  exit 1 ; \
 	fi
 
 coverage: wp-deps
-	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
+	if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit --steps --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH); \
+		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+        	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ wordpress \
+			php -dpcov.enabled=1 -dpcov.directory=. -dpcov.exclude="~inc~" $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit -c codeception.dist.yml --steps --verbose --debug --coverage-text --no-exit -- $(UNIT_TEST_CASE_PATH) ; \
 	fi
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
@@ -518,15 +520,11 @@ integration-tests: integration-start
 	@echo "Testing if we need to run integration tests"
 	@if [[ -n "$(FOUND_INTEGRATION_TESTS)" ]]; then \
   		echo "Running all integration tests for $(PROJECT)"; \
-  		pwd ; \
-  		ls -lart /var/www/html/wp-content/plugins/e20r-members-list/ ; \
-  		echo "Show permissions for _* directories"; \
-  		ls -lart /var/www/html/wp-content/plugins/e20r-members-list/tests/_* ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
   			exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ wordpress \
-  			$(COMPOSER_DIR)/bin/codecept $(INTEGRATION_BOOTSTRAP_SETTINGS) run integration --verbose --debug --steps $(COVERAGE_SETTINGS) -- $(INTEGRATION_TEST_CASE_PATH) && \
+  			$(COMPOSER_DIR)/bin/codecept $(INTEGRATION_BOOTSTRAP_SETTINGS) run integration --verbose --debug --steps --no-exit $(COVERAGE_SETTINGS) -- $(INTEGRATION_TEST_CASE_PATH) && \
 		echo "Completed running all integration tests" ; \
 	fi
 
@@ -539,7 +537,7 @@ integration:
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
   			exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ wordpress \
-  			$(COMPOSER_DIR)/bin/codecept $(INTEGRATION_BOOTSTRAP_SETTINGS) run integration --verbose --debug --steps $(COVERAGE_SETTINGS) -- $(INTEGRATION_TEST_CASE_PATH)$(TEST_TO_RUN); \
+  			$(COMPOSER_DIR)/bin/codecept $(INTEGRATION_BOOTSTRAP_SETTINGS) run integration --verbose --debug --steps --no-exit $(COVERAGE_SETTINGS) -- $(INTEGRATION_TEST_CASE_PATH)$(TEST_TO_RUN); \
 	fi
 
 #

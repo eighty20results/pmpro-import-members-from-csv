@@ -97,7 +97,8 @@
 			"E20R\\Tests\\Functional\\": "tests/functional/testcases",
 			"E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases",
 			"E20R\\Tests\\API\\": "tests/api/testcases",
-		  	"E20R\\Tests\\Unit\\Fixtures\\": "tests/unit/inc"
+		  	"E20R\\Tests\\Unit\\Fixtures\\": "tests/unit/inc",
+		  	"E20R\\Tests\\Integration\\Fixtures\\": "tests/integration/inc"
         }
     }
 }

@@ -139,9 +139,14 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 * @return bool|int
 		 * @throws InvalidSettingsKey Thrown if Variables::get() references an invalid property
 		 */
-		public function validate_user_id( $has_error, $user_id, $record, $field_name = null ) {
+		public function validate_user_id( $has_error, $user_id, $record, $field_name = null, $wp_error = null ) {
 
 			global $e20r_import_err;
+			global $active_line_number;
+
+			if ( null === $wp_error ) {
+				$wp_error = new \WP_Error();
+			}
 
 			if ( empty( $field_name ) ) {
 				return $has_error;
@@ -154,28 +159,36 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 			}
 
 			$allow_update = (bool) $this->variables->get( 'update_users' );
+			// TODO: Remove duplication of the following code from lines 214-216 in User_Present.php file
 			$has_id       = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
 			$has_email    = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
 			$has_login    = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 
-			$this->error_log->debug( 'ID column found (and contains an integer)? ' . ( $has_id ? 'Yes' : 'No' ) );
-			$this->error_log->debug( 'user_email column found? ' . ( $has_email ? 'Yes' : 'No' ) );
-			$this->error_log->debug( 'user_login column found? ' . ( $has_login ? 'Yes' : 'No' ) );
-
-			$this->error_log->debug( 'Record being processed: ' . print_r( $record, true ) ); // phpcs:ignore
-
 			if ( false === $has_id && false === $has_login && false === $has_email ) {
-				$e20r_import_err['error_no_id'] = __( 'Error: No user ID has been supplied', 'pmpro-import-members-from-csv' );
+				$msg = sprintf(
+					// translators: %1$d: Current line in CSV file being imported
+					esc_attr__( 'Error: No way to identify the user has been supplied for record (line #%1$d)', 'pmpro-import-members-from-csv' ),
+					$active_line_number
+				);
+				$new_error = $wp_error;
+				$new_error->add( 'error_no_id', $msg );
+				$e20r_import_err[ "error_no_id_{$active_line_number}" ] = $new_error;
+				$this->error_log->debug( $msg );
 
 				return Status::E20R_ERROR_NO_USER_ID;
 			}
 
 			if ( false === $has_email && true === $has_login ) {
-				$e20r_import_err['error_no_email'] = sprintf(
-				// translators: %d - User ID
-					__( 'Error: No Email address supplied for user record # %d', 'pmpro-import-members-from-csv' ),
-					$user_id
+				$msg = sprintf(
+				// translators: %1$d: User ID, %2$d: Active line number in CSV file
+					esc_attr__( 'Error: No Email address supplied for user %1$d (line %2$d)', 'pmpro-import-members-from-csv' ),
+					$user_id,
+					$active_line_number
 				);
+				$new_error = $wp_error;
+				$new_error->add( 'error_no_email', $msg );
+				$e20r_import_err[ "error_no_email_{$active_line_number}" ] = $new_error;
+				$this->error_log->debug( $msg );
 
 				return Status::E20R_ERROR_NO_EMAIL;
 			}
@@ -186,7 +199,6 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 
 			if ( false === $allow_update && ( true === $found_by_email || true === $found_by_id || true === $found_by_login ) ) {
 				$this->error_log->debug( 'User exists, but not allowing updates!' );
-
 				return Status::E20R_ERROR_USER_EXISTS_NO_UPDATE;
 			}
 

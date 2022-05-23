@@ -21,20 +21,22 @@
  * @package \
  */
 
+use Codeception\Util\Autoload;
+
 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 error_log( 'Loading fixture definitions for integration tests' );
+Autoload::addNamespace( 'E20R\\Tests\\Integration\\Fixtures', __DIR__ . '/inc/' );
 
 if ( file_exists( __DIR__ . '/../unit/inc/csv-fixtures.php' ) ) {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'Loading "' . __DIR__ . '/../unit/inc/csv-fixtures.php"' );
 	require_once __DIR__ . '/../unit/inc/csv-fixtures.php';
 }
 
-if ( file_exists( __DIR__ . '/inc/fixture_insert_test_data.php' ) ) {
-	require_once __DIR__ . '/inc/fixture_insert_test_data.php';
-}
-
-if ( file_exists( __DIR__ . '/inc/fixture_clear_test_data.php' ) ) {
-	require_once __DIR__ . '/inc/fixture_clear_test_data.php';
-}
+//
+//if ( file_exists( __DIR__ . '/inc/fixture_clear_test_data.php' ) ) {
+//	require_once __DIR__ . '/inc/fixture_clear_test_data.php';
+//}
 
 // PMPro isn't very defensively coded and
 if ( ! defined( 'AUTH_KEY' ) ) {

@@ -1,7 +1,7 @@
 ARG APACHE_RUN_USER
 ARG APACHE_RUN_GROUP
-ARG WP_RELEASE latest
-FROM wordpress:$WP_RELEASE
+ARG WP_RELEASE=latest
+FROM wordpress:${WP_RELEASE}
 
 RUN docker-php-ext-install pdo_mysql && \
     pecl install pcov && docker-php-ext-enable pcov && \

@@ -163,6 +163,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_create_user_import() {
 		return array(
+			// allow_update, clear_user, user_line, meta_line, expected
 			array( false, false, 0, 0, 2 ),
 			array( false, false, 2, 2, 3 ),
 		);
@@ -180,13 +181,22 @@ class Import_User_IntegrationTest extends WPTestCase {
 		// Let us test with/without deleting existing users
 		if ( true === $clear_user && null !== $import_data ) {
 			$user_to_delete = null;
+			$id_fields      = array(
+				'ID'         => 'ID',
+				'user_login' => 'login',
+				'user_email' => 'email',
+			);
 
-			if ( ! empty( $import_data['user_email'] ) ) {
-				$user_to_delete = get_user_by( 'email', $import_data['user_email'] );
-			} elseif ( ! empty( $import_data['user_login'] ) ) {
-				$user_to_delete = get_user_by( 'login', $import_data['user_login'] );
-			} elseif ( ! empty( $import_data['ID'] ) ) {
-				$user_to_delete = get_user_by( 'ID', $import_data['ID'] );
+			foreach ( $id_fields as $field_name => $user_by_field ) {
+				$this->errorlog->debug( "Attempting to locate user from {$field_name}" );
+				if ( isset( $user_data[ $field_name ] ) && ! empty( $user_data[ $field_name ] ) ) {
+					$this->errorlog->debug( "Import has data in {$field_name} column" );
+					$user = get_user_by( $user_by_field, $user_data[ $field_name ] );
+					if ( ! empty( $user->ID ) ) {
+						$this->errorlog->debug( 'Found user to delete: ' . $user->ID );
+						break;
+					}
+				}
 			}
 
 			if ( ! empty( $user_to_delete ) ) {
@@ -255,34 +265,11 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_update_user_import() {
 		return array(
-			array(
-				true,
-				false,
-				0,
-				0,
-				4,
-			),
-			array(
-				true,
-				false,
-				1,
-				1,
-				1002,
-			),
-			array(
-				true,
-				false,
-				2,
-				2,
-				1003,
-			),
-			array(
-				true,
-				false,
-				3,
-				3,
-				1004,
-			),
+			// allow_update, clear_user, user_line, meta_line, expected
+			array( true, false, 0, 0, 4 ),
+			array( true, false, 1, 1, 1002 ),
+			array( true, false, 2, 2, 1003 ),
+			array( true, false, 3, 3, 1004 ),
 		);
 	}
 
