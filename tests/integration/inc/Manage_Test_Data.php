@@ -196,7 +196,7 @@ class Manage_Test_Data {
 		$sql        .= '),';
 		$this->sql_array[] = $sql;
 
-		return $this->add_to_db( $$this->sql_array, $wpdb->users );
+		return $this->add_to_db( $this->sql_array, $wpdb->users );
 	}
 
 	/**
@@ -257,12 +257,12 @@ class Manage_Test_Data {
 			trigger_error( 'WordPress environment is not running. Invalid test' );
 		}
 
-		$$this->sql_array = array(
+		$this->sql_array = array(
 			"(1,'4240DB7E44','c87a9d2f9028edc0cdd7b0f9fda961e4',2,1,'','Test User1','123 Nostreet','Oslo','Oslo','0571','NO','1234567890','25','0','',1,0,'','25','','Visa','XXXXXXXXXXXX4242','10','2025','success','','sandbox','TEST4240DB7E44','','2022-02-12 09:36:34','','',''),",
 			"(2,'E26C893AC4','e58966f4c242d4835fd72d55f60174bd',3,2,'','Test User2','234 Nostreet','Oslo','Oslo','0517','NO','1234567890','15','0','',2,0,'','15','','Visa','XXXXXXXXXXXX4242','01','2026','success','','sandbox','TESTE26C893AC4','TESTE26C893AC4','2022-02-12 09:38:22','','','');",
 		);
 
-		return $this->add_to_db( $$this->sql_array, $line_to_load, $wpdb->pmpro_membership_orders );
+		return $this->add_to_db( $this->sql_array, $line_to_load, $wpdb->pmpro_membership_orders );
 	}
 
 	/**
@@ -278,12 +278,12 @@ class Manage_Test_Data {
 			trigger_error( 'WordPress environment is not running. Invalid test' );
 		}
 
-		$$this->sql_array = array(
+		$this->sql_array = array(
 			"(1,'Test Level 1 (1 year long)','','',25.00000000,0.00000000,0,'',0,0.00000000,0,1,1,'Year')",
 			"(2,'Test Level 2 (Recurring)','','',15.00000000,10.00000000,1,'Month',0,0.00000000,0,1,0,'')",
 		);
 
-		return $this->add_to_db( $$this->sql_array, $wpdb->pmpro_membership_levels );
+		return $this->add_to_db( $this->sql_array, $wpdb->pmpro_membership_levels );
 	}
 
 	/**
@@ -313,22 +313,22 @@ class Manage_Test_Data {
 			'modified'        => 'null',
 		);
 
-		$$this->sql_array = array();
+		$this->sql_array = array();
 		$sql       = '(';
 		foreach ( $column_map as $db_col => $csv_col ) {
 			$sql .= sprintf( '\'%1$s\',', isset( $this->data[ $csv_col ] ) ? $this->data[ $csv_col ] : '' );
 		}
 
-		$$this->sql_array[] = $sql;
+		$this->sql_array[] = $sql;
 
-		$$this->sql_array = array(
+		$this->sql_array = array(
 			"(1,2,1,0,25.00000000,0.00000000,0,'',0,0.00000000,0,'active','2022-02-12 09:36:33','2023-02-12 23:59:59','2022-02-12 09:36:34')",
 			"(2,3,2,0,15.00000000,10.00000000,1,'Month',0,0.00000000,0,'active','2022-02-12 09:38:22','0000-00-00 00:00:00','2022-02-12 09:38:22')",
 			"(2,4,2,0,15.00000000,10.00000000,1,'Month',0,0.00000000,0,'active','2021-02-12 09:38:22','0000-00-00 00:00:00','2022-02-12 09:38:22')",
 			"(1,1002,1,0,25.00000000,0.00000000,0,'',0,0.00000000,0,'active','2020-02-12 09:36:33','2023-02-12 23:59:59','2022-02-12 09:36:34')",
 		);
 
-		return $this->add_to_db( $$this->sql_array, $wpdb->pmpro_memberships_users );
+		return $this->add_to_db( $this->sql_array, $wpdb->pmpro_memberships_users );
 	}
 
 	/**
