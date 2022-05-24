@@ -76,6 +76,11 @@ class Manage_Test_Data {
 	 */
 	private $users_to_configure = null;
 
+	/**
+	 * List of SQL statements
+	 *
+	 * @var string[]
+	 */
 	private $sql_array = [];
 
 	/**
@@ -133,7 +138,7 @@ class Manage_Test_Data {
 	public function insert_user_records( $line_to_load = null ) {
 
 		global $wpdb;
-		$this->sql_array = [];
+		$this->sql_array = array();
 
 		if ( null === $wpdb ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
@@ -188,15 +193,15 @@ class Manage_Test_Data {
 					$value = null;
 					break;
 				default:
-					$value = isset( $csv_col ) ? $this->data[ $csv_col ] : '';
+					$value = $this->data[ $csv_col ] ?? '';
 			}
 
 			$sql .= sprintf( '\'%1$s\',', $value );
 		}
-		$sql        .= '),';
+		$sql              .= '),';
 		$this->sql_array[] = $sql;
 
-		return $this->add_to_db( $this->sql_array, $wpdb->users );
+		return $this->add_to_db( $wpdb->users );
 	}
 
 	/**
@@ -262,7 +267,7 @@ class Manage_Test_Data {
 			"(2,'E26C893AC4','e58966f4c242d4835fd72d55f60174bd',3,2,'','Test User2','234 Nostreet','Oslo','Oslo','0517','NO','1234567890','15','0','',2,0,'','15','','Visa','XXXXXXXXXXXX4242','01','2026','success','','sandbox','TESTE26C893AC4','TESTE26C893AC4','2022-02-12 09:38:22','','','');",
 		);
 
-		return $this->add_to_db( $this->sql_array, $line_to_load, $wpdb->pmpro_membership_orders );
+		return $this->add_to_db( $wpdb->pmpro_membership_orders );
 	}
 
 	/**
@@ -283,7 +288,7 @@ class Manage_Test_Data {
 			"(2,'Test Level 2 (Recurring)','','',15.00000000,10.00000000,1,'Month',0,0.00000000,0,1,0,'')",
 		);
 
-		return $this->add_to_db( $this->sql_array, $wpdb->pmpro_membership_levels );
+		return $this->add_to_db( $wpdb->pmpro_membership_levels );
 	}
 
 	/**
@@ -295,7 +300,7 @@ class Manage_Test_Data {
 
 		global $wpdb;
 
-		$column_map = array(
+		$column_map      = array(
 			'id'              => 'null',
 			'user_id'         => 'membership_user_id',
 			'membership_id'   => 'membership_id',
@@ -312,9 +317,8 @@ class Manage_Test_Data {
 			'enddate'         => 'membership_enddate',
 			'modified'        => 'null',
 		);
-
 		$this->sql_array = array();
-		$sql       = '(';
+		$sql             = '(';
 		foreach ( $column_map as $db_col => $csv_col ) {
 			$sql .= sprintf( '\'%1$s\',', isset( $this->data[ $csv_col ] ) ? $this->data[ $csv_col ] : '' );
 		}
@@ -328,7 +332,7 @@ class Manage_Test_Data {
 			"(1,1002,1,0,25.00000000,0.00000000,0,'',0,0.00000000,0,'active','2020-02-12 09:36:33','2023-02-12 23:59:59','2022-02-12 09:36:34')",
 		);
 
-		return $this->add_to_db( $this->sql_array, $wpdb->pmpro_memberships_users );
+		return $this->add_to_db( $wpdb->pmpro_memberships_users );
 	}
 
 	/**
@@ -358,7 +362,7 @@ class Manage_Test_Data {
 				$sql .= sprintf( '%1$s, ', $this->sql_array[ $i ] );
 		}
 
-		$sql = preg_replace( '/(.*),$/', '$1;', $sql );
+		$sql = preg_replace( '/(.*), $/', '$1;', $sql );
 
 		error_log( $sql );
 
