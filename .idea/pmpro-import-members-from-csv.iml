@@ -22,6 +22,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests/integration/testcases" isTestSource="true" packagePrefix="E20R\Tests\Integration\" />
       <sourceFolder url="file://$MODULE_DIR$/tests/unit/inc" isTestSource="true" packagePrefix="E20R\Tests\Unit\Fixtures\" />
       <sourceFolder url="file://$MODULE_DIR$/tests/unit/testcases" isTestSource="true" packagePrefix="E20R\Tests\Unit\" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/integration/inc" isTestSource="true" packagePrefix="E20R\Tests\Integration\Fixtures\" />
       <excludeFolder url="file://$MODULE_DIR$/.circleci" />
       <excludeFolder url="file://$MODULE_DIR$/.github" />
       <excludeFolder url="file://$MODULE_DIR$/.wordpress-org" />
