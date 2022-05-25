@@ -160,14 +160,17 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 
 			$allow_update = (bool) $this->variables->get( 'update_users' );
 			// TODO: Remove duplication of the following code from lines 214-216 in User_Present.php file
-			$has_id       = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
-			$has_email    = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
-			$has_login    = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
+			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
+			$has_email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
+			$has_login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 
 			if ( false === $has_id && false === $has_login && false === $has_email ) {
 				$msg = sprintf(
 					// translators: %1$d: Current line in CSV file being imported
-					esc_attr__( 'Error: No way to identify the user has been supplied for record (line #%1$d)', 'pmpro-import-members-from-csv' ),
+					esc_attr__(
+						'Error: No way to identify the user has been supplied for record (line #%1$d)',
+						'pmpro-import-members-from-csv'
+					),
 					$active_line_number
 				);
 				$new_error = $wp_error;
@@ -181,7 +184,10 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 			if ( false === $has_email && true === $has_login ) {
 				$msg = sprintf(
 				// translators: %1$d: User ID, %2$d: Active line number in CSV file
-					esc_attr__( 'Error: No Email address supplied for user %1$d (line %2$d)', 'pmpro-import-members-from-csv' ),
+					esc_attr__(
+						'Error: No Email address supplied for user %1$d (line %2$d)',
+						'pmpro-import-members-from-csv'
+					),
 					$user_id,
 					$active_line_number
 				);
