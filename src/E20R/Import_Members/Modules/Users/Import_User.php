@@ -151,7 +151,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			 */
 			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
 
-			if ( true === $user_exists ) {
+			if ( true === $user_exists || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $user_exists ) {
 				$this->error_log->debug( 'Loading user because we know it exists already' );
 				$user = $this->find_user( $user_data );
 
@@ -160,7 +160,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 			}
 
-			if ( Status::E20R_ERROR_USER_EXISTS_NO_UPDATE === $user_exists ) {
+			if ( Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $user_exists ) {
 				$msg = sprintf(
 				// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
 					esc_attr__(
