@@ -257,14 +257,15 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			);
 
 			foreach ( $id_fields as $field => $type ) {
+				$this->error_log->debug( "Data record contains the {$field} column? " . ( ${$type} ? 'Yes' : 'No' ) . ' Verifying: ' . ( ! empty( $record[ $field ] ) ? 'Yes' : 'No' ) );
 				$has_column = ${$type};
 				$exists     = $this->db_user( $field, $record[ $field ] );
 				$status     = $this->user_data_can_be_imported( $has_column, $exists, $allow_update );
-				if ( true === $status ) {
+				$this->status_msg( $status, $allow_update );
+
+				if ( true === $status || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $status ) {
 					$this->error_log->debug( "User found using the {$field} value" );
 					break;
-				} else {
-					$this->status_msg( $status, $allow_update );
 				}
 			}
 
@@ -314,15 +315,17 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 */
 		private function db_user( $column, $value ) {
 			global $wpdb;
-			$count = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->users} WHERE %s = %s",
-					$column,
-					$value
-				)
+
+			$sql   = sprintf(
+				'SELECT COUNT(*) FROM %1$s WHERE %2$s = \'%3$s\'',
+				$wpdb->users,
+				esc_sql( $column ),
+				esc_sql( $value )
 			);
+			$count = (int) $wpdb->get_var( $sql ); // // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
 			$this->error_log->debug( "Found {$count} users using {$column} and '{$value}'" );
-			return 1 <= $count;
+			return ( 1 <= $count );
 		}
 	}
 }
