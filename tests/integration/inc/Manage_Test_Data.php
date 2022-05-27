@@ -22,11 +22,18 @@
 
 namespace E20R\Tests\Integration\Fixtures;
 
+use E20R\Import_Members\Error_Log;
 use mysqli_result;
 use SplFileObject;
 
 class Manage_Test_Data {
 
+	/**
+	 * Instance of the debug info class
+	 *
+	 * @var null|Error_Log
+	 */
+	private $errorlog = null;
 	/**
 	 * Number of user records to process
 	 *
@@ -81,14 +88,20 @@ class Manage_Test_Data {
 	 *
 	 * @var string[]
 	 */
-	private $sql_array = [];
+	private $sql_array = array();
 
 	/**
 	 * Constructor
 	 *
 	 * @param int|null $line User to add
 	 */
-	public function __construct( $line = null ) {
+	public function __construct( $line = null, $errorlog = null ) {
+		if ( null === $errorlog ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			$errorlog = new Error_Log();
+		}
+		$this->errorlog = $errorlog;
+
 		$this->user_line                    = $line;
 		list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
 	}
@@ -171,7 +184,7 @@ class Manage_Test_Data {
 			$this->read_line_from_csv( $line_to_load, __DIR__ . '/test_data_to_load.csv' );
 		}
 
-		$sql = '(';
+		$data_list = array();
 
 		foreach ( $column_map as $db_col => $csv_col ) {
 			switch ( $csv_col ) {
@@ -196,11 +209,16 @@ class Manage_Test_Data {
 					$value = $this->data[ $csv_col ] ?? '';
 			}
 
-			$sql .= sprintf( '\'%1$s\',', $value );
+			if ( null !== $value ) {
+				$data_list[ $csv_col ] = $value;
+			} else {
+				$data_list[ $csv_col ] = 'NULL';
+			}
 		}
-		$sql              .= '),';
-		$this->sql_array[] = $sql;
 
+		$this->sql_array[] = sprintf( "('%1\$s')", implode( "','", $data_list ) );
+
+		$this->users_to_configure = count( $this->sql_array );
 		return $this->add_to_db( $wpdb->users );
 	}
 
@@ -338,7 +356,6 @@ class Manage_Test_Data {
 	/**
 	 * Add specified number of records to the specified table
 	 *
-	 * @param string[] $sql_array List of records available to add
 	 * @param string $table Name of the DB table
 	 *
 	 * @return bool|int|mysqli_result|resource|null
@@ -363,8 +380,6 @@ class Manage_Test_Data {
 		}
 
 		$sql = preg_replace( '/(.*), $/', '$1;', $sql );
-
-		error_log( $sql );
 
 		// Insert user metadata
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
@@ -454,5 +469,42 @@ class Manage_Test_Data {
 		reset( $text_array );
 
 		return $text_array;
+	}
+
+	/**
+	 * Maybe delete pre-existing users who may have been added by another test
+	 *
+	 * @param bool       $clear_user Whether to delete a pre-existing user record (or not)
+	 * @param array|null $import_data The wp_users data to identify and delete the user (if we're supposed to delete them)
+	 *
+	 * @return void
+	 */
+	public function maybe_delete_user( $clear_user = false, $import_data = null ) {
+		// Let us test with/without deleting existing users
+		if ( true === $clear_user && null !== $import_data ) {
+			$user_to_delete = null;
+			$id_fields      = array(
+				'ID'         => 'ID',
+				'user_login' => 'login',
+				'user_email' => 'email',
+			);
+
+			foreach ( $id_fields as $field_name => $user_by_field ) {
+				$this->errorlog->debug( "Attempting to locate user from {$field_name}" );
+				if ( isset( $user_data[ $field_name ] ) && ! empty( $user_data[ $field_name ] ) ) {
+					$this->errorlog->debug( "Import has data in {$field_name} column" );
+					$user = get_user_by( $user_by_field, $user_data[ $field_name ] );
+					if ( ! empty( $user->ID ) ) {
+						$this->errorlog->debug( 'Found user to delete: ' . $user->ID );
+						break;
+					}
+				}
+			}
+
+			if ( ! empty( $user_to_delete ) ) {
+				$this->errorlog->debug( "Removing a pre-existing user with ID {$user_to_delete->get('ID')} from the WP database" );
+				wp_delete_user( $user_to_delete->ID );
+			}
+		}
 	}
 }

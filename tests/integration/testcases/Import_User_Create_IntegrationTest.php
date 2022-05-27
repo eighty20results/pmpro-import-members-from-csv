@@ -29,7 +29,6 @@ use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Variables;
 
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
-
 use WP_Error;
 use stdClass;
 use MemberOrder;
@@ -38,7 +37,7 @@ use WP_User;
 use function fixture_read_from_user_csv;
 use function fixture_read_from_meta_csv;
 
-class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
+class Import_User_Create_IntegrationTest extends WPTestCase {
 
 	/**
 	 * Default Error_Log() class
@@ -77,9 +76,9 @@ class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
 	private $wp_error = null;
 
 	/**
-	 * Load WP and PMPro tables with test data
+	 * Instance of the test data generation class
 	 *
-	 * @var Manage_Test_Data|null
+	 * @var null|Manage_Test_Data
 	 */
 	private $test_data = null;
 
@@ -89,8 +88,6 @@ class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
 	 * @return void
 	 */
 	public function setUp() : void {
-		$this->test_data = new Manage_Test_Data();
-
 		parent::setUp();
 		$this->load_mocks();
 	}
@@ -102,6 +99,7 @@ class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
 
 		$this->errorlog  = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		$this->variables = new Variables( $this->errorlog );
+		$this->test_data = new Manage_Test_Data( null, $this->errorlog );
 	}
 
 	/**
@@ -113,39 +111,23 @@ class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
 	}
 
 	/**
-	 * Test import of users but don't allow updating them
+	 * Test of the happy-path when importing a user who doesn't exist in the DB already
 	 *
-	 * @param bool   $allow_update We can/can not update existing user(s)
-	 * @param bool   $clear_user  Whether we should attempt to delete any existing user record before importing
-	 * @param int    $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
-	 * @param int    $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
-	 * @param int    $expected_id The ID value we expect to the resulting WP_User class to contain
-	 * @param string $expected_email The email address we expect the resulting WP_User class to contain
-	 * @param string $expected_login The login name we expect the resulting WP_User class to contain
+	 * @param bool $allow_update We can/can not update existing user(s)
+	 * @param bool $clear_user  Whether we should attempt to delete any existing user record before importing
+	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
+	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
+	 * @param int  $expected Result we expect to see from the test execution
 	 *
-	 * @dataProvider fixture_users_to_add_and_update
+	 * @dataProvider fixture_create_user_import
 	 * @test
 	 */
-	public function it_should_add_new_users_and_skip_existing_ones( $allow_update, $clear_user, $user_line, $meta_line, $expected_id, $expected_email, $expected_login ) {
+	public function it_should_create_new_user( $allow_update, $clear_user, $user_line, $meta_line, $expected ) {
+
 		$meta_headers = array();
 		$data_headers = array();
 		$import_data  = array();
 		$import_meta  = array();
-
-		if ( false !== $allow_update ) {
-			$this->fail( 'This test should not set the variable for updating existing user data to true' );
-		}
-
-		$this->errorlog->debug( 'Make sure the expected DB tables exist' );
-		$this->test_data->tables_exist();
-
-		$this->errorlog->debug( 'Adding user records we need for tests' );
-		// Insert all membership level data
-		$this->test_data->set_line();
-		$this->test_data->insert_level_data();
-		$this->test_data->set_line( $user_line );
-		$this->test_data->insert_user_records( $user_line );
-		$this->test_data->insert_member_data();
 
 		// Read from one of the test file(s)
 		if ( null !== $user_line ) {
@@ -156,11 +138,8 @@ class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
 
-		try {
-			$this->variables->set( 'update_users', $allow_update );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
-		}
+		$this->variables->set( 'update_users', $allow_update );
+		$this->test_data->maybe_delete_user( $clear_user, $import_data );
 
 		$import_user = new Import_User( $this->variables, $this->errorlog );
 
@@ -170,26 +149,23 @@ class Import_User_AddUpdate_IntegrationTest extends WPTestCase {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
 
-		// Make sure the import operation didn't return NULL value so we can get a real user object
+		self::assertSame( $expected, $result );
 		$real_user = new WP_User( $result );
-
-		self::assertSame( $expected_id, $real_user->ID, 'Wrong WP_User->ID value' );
-		self::assertSame( $expected_email, $real_user->user_email, 'Wrong WP_User->user_email value' );
-		self::assertSame( $expected_login, $real_user->user_login, 'Wrong WP_User->user_login value' );
+		self::assertSame( $expected, $real_user->ID );
+		self::assertSame( $import_data['user_email'], $real_user->user_email );
+		self::assertSame( $import_data['user_login'], $real_user->user_login );
 	}
 
 	/**
-	 * Fixture for multiple users to add, including repeating users so data will get updated
+	 * Fixture generator for the it_should_create_new_user() test method
 	 *
-	 * @return array|array[]
+	 * @return array
 	 */
-	public function fixture_users_to_add_and_update() {
+	public function fixture_create_user_import() {
 		return array(
-			// allow_update, clear_user, user_line, meta_line, expected_id, expected_email, expected_login
-			array( false, true, 0, 0, 0, false, false ), // User already exists, and we can't update them so Import_User::import() should return null
-			array( false, true, 2, 2, 4, 'olga@owndomain.com', 'olga@owndomain.com' ), // User doesn't exist so being added
-			array( false, true, 3, 3, 6, 'peter@owndomain.com', 'peter@owndomain.com' ), // User doesn't exist so being added
-			array( false, false, 4, 4, 0, false, false ), // User already exists, and we can't update them so Import_User::import() should return null
+			// allow_update, clear_user, user_line, meta_line, expected
+			array( false, false, 0, 0, 8 ),
+			array( false, false, 2, 2, 9 ),
 		);
 	}
 }
