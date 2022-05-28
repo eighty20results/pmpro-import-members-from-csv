@@ -115,6 +115,7 @@ class Import_User_Create_IntegrationTest extends WPTestCase {
 	 *
 	 * @param bool $allow_update We can/can not update existing user(s)
 	 * @param bool $clear_user  Whether we should attempt to delete any existing user record before importing
+	 * @param bool $disable_hashing Update 'password_hashing_disabled' setting to this value
 	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
 	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
 	 * @param int  $expected Result we expect to see from the test execution
@@ -122,29 +123,35 @@ class Import_User_Create_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_create_user_import
 	 * @test
 	 */
-	public function it_should_create_new_user( $allow_update, $clear_user, $user_line, $meta_line, $expected ) {
+	public function it_should_create_new_user( $allow_update, $clear_user, $disable_hashing, $user_line, $meta_line, $expected ) {
 
 		$meta_headers = array();
-		$data_headers = array();
+		$user_headers = array();
 		$import_data  = array();
 		$import_meta  = array();
 
 		// Read from one of the test file(s)
 		if ( null !== $user_line ) {
-			list( $data_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
+			list( $user_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
 		}
 
 		if ( null !== $meta_line ) {
 			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
 		}
 
-		$this->variables->set( 'update_users', $allow_update );
+		try {
+			$this->variables->set( 'update_users', $allow_update );
+			$this->variables->set( 'password_hashing_disabled', $disable_hashing );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		}
+
 		$this->test_data->maybe_delete_user( $clear_user, $import_data );
 
 		$import_user = new Import_User( $this->variables, $this->errorlog );
 
 		try {
-			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ) );
+			$result = $import_user->import( $import_data, $import_meta, ( $user_headers + $meta_headers ) );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
@@ -154,6 +161,22 @@ class Import_User_Create_IntegrationTest extends WPTestCase {
 		self::assertSame( $expected, $real_user->ID );
 		self::assertSame( $import_data['user_email'], $real_user->user_email );
 		self::assertSame( $import_data['user_login'], $real_user->user_login );
+
+		// Verify that the password is as expected
+		if ( ! empty( $import_data['user_pass'] ) ) {
+			if ( true === $disable_hashing ) {
+				self::assertSame(
+					$import_data['user_pass'],
+					$real_user->user_pass,
+					'Error: Unexpected password when test used a pre-hashed password'
+				);
+			} else {
+				self::assertTrue(
+					wp_check_password( $import_data['user_pass'], $real_user->user_pass, $real_user->ID ),
+					'Error: Unexpected password when test included plaintext password'
+				);
+			}
+		}
 	}
 
 	/**
@@ -163,9 +186,23 @@ class Import_User_Create_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_create_user_import() {
 		return array(
-			// allow_update, clear_user, user_line, meta_line, expected
-			array( false, false, 0, 0, 8 ),
-			array( false, false, 2, 2, 9 ),
+			// allow_update, clear_user, disable_hashing, user_line, meta_line, expected
+			array( false, false, false, 0, 0, 8 ),
+			array( false, false, false, 2, 2, 9 ),
+			array( false, false, false, 5, 5, 10 ),
+			array( false, false, true, 6, 6, 11 ),
+
 		);
+	}
+
+	/**
+	 * Convert a string to a hashed password string
+	 *
+	 * @param string $password_string The string to create a password hash for
+	 *
+	 * @return string|null
+	 */
+	private function fixture_mysql_password( $password_string ) {
+		return wp_hash_password( $password_string );
 	}
 }

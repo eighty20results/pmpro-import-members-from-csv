@@ -142,23 +142,13 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			do_action( 'pmp_im_pre_member_import', $user_data, $user_meta );
 			do_action( 'e20r_before_user_import', $user_data, $user_meta );
 
-			$user_id                  = 0;
-			$user                     = false;
-			$user_exists_needs_update = false;
+			$user_id = 0;
+			$user    = false;
 
 			/**
 			 * Can the user from the import data be found on the system
 			 */
 			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
-
-			if ( true === $user_exists || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $user_exists ) {
-				$this->error_log->debug( 'Loading user because we know it exists already' );
-				$user = $this->find_user( $user_data );
-
-				if ( ! empty( $user->ID ) ) {
-					$user_id = $user->ID;
-				}
-			}
 
 			if ( Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $user_exists ) {
 				$msg = sprintf(
@@ -177,6 +167,15 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$e20r_import_warn[ "user_exists_cannot_update_{$active_line_number}" ] = $new_error;
 				$this->error_log->debug( $msg );
 				return null;
+			}
+
+			if ( true === $user_exists ) {
+				$this->error_log->debug( 'Loading user because we know it exists already' );
+				$user = $this->find_user( $user_data );
+
+				if ( ! empty( $user->ID ) ) {
+					$user_id = $user->ID;
+				}
 			}
 
 			if ( false === $allow_id_update && ( ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) ) {
@@ -237,12 +236,15 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			if ( false === $user && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding new user record' );
 				$user_id = wp_insert_user( $user_data );
-				// FIXME: insert_or_update..() needs to support update with a pre-hashed password as well
 			} elseif ( // pre-hashed password and we'll allow both updating and adding user if other settings let us
 				( false === $user && true === $password_hashing_disabled ) ||
 				( false !== $user && true === $password_hashing_disabled && true === $allow_update )
 			) {
-				$this->error_log->debug( 'Adding a new user record with pre-hashed password' );
+				$this->error_log->debug( 'Adding a new user record with a pre-hashed password' );
+				if ( is_a( $user, 'WP_User' ) && empty( $user_data['ID'] ) ) {
+					$this->error_log->debug( 'Actually updating user record with a pre-hashed password' );
+					$user_data['ID'] = $user->ID;
+				}
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
 			} elseif ( ! empty( $user_id ) && true === $allow_update ) {
 				// Insert, Update or insert without (re) hashing the password
