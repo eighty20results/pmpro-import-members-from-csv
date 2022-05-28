@@ -240,16 +240,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				( false === $user && true === $password_hashing_disabled ) ||
 				( false !== $user && true === $password_hashing_disabled && true === $allow_update )
 			) {
-				$this->error_log->debug( 'Adding a new user record with a pre-hashed password' );
 				if ( is_a( $user, 'WP_User' ) && empty( $user_data['ID'] ) ) {
-					$this->error_log->debug( 'Actually updating user record with a pre-hashed password' );
 					$user_data['ID'] = $user->ID;
 				}
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
 			} elseif ( ! empty( $user_id ) && true === $allow_update ) {
 				// Insert, Update or insert without (re) hashing the password
-				$this->error_log->debug( 'Updating an existing user record...' );
-
 				if ( empty( $user_data['ID'] ) ) {
 					$user_data['ID'] = $user_id;
 				}
@@ -283,7 +279,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			} else {
 
 				if ( ! empty( $user_id ) ) {
-					$this->error_log->debug( "Loading user record (possibly updated) for: {$user_id}" );
 					$user = $this->find_user( array( 'ID' => $user_id ) );
 				}
 
@@ -296,14 +291,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$all_roles    = array( $default_role );
 
 				if ( ! empty( $user_data['role'] ) ) {
-					$this->error_log->debug( "Update role(s) for user with ID {$user_id}: {$user_data['role']}" );
-					$roles      = array_map( 'trim', explode( ',', $user_data['role'] ) );
+					$roles      = array_map( 'trim', explode( ';', $user_data['role'] ) );
 					$all_roles += $roles;
 				}
 
 				if ( ! empty( $all_roles ) ) {
 					foreach ( $all_roles as $role_name ) {
-						$this->error_log->debug( "Adding role {$role_name} to user with ID {$user_id}" );
 						$user->add_role( $role_name );
 					}
 				}
@@ -322,7 +315,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$site_id = (int) $this->variables->get( 'site_id' );
 
 				if ( is_multisite() && ! empty( $site_id ) ) {
-					$this->error_log->debug( "Adding user with ID {$user_id} to {$site_id} (blog id) as a {$default_role} (role)" );
 					add_user_to_blog( $site_id, $user_id, $default_role );
 				}
 
@@ -355,7 +347,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 
 				if ( ( false !== $user && true === $allow_update ) && ( true === $new_user_notification || true === $admin_new_user_notification ) ) {
-					$this->error_log->debug( 'Sending new user notification message to user' );
 					wp_new_user_notification( $user_id, null, $msg_target );
 				}
 

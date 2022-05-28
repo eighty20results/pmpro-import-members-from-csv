@@ -448,6 +448,14 @@ The option is removed when the plugin is deactivated in the "Plugins" admin pane
 Nag tracking can be disabled altogether with the `e20r_import_donation_tracking_disabled` filter:
 `add_filter( 'e20r_import_donation_tracking_disabled', '__return_true' );'`
 
+### Can I import and add multiple WordPress roles to a user's record?
+
+Yes you can. 
+
+Use a `;` (semi-colon) to separate the role names to add, and the plugin will assign any of the roles included to the user record being imported or updated.
+
+It assumes every one of those roles have been defined and exist on the system itself.
+ 
 ### Installation
 
 1. Upload the `pmpro-import-members-from-csv` folder to the `/wp-content/plugins/` directory.
