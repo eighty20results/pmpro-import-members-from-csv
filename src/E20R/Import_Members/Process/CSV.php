@@ -415,7 +415,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				}
 
 				// Separate user data from meta
-				$user_data = $user_meta = array(); // phpcs:ignore Squiz.PHP.DisallowMultipleAssignments.Found
+				$user_data = array();
+				$user_meta = array();
 
 				$this->error_log->debug( "Processing next user data. (previous line #: {$active_line_number})" );
 				try {
@@ -440,6 +441,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 
 				$this->error_log->debug( "Processed line #{$active_line_number}..." );
 				$user_id_status = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
+
+				// TODO: Process cached warning messages as well
 
 				switch ( $user_id_status ) {
 					case Status::E20R_ERROR_NO_USER_ID:
