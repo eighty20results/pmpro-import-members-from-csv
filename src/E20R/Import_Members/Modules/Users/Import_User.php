@@ -245,7 +245,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
 			} elseif ( ! empty( $user_id ) && true === $allow_update ) {
-				// Insert, Update or insert without (re) hashing the password
+				// Update and support hashing the of any $user_data['user_pass'] string
 				if ( empty( $user_data['ID'] ) ) {
 					$user_data['ID'] = $user_id;
 				}
@@ -276,6 +276,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			// Is there an error?
 			if ( is_wp_error( $user_id ) ) {
 				$e20r_import_err[ $active_line_number ] = $user_id;
+				$user_id                                = null;
 			} else {
 
 				if ( ! empty( $user_id ) ) {
@@ -297,6 +298,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				if ( ! empty( $all_roles ) ) {
 					foreach ( $all_roles as $role_name ) {
+						$this->error_log->debug( "Adding role '{$role_name}' for user ID {$user_id}" );
 						$user->add_role( $role_name );
 					}
 				}
