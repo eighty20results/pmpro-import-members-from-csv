@@ -29,7 +29,6 @@
       <path value="$PROJECT_DIR$/inc/mikehaertl/php-shellcommand" />
       <path value="$PROJECT_DIR$/inc/phpmetrics/phpmetrics" />
       <path value="$PROJECT_DIR$/inc/softcreatr/jsonpath" />
-      <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utilities" />
       <path value="$PROJECT_DIR$/inc/codeception/module-db" />
       <path value="$PROJECT_DIR$/inc/codeception/codeception" />
       <path value="$PROJECT_DIR$/inc/codeception/module-phpbrowser" />
@@ -119,7 +118,6 @@
       <path value="$PROJECT_DIR$/inc/doctrine/cache" />
       <path value="$PROJECT_DIR$/inc/doctrine/annotations" />
       <path value="$PROJECT_DIR$/inc/doctrine/inflector" />
-      <path value="$PROJECT_DIR$/inc/wp_plugins/paid-memberships-pro" />
       <path value="$PROJECT_DIR$/inc/hamcrest/hamcrest-php" />
       <path value="$PROJECT_DIR$/inc/lucatume/wp-browser" />
       <path value="$PROJECT_DIR$/inc/mikey179/vfsstream" />
@@ -140,8 +138,9 @@
       <path value="$PROJECT_DIR$/inc/fzaninotto/faker" />
       <path value="$PROJECT_DIR$/inc/brain/faker" />
       <path value="$PROJECT_DIR$/../WordPress/" />
-      <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utliities" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/woocommerce" />
+      <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utilities" />
+      <path value="$PROJECT_DIR$/inc/wp_plugins/paid-memberships-pro" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1">
