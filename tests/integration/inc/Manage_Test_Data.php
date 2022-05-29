@@ -196,11 +196,7 @@ class Manage_Test_Data {
 					}
 					break;
 				case 'user_pass':
-					if ( empty( $this->data[ $csv_col ] ) ) {
-						$value = $this->default_password;
-					} else {
-						$value = $this->data[ $csv_col ];
-					}
+					$value = wp_hash_password( $this->default_password );
 					break;
 				case 'null':
 					$value = null;
@@ -338,7 +334,7 @@ class Manage_Test_Data {
 		$this->sql_array = array();
 		$sql             = '(';
 		foreach ( $column_map as $db_col => $csv_col ) {
-			$sql .= sprintf( '\'%1$s\',', isset( $this->data[ $csv_col ] ) ? $this->data[ $csv_col ] : '' );
+			$sql .= sprintf( '\'%1$s\',', $this->data[ $csv_col ] ?? '' );
 		}
 
 		$this->sql_array[] = $sql;
@@ -381,6 +377,7 @@ class Manage_Test_Data {
 
 		$sql = preg_replace( '/(.*), $/', '$1;', $sql );
 
+		$this->errorlog->debug( "SQL: '{$sql}'" );
 		// Insert user metadata
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->query( $sql );
@@ -398,6 +395,7 @@ class Manage_Test_Data {
 
 		$file_object = new SplFileObject( $file_name, 'r' );
 		$data_array  = array();
+		$line        = array();
 
 		// Use the expected delimiters, enclosures and escape characters
 		$file_object->setCsvControl(
@@ -411,26 +409,22 @@ class Manage_Test_Data {
 			SplFileObject::SKIP_EMPTY
 		);
 
-		// Read the CSV header and turn it into an array of keys
-		// $file_object->seek( 0 );
+		// Read header for file
+		$this->headers = $this->make_header_array( $file_object->fgetcsv() );
 
-		$line    = $file_object->fgetcsv();
-		$headers = $this->make_header_array( $line );
-
-		if ( null !== $line_id ) {
-			$file_object->seek( $line_id );
-		}
+		// Find the first entry
+		$file_object->seek( (int) $line_id );
 		$line = $file_object->fgetcsv();
 
 		foreach ( $line as $key => $value ) {
-			$column_name = $headers[ $key ];
+			$column_name = $this->headers[ $key ];
 			$column      = trim( $value );
 			if ( ! empty( $column_name ) ) {
-				$data_array[ $column_name ] = $column;
+				$this->data[ $column_name ] = $column;
 			}
 		}
 
-		return array( $headers, $data_array );
+		return array( $this->headers, $this->data );
 	}
 
 	/**
