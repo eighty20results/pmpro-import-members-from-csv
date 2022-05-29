@@ -154,7 +154,6 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 
 			if ( ! ( isset( $record['ID'] ) || isset( $record['user_email'] ) || isset( $record['user_login'] ) ) ) {
 				$this->error_log->debug( 'Cannot find one of the expected column(s): ID, user_email, user_login' );
-
 				return $has_error;
 			}
 
