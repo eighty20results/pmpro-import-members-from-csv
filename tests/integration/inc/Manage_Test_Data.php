@@ -377,7 +377,7 @@ class Manage_Test_Data {
 
 		$sql = preg_replace( '/(.*), $/', '$1;', $sql );
 
-		$this->errorlog->debug( "SQL: '{$sql}'" );
+		// $this->errorlog->debug( "SQL: '{$sql}'" );
 		// Insert user metadata
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->query( $sql );
