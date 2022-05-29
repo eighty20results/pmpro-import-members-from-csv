@@ -777,7 +777,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		}
 
 		/**
-		 * Change some of the imported columns to add "imported_" to the front so we don't confuse the data later.
+		 * Change imported columns to add "imported_" to the front, so we don't confuse the data later.
 		 *
 		 * @param array $user_meta
 		 * @param array $user_data
