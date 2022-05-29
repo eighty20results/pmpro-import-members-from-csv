@@ -620,7 +620,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			// we won't add a payment record (that's just not right!)
 
 			$this->error_log->debug( "Adding PMPro order for {$user_id}..?" );
-			$default_level = pmpro_getLevel( $record['membership_id'] );
+			$default_level = (array) pmpro_getLevel( $record['membership_id'] );
 
 			foreach ( $default_level as $property => $value ) {
 				$header_name = "membership_${property}";
