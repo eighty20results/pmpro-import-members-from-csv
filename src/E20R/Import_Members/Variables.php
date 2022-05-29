@@ -243,6 +243,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 				$this->error_log->debug( 'Error: Cannot find the WP_UPLOAD_DIR location!!' );
 			}
 
+			// FIXME: Split error and warning logs to two separate files and update settings accordingly
 			$logfile_url        = $upload_dir['baseurl'] ?? 'https://localhost/';
 			$this->logfile_path = trailingslashit( $upload_dir['basedir'] ?? './' ) . 'e20r_im_errors.log';
 			$this->logfile_url  = esc_url_raw( $logfile_url ) . '/e20r_im_errors.log';
