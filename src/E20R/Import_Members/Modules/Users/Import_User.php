@@ -101,13 +101,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		/**
 		 * Process and Import user data/user meta data
 		 *
-		 * @param array         $user_data Array of data from the CSV file we will import as WP_User data
-		 * @param array         $user_meta Array of metadata for the user being imported
-		 * @param string[]      $headers The file headers/import headers supplied
+		 * @param array $user_data Array of data from the CSV file we will import as WP_User data
+		 * @param array $user_meta Array of metadata for the user being imported
+		 * @param string[] $headers The file headers/import headers supplied
 		 * @param WP_Error|null $wp_error For unit testing. Default and expected received value should be null.
 		 *
 		 * @return int|null
-		 * @throws InvalidSettingsKey Thrown when we specify an invalid setting (variable)
+		 *
+		 * @throws InvalidSettingsKey Thrown when the specified Variable::get() parameter doesn't exist (should not happen)
 		 */
 		public function import( $user_data, $user_meta, $headers, $wp_error = null ) {
 
@@ -127,11 +128,18 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$e20r_import_warn = array();
 			}
 
-			$display_errors  = $this->variables->get( 'display_errors' );
-			$allow_update    = (bool) $this->variables->get( 'update_users' );
-			$allow_id_update = (bool) $this->variables->get( 'update_id' );
-			$msg_target      = '';
-			$site_id         = $this->variables->get( 'site_id' );
+			try {
+				$display_errors  = $this->variables->get( 'display_errors' );
+				$allow_update    = (bool) $this->variables->get( 'update_users' );
+				$allow_id_update = (bool) $this->variables->get( 'update_id' );
+				$site_id         = (int) $this->variables->get( 'site_id' );
+			} catch ( InvalidSettingsKey $e ) {
+				$wp_error->add( 'e20r_setting_key', $e->getMessage() );
+				$e20r_import_err[ "startup_error_{$active_line_number}" ] = $wp_error;
+				return null;
+			}
+
+			$msg_target = '';
 
 			if ( empty( $display_errors ) ) {
 				$display_errors = array();
