@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Tests\Unit\Email_Templates_UnitTest
+ * @package E20R\Tests\Integration\Import_Users_IntegrationTest
  */
 
 namespace E20R\Tests\Integration;
