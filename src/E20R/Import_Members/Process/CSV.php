@@ -568,6 +568,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				}
 
 				if ( ! empty( $partial ) && ! empty( $active_line_number ) ) {
+					// Go to next line in case we have to restart the operation
 					$active_line_number = ( $file_object->key() + 1 );
 					update_option( "e20rcsv_{$file}", $active_line_number, 'no' );
 				}
