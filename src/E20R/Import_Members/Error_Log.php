@@ -50,11 +50,11 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 			$this->add_error_msg(
 				sprintf(
 				// translators: %1$s - HTML for link to log file, %2$s closing HTML for link
-					__( 'Errors or Warnings found: Please inspect the Import %1$serror log%2$s', 'pmpro-import-members-from-csv' ),
+					esc_attr__( 'Errors or Warnings found: Please inspect the Import %1$serror log%2$s', 'pmpro-import-members-from-csv' ),
 					sprintf(
 						'<a href="%1$s" title="%2$s" target="_blank">',
 						esc_url_raw( $log_file_url ),
-						__( 'Link to Import error/warning log', 'pmpro-import-members-from-csv' )
+						esc_attr__( 'Link to Import error/warning log', 'pmpro-import-members-from-csv' )
 					),
 					'</a>'
 				),
@@ -65,7 +65,7 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 				$log = fopen( $log_file_path, 'a' ); // phpcs:ignore
 			} catch ( \Exception $e ) {
 				$this->add_error_msg(
-					__(
+					esc_attr__(
 						'Import errors/warnings will not be logged. Unable to write to the server file system',
 						'pmpro-import-members-from-csv'
 					),
@@ -78,7 +78,7 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 				$this->add_error_msg(
 					sprintf(
 					// translators: %s Path to log file
-						__( 'Unable to write error log to: %s', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Unable to write error log to: %s', 'pmpro-import-members-from-csv' ),
 						$log_file_path
 					),
 					'error'
@@ -107,7 +107,7 @@ if ( ! class_exists( '\E20R\Import_Members\Error_log' ) ) {
 						$log,
 						sprintf(
 								// translators: %1$d - Line number, %2$s - Error message to log
-							__( "[Line %1\$d] %2\$s\n", 'pmpro-import-members-from-csv' ),
+							esc_attr__( "[Line %1\$d] %2\$s\n", 'pmpro-import-members-from-csv' ),
 							$line,
 							$message
 						)
