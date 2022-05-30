@@ -24,6 +24,7 @@ namespace E20R\Tests\Integration;
 use Codeception\TestCase\WPTestCase;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Variables;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
@@ -212,8 +213,21 @@ class CSV_IntegrationTest extends WPTestCase {
 	 *
 	 * @test
 	 */
-	public function it_should_successfully_process_csv_file() {
+	public function it_should_successfully_process_csv_file( $file_name, $file_args, $import_result ) {
 
+		$m_user_import = self::makeEmpty(
+			Import_User::class,
+			array(
+				'import' => $import_result,
+			)
+		);
+
+		try {
+			$this->csv = new CSV( $this->variables, $this->errorlog );
+			$result    = $this->csv->process( $file_name, $file_args, $m_user_import );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not receive: ' . $e->getMessage() );
+		}
 	}
 
 	/**
