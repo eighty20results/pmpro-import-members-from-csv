@@ -209,7 +209,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			$this->import_user = $import_user;
 
 			if ( empty( $csv ) ) {
-				$csv = new CSV( $this->variables );
+				$csv = new CSV( $this->variables, $this->error_log );
 			}
 			$this->csv = $csv;
 
