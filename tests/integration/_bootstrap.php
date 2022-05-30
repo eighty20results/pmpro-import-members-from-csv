@@ -23,33 +23,20 @@
 
 use Codeception\Util\Autoload;
 
-// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-error_log( 'Loading fixture definitions for integration tests' );
 Autoload::addNamespace( 'E20R\\Tests\\Integration\\Fixtures', __DIR__ . '/inc/' );
 
 if ( file_exists( __DIR__ . '/../unit/inc/csv-fixtures.php' ) ) {
-	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-	error_log( 'Loading "' . __DIR__ . '/../unit/inc/csv-fixtures.php"' );
 	require_once __DIR__ . '/../unit/inc/csv-fixtures.php';
 }
 
-//
-//if ( file_exists( __DIR__ . '/inc/fixture_clear_test_data.php' ) ) {
-//	require_once __DIR__ . '/inc/fixture_clear_test_data.php';
-//}
-
 // PMPro isn't very defensively coded and
 if ( ! defined( 'AUTH_KEY' ) ) {
-	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-	error_log( 'Defining AUTH_KEY' );
-	define( 'AUTH_KEY', rand_string( 32 ) );
+	define( 'AUTH_KEY', e20r_rand_string( 32 ) );
 }
 
 // pmpro_next_payment() assumes AUTH_KEY and SECURE_AUTH_KEY will always be defined
 if ( ! defined( 'SECURE_AUTH_KEY' ) ) {
-	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-	error_log( 'Defining SECURE_AUTH_KEY' );
-	define( 'SECURE_AUTH_KEY', rand_string( 32 ) );
+	define( 'SECURE_AUTH_KEY', e20r_rand_string( 32 ) );
 }
 
 /**
@@ -59,7 +46,7 @@ if ( ! defined( 'SECURE_AUTH_KEY' ) ) {
  *
  * @return string|null
  */
-function rand_string( $length ) {
+function e20r_rand_string( $length ) {
 	$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz@#$&*';
 	$size  = strlen( $chars );
 	$str   = null;
