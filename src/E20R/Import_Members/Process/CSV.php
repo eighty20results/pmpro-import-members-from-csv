@@ -78,35 +78,41 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 *
 		 * @return bool|string
 		 *
-		 * @test CSV_UnitTest::test_GetImportFilePath
+		 * @throws InvalidSettingsKey Thrown if 'filename' became an invalid setting
 		 */
 		public function get_import_file_path( $file_name = null ) {
-			$upload_dir = wp_upload_dir();
 
 			if ( empty( $file_name ) ) {
-				$this->error_log->debug( 'Trying to look for file name from cached variables' );
+				$this->error_log->debug( 'Loading file name from Variables()' );
 				$file_name = $this->variables->get( 'filename' );
 			}
 
 			if ( empty( $file_name ) ) {
+				$this->error_log->debug( 'Loading file name from transient' );
 				$file_name = get_transient( 'e20r_import_filename' );
 			}
 
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			if ( empty( $file_name ) && isset( $_REQUEST['filename'] ) ) {
+			if ( empty( $file_name ) && ! empty( $_REQUEST['filename'] ) ) {
+				$this->error_log->debug( "Loading '{$_REQUEST['filename']}' from REQUEST variable" );
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$file_name = sanitize_file_name( $_REQUEST['filename'] );
 			}
 
 			if ( empty( $file_name ) ) {
+				$this->error_log->debug( 'Name of uploaded file is missing!' );
 				return false;
 			}
 
+			$upload_dir = wp_upload_dir();
 			$import_dir = trailingslashit( $upload_dir['basedir'] ) . 'e20r_imports';
 			$file       = basename( $file_name );
 			$file_name  = "{$import_dir}/{$file}";
 
+			$this->error_log->debug( "Looking for '{$file_name}' and it exists? " . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
+
 			if ( false === file_exists( $file_name ) ) {
+				$this->error_log->debug( 'File not found!' );
 				return false;
 			}
 
