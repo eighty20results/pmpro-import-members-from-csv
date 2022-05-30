@@ -109,8 +109,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$file       = basename( $file_name );
 			$file_name  = "{$import_dir}/{$file}";
 
-			$this->error_log->debug( "Looking for '{$file_name}' and it exists? " . ( file_exists( $file_name ) ? 'Yes' : 'No' ) );
-
 			if ( false === file_exists( $file_name ) ) {
 				$this->error_log->debug( 'File not found!' );
 				return false;

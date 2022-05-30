@@ -143,8 +143,9 @@ class CSV_IntegrationTest extends WPTestCase {
 	 */
 	public function it_should_validate_filename_settings( $file_name, $file_exists, $from_settings, $from_transient, $request_value, $expected_filename ) {
 
-		when( 'file_exists' )
-			->justReturn(
+		expect( 'file_exists' )
+			->with( Mockery::any() )
+			->andReturn(
 				function( $to_find ) use ( $file_exists ) {
 					$this->errorlog->debug( "File to find: {$to_find} and returning " . ( $file_exists ? 'True' : 'False' ) );
 					return $file_exists;
