@@ -123,6 +123,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @param string $tmp_name
 		 *
 		 * @return false|string
+		 * @throws InvalidSettingsKey When 'background_import', 'filename', and 'per_partial' aren't valid Variables() class member properties
 		 */
 		public function pre_process_file( $tmp_name = null ) {
 
@@ -143,10 +144,11 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$saved_filename = $_FILES['members_csv']['name'] ?? $saved_filename;
 			$saved_filename = $_REQUEST['filename'] ?? $saved_filename; //phpcs:ignore
 
-			//Check for a imports directory in wp-content
-			// $file_name       = self::get_import_file_path( $saved_filename );
+			//Check for the directory in wp-content where we'll save the uploaded file
+			$filename        = $this->get_import_file_path( $saved_filename );
 			$upload_dir      = wp_upload_dir();
-			$import_dir      = $upload_dir['basedir'] . '/e20r_imports';
+			$import_dir      = dirname( $filename );
+			$saved_filename  = basename( $filename );
 			$directory_error = false;
 			$no_file_error   = false;
 
@@ -166,7 +168,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			}
 
 			$clean_file_error = $this->clean_files( $saved_filename );
-			$destination_name = "{$import_dir}/{$saved_filename}";
+			$destination_name = "{$filename}";
 
 			if ( ! is_dir( $import_dir ) && false === wp_mkdir_p( $import_dir ) ) {
 
@@ -299,13 +301,14 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 *
 		 * @param string           $file_name Name of the CSV file we're processing
 		 * @param array            $args File arguments supplied
-		 * @param Import_User|null $import_user  Optional Import_User)_ class instance
+		 * @param Import_User|null $import_user  Optional Import_User() class instance
+		 * @param SplFileObject|null $file_object Optional SplFileObject() class instance
 		 *
 		 * @return array
 		 *
 		 * @since 0.5
 		 */
-		public function process( $file_name, $args, $import_user = null ) {
+		public function process( $file_name, $args, $import_user = null, $file_object = null ) {
 
 			global $active_line_number;
 			global $e20r_import_err;
@@ -324,7 +327,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$headers = array();
 
 			if ( null === $import_user ) {
-				$import_user = new Import_User();
+				$import_user = new Import_User( $this->variables, $this->error_log, $this->user_presence );
 			}
 
 			$user_ids = array();
@@ -344,8 +347,11 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			// Mac CR+LF fix
 			ini_set( 'auto_detect_line_endings', '1' );
 
-			$file        = basename( $file_name );
-			$file_object = new SplFileObject( $file_name, 'r' );
+			$file = basename( $file_name );
+
+			if ( null === $file_object ) {
+				$file_object = new SplFileObject( $file_name, 'r' );
+			}
 
 			// Use the expected delimiters, enclosures and escape characters
 			$file_object->setCsvControl(
