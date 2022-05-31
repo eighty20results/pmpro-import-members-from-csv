@@ -207,24 +207,44 @@ class CSV_IntegrationTest extends WPTestCase {
 	/**
 	 * Happy path for CSV::process() method
 	 *
+	 * @param string $file_name The name of the file we're processing
+	 * @param array $file_args File arguments we support/allow
+	 * @param int[] $import_results Results from the mocked Import_User::import() method
 	 * @return void
 	 *
 	 * @dataProvider fixture_process_test_data
 	 *
 	 * @test
 	 */
-	public function it_should_successfully_process_csv_file( $file_name, $file_args, $import_result ) {
+	public function it_should_successfully_process_csv_file( $file_name, $file_args, $import_results ) {
 
 		$m_user_import = self::makeEmpty(
 			Import_User::class,
 			array(
-				'import' => $import_result,
+				'import' => $import_results,
+			)
+		);
+
+		$m_csv_file_object = self::makeEmpty(
+			\SplFileObject::class,
+			array(
+				'fgetcsv'       => function() use ( $import_results ) {
+					$result_array = array();
+					foreach ( $import_results as $key => $import_result ) {
+						$result_array[] = $import_result;
+					}
+					return $result_array;
+				},
+				'eof'           => true,
+				'seek'          => __return_null(),
+				'setCsvControl' => true,
+				'setFlags'      => true,
 			)
 		);
 
 		try {
 			$this->csv = new CSV( $this->variables, $this->errorlog );
-			$result    = $this->csv->process( $file_name, $file_args, $m_user_import );
+			$result    = $this->csv->process( $file_name, $file_args, $m_user_import, $m_csv_file_object );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
 		}
@@ -236,7 +256,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_process_test_data() {
 		return array(
-			array(),
+			array( 'test_file_1.csv', array(), array() ),
 		);
 	}
 }
