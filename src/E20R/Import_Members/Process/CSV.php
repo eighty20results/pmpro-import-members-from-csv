@@ -74,13 +74,20 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		/**
 		 * Return the path to the Import file (from the $_REQUEST, the $_FILES array, or a transient)
 		 *
-		 * @param null|string $file_name
+		 * @param null|string $file_name The file name to check the existence of
+		 * @param null|string $import_dir_path The (mocked!) path to the upload directory
 		 *
 		 * @return bool|string
 		 *
 		 * @throws InvalidSettingsKey Thrown if 'filename' became an invalid setting
 		 */
-		public function get_import_file_path( $file_name = null ) {
+		public function verify_import_file_path( $file_name = null, $import_dir_path = null ) {
+
+			// Only override the import directory when we're executing integration or unit tests
+			if ( null === $import_dir_path && ! defined( 'PLUGIN_INTEGRATION' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
+				$upload_dir      = wp_upload_dir();
+				$import_dir_path = trailingslashit( $upload_dir['basedir'] ) . 'e20r_imports';
+			}
 
 			if ( empty( $file_name ) ) {
 				$this->error_log->debug( 'Loading file name from Variables()' );
@@ -99,22 +106,22 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$file_name = sanitize_file_name( $_REQUEST['filename'] );
 			}
 
+			// We enforce the location of the uploaded file (shouldn't be possible to fool us
+			$file_name = basename( $file_name );
+
 			if ( empty( $file_name ) ) {
 				$this->error_log->debug( 'Name of uploaded file is missing!' );
 				return false;
 			}
 
-			$upload_dir = wp_upload_dir();
-			$import_dir = trailingslashit( $upload_dir['basedir'] ) . 'e20r_imports';
-			$file       = basename( $file_name );
-			$file_name  = "{$import_dir}/{$file}";
+			$file_to_find = sprintf( '%1$s/%2$s', $import_dir_path, $file_name );
 
-			if ( false === file_exists( $file_name ) ) {
+			if ( false === file_exists( $file_to_find ) ) {
 				$this->error_log->debug( 'File not found!' );
 				return false;
 			}
 
-			return $file_name;
+			return $file_to_find;
 		}
 
 		/**
@@ -145,7 +152,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$saved_filename = $_REQUEST['filename'] ?? $saved_filename; //phpcs:ignore
 
 			//Check for the directory in wp-content where we'll save the uploaded file
-			$filename        = $this->get_import_file_path( $saved_filename );
+			$filename        = $this->verify_import_file_path( $saved_filename );
 			$upload_dir      = wp_upload_dir();
 			$import_dir      = dirname( $filename );
 			$saved_filename  = basename( $filename );
