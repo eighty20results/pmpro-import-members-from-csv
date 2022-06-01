@@ -179,7 +179,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			$this->error_log->debug( 'Import is complete... ' );
 
 			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
-			$file_name = $this->csv->get_import_file_path( null );
+			$file_name = $this->csv->verify_import_file_path( null );
 
 			if ( empty( $file_name ) ) {
 				$this->error_log->debug( 'File not found/not available. Nothing to clean!' );

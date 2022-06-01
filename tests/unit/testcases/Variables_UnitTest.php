@@ -222,7 +222,7 @@ class Variables_UnitTest extends Unit {
 	}
 
 	/**
-	 * Fixture for the CSV::get_import_file_path() unit test
+	 * Fixture for the CSV::verify_import_file_path() unit test
 	 *
 	 * Expected info for fixture:
 	 *      string full path, (string) $expected_file_name

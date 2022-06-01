@@ -143,13 +143,13 @@ class CSV_UnitTest extends Unit {
 				->willReturn( basename( $_REQUEST['filename'] ) );
 
 		$csv    = new CSV();
-		$result = $csv->get_import_file_path();
+		$result = $csv->verify_import_file_path();
 
 		$this->assertEquals( $expected_result, $result );
 	}
 
 	/**
-	 * Fixture for the CSV::get_import_file_path() unit test
+	 * Fixture for the CSV::verify_import_file_path() unit test
 	 *
 	 * Expected info for fixture:
 	 *      string full path, (string) $expected_file_name
