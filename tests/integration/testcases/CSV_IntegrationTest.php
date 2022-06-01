@@ -21,6 +21,7 @@
 
 namespace E20R\Tests\Integration;
 
+use Brain\Monkey\Expectation\Exception\ExpectationArgsRequired;
 use Codeception\TestCase\WPTestCase;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
@@ -29,6 +30,8 @@ use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Variables;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
 use Mockery;
+use org\bovigo\vfs\vfsStream;
+use SplFileObject;
 use WP_Mock;
 use WP_Mock\Functions;
 use function Brain\Monkey\Functions\expect;
@@ -58,6 +61,19 @@ class CSV_IntegrationTest extends WPTestCase {
 	private $csv = null;
 
 	/**
+	 * Mocked file system to use for testing purposes
+	 *
+	 * @var null|vfsStream
+	 */
+	private $file_system = null;
+
+	/**
+	 * Directory structure for the mocked file system
+	 *
+	 * @var \array[][][][][][]
+	 */
+	private $structure;
+	/**
 	 * Codeception setUp method
 	 *
 	 * @return void
@@ -65,6 +81,21 @@ class CSV_IntegrationTest extends WPTestCase {
 	public function setUp() : void {
 		parent::setUp();
 		\WP_Mock::setUp();
+
+		$this->structure   = array(
+			'var' => array(
+				'www' => array(
+					'html' => array(
+						'wp-content' => array(
+							'uploads' => array(
+								'e20r_imports' => array(),
+							),
+						),
+					),
+				),
+			),
+		);
+		$this->file_system = vfsStream::setup( 'mocked', null, $this->structure );
 
 		$this->test_data = new Manage_Test_Data();
 		$this->load_mocks();
@@ -126,7 +157,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	}
 
 	/**
-	 * Test for CSV::get_import_file_path()
+	 * Test for CSV::verify_import_file_path()
 	 *
 	 * @param string $file_name File name we're passing to the method being tested
 	 * @param bool   $file_exists The return value for the mocked 'file_exists()' function
@@ -138,20 +169,11 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * @return void
 	 *
 	 * @dataProvider fixture_upload_settings
-	 * @covers CSV::get_import_file_path()
+	 * @covers CSV::verify_import_file_path()
 	 *
 	 * @test
 	 */
 	public function it_should_validate_filename_settings( $file_name, $file_exists, $from_settings, $from_transient, $request_value, $expected_filename ) {
-
-		expect( 'file_exists' )
-			->with( Mockery::any() )
-			->andReturn(
-				function( $to_find ) use ( $file_exists ) {
-					$this->errorlog->debug( "File to find: {$to_find} and returning " . ( $file_exists ? 'True' : 'False' ) );
-					return $file_exists;
-				}
-			);
 
 		if ( ! empty( $from_transient ) ) {
 			$this->errorlog->debug( "Setting 'e20r_import_filename' transient to {$from_transient}" );
@@ -171,12 +193,19 @@ class CSV_IntegrationTest extends WPTestCase {
 			$file_name            = $request_value;
 		}
 
-		$upload_dir = '/var/www/html/wp-content/uploads/e20r_imports';
-		$this->errorlog->debug( "file_exists('{$upload_dir}/{$file_name}') will (should) return: " . ( $file_exists ? 'True' : 'False' ) );
+		if ( true === $file_exists ) {
+			$this->errorlog->debug( "Adding {$file_name} as the file to the mocked file system" );
+			$this->structure['var']['www']['html']['wp-content']['uploads']['e20r_imports'] = array( $file_name => 'dummy,csv,header,data' );
+			$this->file_system = vfsStream::setup( 'mocked', null, $this->structure );
+		}
+
+		$this->errorlog->debug( "file_exists('$file_name') should return: " . ( $file_exists ? 'True' : 'False' ) );
 
 		try {
 			$this->csv = new CSV( $this->variables, $this->errorlog );
-			$result    = $this->csv->get_import_file_path( $file_name );
+
+			// Using the vfsStream() class to mock the file system, so the directory path is a little different from that of a real server
+			$result = $this->csv->verify_import_file_path( $file_name, 'vfs://mocked/var/www/html/wp-content/uploads/e20r_imports' );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
 		}
@@ -190,7 +219,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * @return array[]
 	 */
 	public function fixture_upload_settings() {
-		$upload_dir = '/var/www/html/wp-content/uploads/e20r_imports';
+		$upload_dir = 'vfs://mocked/var/www/html/wp-content/uploads/e20r_imports';
 		return array(
 			// filename, file_exists, from_settings, from_transient, request_value, expected_filename
 			array( 'file_name_1.csv', true, null, null, null, "{$upload_dir}/file_name_1.csv" ), // #0
@@ -216,35 +245,57 @@ class CSV_IntegrationTest extends WPTestCase {
 	 *
 	 * @test
 	 */
-	public function it_should_successfully_process_csv_file( $file_name, $file_args, $import_results ) {
+	public function it_should_successfully_process_csv_file( $file_name, $file_args, $line_number, $resulting_uid, $headers, $content ) {
 
 		$m_user_import = self::makeEmpty(
 			Import_User::class,
 			array(
-				'import' => $import_results,
+				'import' => $resulting_uid,
 			)
 		);
 
-		$m_csv_file_object = self::makeEmpty(
-			\SplFileObject::class,
-			array(
-				'fgetcsv'       => function() use ( $import_results ) {
-					$result_array = array();
-					foreach ( $import_results as $key => $import_result ) {
-						$result_array[] = $import_result;
-					}
-					return $result_array;
-				},
-				'eof'           => true,
-				'seek'          => __return_null(),
-				'setCsvControl' => true,
-				'setFlags'      => true,
-			)
-		);
+		if ( ! function_exists( 'get_option' ) ) {
+			expect( 'get_option' )
+				->with( array( "e20rcsv_{$file_name}", null ) )
+				->atLeast()
+				->once()
+				->andReturn( $line_number );
+		} else {
+			$this->fail( 'get_option() is defined before this test is executed!' );
+		}
+
+		// FIXME: Need to make sure we mock the full set of SplFileObject() methods we use, in the right order
+		$input_file = Mockery::mock( SplFileObject::class, array( 'php://memory' ) );
+		$input_file->shouldReceive( 'setCsvControl' )
+			->with( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE )
+			->once()
+			->shouldReceive( 'setFlags' )
+			->with( SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY )
+			->once()
+			->shouldReceive( 'eof' )
+			->with()
+			->andReturn( false )
+			->once()
+			->shouldReceive( 'fgetcsv' )
+			->with()
+			->andReturn( $headers )
+			->shouldReceive( 'eof' )
+			->with()
+			->andReturn( false )
+			->shouldReceive( 'key' )
+			->with()
+			->andReturn( 1 )
+			->once()
+			->shouldReceive( 'fgetcsv' )
+			->with()
+			->andReturn( $headers )
+			->shouldReceive( 'eof' )
+			->with()
+			->andReturn( true );
 
 		try {
 			$this->csv = new CSV( $this->variables, $this->errorlog );
-			$result    = $this->csv->process( $file_name, $file_args, $m_user_import, $m_csv_file_object );
+			$result    = $this->csv->process( $file_name, $file_args, $m_user_import, $input_file );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
 		}
@@ -256,7 +307,8 @@ class CSV_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_process_test_data() {
 		return array(
-			array( 'test_file_1.csv', array(), array() ),
+			// file_name, file_args, line_number, resulting_uid, headers, content
+			array( 'test_file_1.csv', array(), 1, 2, array(), array() ),
 		);
 	}
 }
