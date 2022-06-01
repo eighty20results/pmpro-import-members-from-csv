@@ -29,6 +29,9 @@ if ( file_exists( __DIR__ . '/../unit/inc/csv-fixtures.php' ) ) {
 	require_once __DIR__ . '/../unit/inc/csv-fixtures.php';
 }
 
+if ( ! defined( 'PLUGIN_INTEGRATION' ) ) {
+	define( 'PLUGIN_INTEGRATION', true );
+}
 // PMPro isn't very defensively coded and
 if ( ! defined( 'AUTH_KEY' ) ) {
 	define( 'AUTH_KEY', e20r_rand_string( 32 ) );
