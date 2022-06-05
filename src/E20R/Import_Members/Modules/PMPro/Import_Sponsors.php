@@ -238,10 +238,15 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 		public function maybe_link_to_sponsor( $sponsored_user_id, $sponsor, $last_try = false ) {
 
 			global $e20r_import_err;
+			global $e20r_import_warn;
 			global $wpdb;
 
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
+			}
+
+			if ( ! is_array( $e20r_import_warn ) ) {
+				$e20r_import_warn = array();
 			}
 
 			if ( ! function_exists( 'pmprosm_getCodeByUserID' ) ) {
@@ -249,7 +254,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 					'pmp_im_sponsor',
 					sprintf(
 						__(
-							'The PMPro Sponsored Members add-on is not active! To Import sponsored members, this add-on needs to be installed and activated.',
+							'The PMPro Sponsored Members add-on is not active! To import sponsored members, this add-on needs to be installed and activated.',
 							'pmpro-import-members-from-csv'
 						)
 					)
@@ -411,6 +416,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 
 			$this->error_log->debug( "Updated the usage of {$code_id}" );
 
+			if ( ! empty( $e20r_import_warn ) ) {
+				$this->error_log->log_errors(
+					$e20r_import_warn,
+					$this->variables->get( 'logfile_warning_path' ),
+					$this->variables->get( 'logfile_warning_url' )
+				);
+			}
+
 			if ( empty( $e20r_import_err ) ) {
 				$status = true;
 
@@ -420,8 +433,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 			} else {
 				$this->error_log->log_errors(
 					$e20r_import_err,
-					$this->variables->get( 'logfile_path' ),
-					$this->variables->get( 'logfile_url' )
+					$this->variables->get( 'logfile_error_path' ),
+					$this->variables->get( 'logfile_error_url' )
 				);
 				$status = false;
 			}
