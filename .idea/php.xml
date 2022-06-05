@@ -87,7 +87,6 @@
       <path value="$PROJECT_DIR$/inc/phpunit/php-text-template" />
       <path value="$PROJECT_DIR$/inc/phpunit/phpunit" />
       <path value="$PROJECT_DIR$/inc/phpunit/php-code-coverage" />
-      <path value="$PROJECT_DIR$/inc/phpunit/php-token-stream" />
       <path value="$PROJECT_DIR$/inc/symfony/console" />
       <path value="$PROJECT_DIR$/inc/symfony/deprecation-contracts" />
       <path value="$PROJECT_DIR$/inc/symfony/finder" />
@@ -141,6 +140,14 @@
       <path value="$PROJECT_DIR$/inc/wp_plugins/woocommerce" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utilities" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/paid-memberships-pro" />
+      <path value="$PROJECT_DIR$/inc/xrstf/composer-php52" />
+      <path value="$PROJECT_DIR$/inc/lucatume/args" />
+      <path value="$PROJECT_DIR$/inc/lucatume/function-mocker" />
+      <path value="$PROJECT_DIR$/inc/phpunit/php-invoker" />
+      <path value="$PROJECT_DIR$/inc/sebastian/cli-parser" />
+      <path value="$PROJECT_DIR$/inc/sebastian/complexity" />
+      <path value="$PROJECT_DIR$/inc/sebastian/code-unit" />
+      <path value="$PROJECT_DIR$/inc/sebastian/lines-of-code" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1">
