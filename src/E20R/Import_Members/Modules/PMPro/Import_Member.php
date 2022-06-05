@@ -539,8 +539,16 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			if ( ! empty( $e20r_import_err ) ) {
 				$this->error_log->log_errors(
 					$e20r_import_err,
-					$this->variables->get( 'logfile_path' ),
-					$this->variables->get( 'logfile_url' )
+					$this->variables->get( 'logfile_error_path' ),
+					$this->variables->get( 'logfile_error_url' )
+				);
+			}
+
+			if ( ! empty( $e20r_import_warn ) ) {
+				$this->error_log->log_errors(
+					$e20r_import_warn,
+					$this->variables->get( 'logfile_warning_path' ),
+					$this->variables->get( 'logfile_warning_url' )
 				);
 			}
 
