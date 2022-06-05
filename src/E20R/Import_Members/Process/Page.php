@@ -201,7 +201,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					( ! isset( $_REQUEST['import'] ) ? 'style="display: none;"' : 'style="display: inline-block;"' )
 				);
-				$efh = fopen( $variables->get( 'logfile_path' ), 'a' ); //phpcs:ignore
+				$efh = fopen( $variables->get( 'logfile_error_path' ), 'a' ); //phpcs:ignore
 				// phpcs::ignore
 				if ( false === $efh ) {
 					printf(
@@ -210,7 +210,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							// translators: %s - Path to log file
 							esc_attr__( 'Note: Please make the %s directory writable to see/save the error log.', 'pmpro-import-members-from-csv' ),
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
-							esc_attr__( $variables->get( 'logfile_path' ) )
+							esc_attr__( $variables->get( 'logfile_error_path' ) )
 						)
 					);
 				}
@@ -240,7 +240,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 				if ( isset( $_REQUEST['import'] ) ) {
 					$error_log_msg = '';
 
-					if ( filesize( $variables->get( 'logfile_path' ) ) > 0 ) {
+					if ( filesize( $variables->get( 'logfile_error_path' ) ) > 0 ) {
 						$error_log_msg = sprintf(
 								// translators: $1$s HTML, %2, HTML
 							__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
@@ -451,7 +451,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 							</th>
 							<td>
 								<?php
-								if ( filesize( $variables->get( 'logfile_path' ) ) > 0 ) {
+								if ( filesize( $variables->get( 'logfile_error_path' ) ) > 0 ) {
 									?>
 								<div style="float: right;">
 									<input class="e20r-import-clear-log button button-primary" type="button" id="clear_log_btn" value="<?php esc_attr_e( 'Clear log', 'pmpro-import-members-from-csv' ); ?>"/>
