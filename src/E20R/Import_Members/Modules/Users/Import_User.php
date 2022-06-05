@@ -53,11 +53,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		private $user_presence = null;
 
 		/**
-		 * Class to check validity of the password record (if it is included)
+		 * Class to check if we should auto-generate a new password for the user
 		 *
-		 * @var Create_Password|mixed|null
+		 * @var Generate_Password|mixed|null
 		 */
-		private $passwd_validator = null;
+		private $generate_passwd = null;
 
 		/**
 		 * Import_User constructor.
@@ -65,11 +65,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @param null|Variables $variables Instance of the Variables() class
 		 * @param null|Error_Log $error_log Instance of the Error_Log() class
 		 * @param null|User_Present $user_presence Instance of the tests for user existence on the system
-		 * @param null|Create_Password $passwd_validator Instance of the tests for the user password
+		 * @param null|Generate_Password $generate_passwd Instance of the tests for the user password
 		 *
 		 * @access private
 		 */
-		public function __construct( $variables = null, $error_log = null, $user_presence = null, $passwd_validator = null ) {
+		public function __construct( $variables = null, $error_log = null, $user_presence = null, $generate_passwd = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
@@ -85,10 +85,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 			$this->user_presence = $user_presence;
 
-			if ( null === $passwd_validator ) {
-				$passwd_validator = new Create_Password( $this->variables, $this->error_log );
+			if ( null === $generate_passwd ) {
+				$generate_passwd = new Generate_Password( $this->variables, $this->error_log );
 			}
-			$this->passwd_validator = $passwd_validator;
+			$this->generate_passwd = $generate_passwd;
 		}
 
 		/**
@@ -96,10 +96,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 */
 		public function load_actions() {
 			add_filter( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), - 1, 3 );
+			add_filter( 'e20r_import_wp_user_data', array( $this, 'maybe_add_or_update' ), -1, 3 );
 		}
 
 		/**
-		 * Process and Import user data/user meta data
+		 * Process and Add/Update user data/user meta data
 		 *
 		 * @param array $user_data Array of data from the CSV file we will import as WP_User data
 		 * @param array $user_meta Array of metadata for the user being imported
@@ -110,7 +111,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @throws InvalidSettingsKey Thrown when the specified Variable::get() parameter doesn't exist (should not happen)
 		 */
-		public function import( $user_data, $user_meta, $headers, $wp_error = null ) {
+		public function maybe_add_or_update( $user_data, $user_meta, $headers, $wp_error = null ) {
 
 			global $e20r_import_err;
 			global $e20r_import_warn;
@@ -139,11 +140,25 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				return null;
 			}
 
-			$msg_target = '';
-
 			if ( empty( $display_errors ) ) {
 				$display_errors = array();
 			}
+
+			// If no user data, bailout!
+			if ( empty( $user_data ) ) {
+				$msg = sprintf(
+				// translators: %1$d: Line in the CSV file being imported
+					esc_attr__( 'No user data found at line #%1$d', 'pmpro-import-members-from-csv' ),
+					( $active_line_number + 1 )
+				);
+
+				$e20r_import_warn[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
+
+				$this->error_log->debug( $msg );
+				return null;
+			}
+
+			$msg_target = '';
 
 			// Something to be done before importing one user?
 			do_action( 'is_iu_pre_user_import', $user_data, $user_meta );
@@ -227,11 +242,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			$password_hashing_disabled = (bool) $this->variables->get( 'password_hashing_disabled' );
-			$create_password           = $this->passwd_validator->validate(
+			$create_password           = $this->generate_passwd->validate(
 				$user_data,
 				$allow_update,
 				( $user_exists ? $user : null )
 			);
+			$this->generate_passwd->status_msg( $create_password, $allow_update );
 
 			// If creating a new user and no password was set, let auto-generate one!
 			$default_password_length = apply_filters( 'e20r_import_password_length', 12 );
@@ -438,7 +454,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			return $user;
 		}
 
-
 		/**
 		 * Change the user ID to match the import data
 		 *
@@ -498,8 +513,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @return int|WP_Error
 		 *
 		 * @since 2.0.1
-		 *
-		 **/
+		 */
 		public function insert_or_update_disabled_hashing_user( $userdata ) {
 
 			global $wpdb;
