@@ -37,18 +37,32 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		private static $instance = null;
 
 		/**
-		 * Path to error log file
+		 * Path to log file for errors
 		 *
-		 * @var string $logfile_path
+		 * @var string $logfile_error_path
 		 */
-		private $logfile_path = '';
+		private $logfile_error_path = '';
+
+		/**
+		 * Path to log file for warnings
+		 *
+		 * @var string $logfile_warning_path
+		 */
+		private $logfile_warning_path = '';
 
 		/**
 		 * URI for error log
 		 *
-		 * @var string $logfile_url
+		 * @var string $logfile_warning_url
 		 */
-		private $logfile_url = '';
+		private $logfile_warning_url = '';
+
+		/**
+		 * URI for error log
+		 *
+		 * @var string $logfile_error_url
+		 */
+		private $logfile_error_url = '';
 
 		/**
 		 * List of Import fields (all supported Modules)
@@ -244,9 +258,12 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 			}
 
 			// FIXME: Split error and warning logs to two separate files and update settings accordingly
-			$logfile_url        = $upload_dir['baseurl'] ?? 'https://localhost/';
-			$this->logfile_path = trailingslashit( $upload_dir['basedir'] ?? './' ) . 'e20r_im_errors.log';
-			$this->logfile_url  = esc_url_raw( $logfile_url ) . '/e20r_im_errors.log';
+			$error_url                  = $upload_dir['baseurl'] ?? 'https://localhost/';
+			$warning_url                = $upload_dir['baseurl'] ?? 'https://localhost/';
+			$this->logfile_error_path   = trailingslashit( $upload_dir['basedir'] ?? './' ) . 'e20r_im_errors.log';
+			$this->logfile_warning_path = trailingslashit( $upload_dir['basedir'] ?? './' ) . 'e20r_im_warnings.log';
+			$this->logfile_error_url    = esc_url_raw( $error_url ) . '/e20r_im_errors.log';
+			$this->logfile_warning_url  = esc_url_raw( $warning_url ) . '/e20r_im_warnings.log';
 			$this->add_fields( array() );
 
 			/**
@@ -278,7 +295,6 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 			if ( true === $this->is_configured() ) {
 				$this->error_log->debug( 'The settings have been instantiated already' );
-
 				return;
 			}
 
@@ -484,15 +500,16 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 			if ( ! property_exists( $this, $variable_name ) ) {
 				throw new InvalidSettingsKey(
-					esc_attr__(
-						'Error: The requested parameter does not exist!',
-						'pmpro-import-members-from-csv'
+					sprintf(
+					// translators: %1$s: Variables() parameter name
+						esc_attr__(
+							'Error: The requested parameter \'%1$s\' does not exist!',
+							'pmpro-import-members-from-csv'
+						),
+						$variable_name
 					)
 				);
 			}
-
-			// phpcs:ignore
-			$this->error_log->debug( "Loading variable value from {$variable_name}: " . print_r( $this->{$variable_name}, true ) );
 
 			if ( ! isset( $this->{$variable_name} ) ) {
 				return null;
@@ -543,8 +560,10 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 				'file_object',
 				'welcome_mail_warning',
 				'fields',
-				'logfile_path',
-				'logfile_url',
+				'logfile_error_path',
+				'logfile_warning_path',
+				'logfile_error_url',
+				'logfile_warning_url',
 			);
 
 			$request_settings = array();

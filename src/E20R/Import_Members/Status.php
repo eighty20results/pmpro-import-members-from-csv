@@ -41,5 +41,7 @@ if ( ! class_exists( '\E20R\Import_Members\Status' ) ) {
 		const E20R_ERROR_ID_NOT_NUMBER                = 200;
 		const E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED    = 201;
 		const E20R_ERROR_CANNOT_UPDATE_USER_ID_NUMBER = 202;
+
+		const E20R_USER_EXISTS_NEW_PASSWORD = 300;
 	}
 }

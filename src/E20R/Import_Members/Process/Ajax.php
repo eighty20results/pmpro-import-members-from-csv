@@ -26,6 +26,8 @@ use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\PMPro\Import_Sponsors;
 use WP_Error;
 
+use function \wp_upload_dir;
+
 if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 	/**
 	 * Class Ajax
@@ -159,10 +161,16 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 		public function wp_ajax_clear_log() {
 			$this->error_log->debug( 'Checking nonce for the clear_log action' );
 			check_admin_referer( 'e20r-im-import-members', 'e20r-im-import-members-wpnonce' );
-			$logfile_path = $this->variables->get( 'logfile_path' );
-			$this->error_log->debug( "Nonce is good. Deleting -> {$logfile_path}" );
+			$logfile_error_path   = $this->variables->get( 'logfile_error_path' );
+			$logfile_warning_path = $this->variables->get( 'logfile_warning_path' );
 
-			if ( false === $this->delete_file( $logfile_path ) ) {
+			if ( false === $this->delete_file( $logfile_error_path ) ) {
+				// TODO: Return error that is error log specific
+				wp_send_json_error();
+			}
+
+			if ( false === $this->delete_file( $logfile_warning_path ) ) {
+				// TODO: Return error that is warning log specific
 				wp_send_json_error();
 			}
 
@@ -322,11 +330,20 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			$status        = null;
 			$error_log_msg = null;
 
-			if ( file_exists( $this->variables->get( 'logfile_path' ) ) ) {
+			if ( file_exists( $this->variables->get( 'logfile_error_path' ) ) ) {
 				$error_log_msg = sprintf(
 				// translators: %1$s - HTML, %2$s - HTML
 					esc_attr__( ', please %1$scheck the error log%2$s', 'pmpro-import-members-from-csv' ),
-					sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_url' ) ) ),
+					sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_error_url' ) ) ),
+					'</a>'
+				);
+			}
+
+			if ( file_exists( $this->variables->get( 'logfile_warning_path' ) ) ) {
+				$error_log_msg = sprintf(
+				// translators: %1$s - HTML, %2$s - HTML
+					esc_attr__( ', please %1$scheck the warning log%2$s', 'pmpro-import-members-from-csv' ),
+					sprintf( '<a href="%1$s">', esc_url_raw( $this->variables->get( 'logfile_warning_url' ) ) ),
 					'</a>'
 				);
 			}
