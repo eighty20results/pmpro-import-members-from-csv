@@ -2,6 +2,7 @@
 
 ## Supported and in use
 
+* `e20r_import_wp_user_data` - Adds or updates the user data being imported as a WP_User and saves it to the DB. The default `Import_User::maybe_add_or_update_data()` method that does the real work is called very early in the filter chain so if you want to fix data for some, it can be done by registering a filter handler.
 * `e20r_import_wpuser_fields` - The WP_User fields to include in the import operation
 * `e20r_import_records_per_scan` - Number of records to import per time-unit (default: 15 )
 * `e20r_import_order_link_timeout` - Number of seconds to wait for the order to be linked (default: 1 second)
