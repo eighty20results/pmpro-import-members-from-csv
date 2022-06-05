@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,19 +15,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Modules\Users
  */
 
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
+use WP_Error;
 
-if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
+if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 	/**
-	 * Class Create_Password
+	 * Class Generate_Password
 	 * @package E20R\Import_Members\Modules\Users
 	 */
-	class Create_Password {
+	class Generate_Password {
 
 		/**
 		 * Instance of the Error_Log() class
@@ -44,12 +48,19 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
 		private $variables = null;
 
 		/**
+		 * Instance of the WP_Error() class
+		 *
+		 * @var WP_Error|null
+		 */
+		private $wp_error = null;
+		/**
 		 * Constructor for the User_Update() class
 		 *
 		 * @param Variables|null $variables
 		 * @param Error_Log|null $error_log
+		 * @param WP_Error|null $wp_error Mockable error object
 		 */
-		public function __construct( $variables = null, $error_log = null ) {
+		public function __construct( $variables = null, $error_log = null, $wp_error = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
@@ -59,12 +70,44 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
 				$variables = new Variables( $this->error_log );
 			}
 			$this->variables = $variables;
+
+			if ( null === $wp_error ) {
+				$wp_error = new WP_Error();
+			}
+			$this->wp_error = $wp_error;
 		}
 
+		/**
+		 * Set a status message in error/warning log and return the status
+		 *
+		 * @param bool $status Returned value from the __CLASS__::validate() method
+		 * @param bool $allow_updates Whether the record can be updated or not
+		 *
+		 * @return void
+		 */
 		public function status_msg( $status, $allow_updates ) {
+			global $e20r_import_warn;
+			global $active_line_number;
 
-			// TODO: Create status_msg for Create password validation!
-			return $status;
+			if ( ! is_array( $e20r_import_warn ) ) {
+				$e20r_import_warn = array();
+			}
+
+			switch ( $status ) {
+				case Status::E20R_USER_EXISTS_NEW_PASSWORD:
+					$msg = sprintf(
+					// translators: %1$d: The line number in the CSV import file
+						esc_attr__(
+							'Warning: Changing password for an existing user! (line: %1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'e20r_im_ident', $msg );
+					$e20r_import_warn[ "overwriting_password_{$active_line_number}" ] = $new_error;
+					break;
+			}
 		}
 
 		/**
@@ -78,30 +121,19 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Create_Password' ) ) {
 		 */
 		public function validate( $record, $update_user = false, $user = null ) {
 
-			// We set a dummy password when...
-			$set_password = false;
+			// We set an auto-generated password when...
 
-			// A password record exists in the Import file, and 'update_user' is true
-			if ( isset( $record['user_pass'] ) && true === $update_user ) {
-				$set_password = true;
-			}
-
-			// A password record exists in the Import file _and_ it's empty and the $user doesn't exist
-			if ( isset( $record['user_pass'] ) && empty( $record['user_pass'] ) && empty( $user ) ) {
-				$set_password = true;
-			}
-
-			// When we're not supposed to update the user and the user doesn't exist
-			if ( false === $update_user && empty( $user ) ) {
-				$set_password = true;
-			}
-
-			// No user_pass record is included in the Import file _and_ the user doesn't exist
+			// No user_pass record is included in the CSV import file _and_ the user doesn't exist
 			if ( ! isset( $record['user_pass'] ) && empty( $user ) ) {
-				$set_password = true;
+				return true;
 			}
 
-			return $set_password;
+			// A password record exists in the CSV file _and_ it's empty and the $user doesn't exist
+			if ( isset( $record['user_pass'] ) && empty( $record['user_pass'] ) && empty( $user ) ) {
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

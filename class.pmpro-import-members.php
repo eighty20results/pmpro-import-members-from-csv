@@ -48,7 +48,6 @@ if ( ! file_exists( __DIR__ . '/composer.phar' ) ) {
 // Load the PSR-4 Autoloader
 global $e20r_import_loader;
 $e20r_import_loader = require_once __DIR__ . '/inc/autoload.php';
-require_once __DIR__ . '/ActivateUtilitiesPlugin.php';
 
 if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
 	define( 'E20R_IMPORT_PLUGIN_FILE', __FILE__ );
@@ -72,6 +71,8 @@ if ( ! class_exists( '\E20R\Import\Loader' ) ) {
 	/**
 	 * Class Loader - AutoLoad classes/sources for the plugin
 	 *
+	 * @returns bool
+	 *
 	 * @package E20R
 	 */
 	class Loader {
@@ -89,12 +90,14 @@ if ( ! class_exists( '\E20R\Import\Loader' ) ) {
 						ActivateUtilitiesPlugin::plugin_not_installed( $for_plugin );
 					}
 				);
+				return false;
 			}
+			return true;
 		}
 	}
 }
 
-if ( defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
+if ( true === Loader::is_utilities_module_active() && defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
 	register_deactivation_hook( __FILE__, 'E20R\\Import_Members\\Import::deactivation' );
 	// Load this plugin
 	add_action( 'plugins_loaded', array( new Import(), 'load_hooks' ), 10 );
