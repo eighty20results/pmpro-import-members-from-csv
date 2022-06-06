@@ -20,6 +20,7 @@ namespace E20R\Test\Unit;
 
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
+use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
@@ -29,6 +30,7 @@ use Mockery;
 
 // Functions to Import from other namespaces
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use function cli\err;
 
 class CSV_UnitTest extends Unit {
 
@@ -65,13 +67,6 @@ class CSV_UnitTest extends Unit {
 		Functions\when( 'esc_attr__' )
 			->returnArg( 1 );
 
-		Functions\when( 'wp_upload_dir' )
-			->justReturn(
-				array(
-					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
-					'basedir' => '/var/www/html/wp-content/uploads',
-				)
-			);
 		Functions\when( 'get_option' )
 			->justReturn( 'https://www.paypal.com/cgi-bin/webscr' );
 
@@ -83,36 +78,46 @@ class CSV_UnitTest extends Unit {
 	 * Test whether the correct path is returned for the Import file specified
 	 *
 	 * @param string[] $files_array The contents of the $_FILES[] variable during the test
-	 * @param string   $function_arg Argument(s) for the called function
+	 * @param string   $variable_content Returned from Variables::get() function
 	 * @param mixed    $transient_result The return value for the get_transient() call
 	 * @param string   $expected_result The expected URL for the file path this test should have generated
 	 *
 	 * @dataProvider fixture_import_file_names
 	 * @test
+	 * @covers CSV::verify_import_file_path
 	 */
-	public function it_should_return_the_import_file_path($files_array, $function_arg, $transient_result, $file_exists, $expected_result ) {
+	public function it_should_use_request_variable_for_import_file_path( $files_array, $variable_content, $transient_result, $file_exists, $expected_result ) {
 
-		$_FILES                   = $files_array;
-		$_REQUEST['filename']     = $_FILES['members_csv']['name'];
-		$_REQUEST['create_order'] = 1;
+		$_FILES               = $files_array;
+		$_REQUEST['filename'] = $files_array['members_csv']['name'];
 
-		$errlog_mock = $this->getMockBuilder( Error_Log::class )
-							->onlyMethods( array( 'debug' ) )
-							->getMock();
-		$var_mock    = $this->getMockBuilder( Variables::class )
-							->onlyMethods( array( 'get' ) )
-							->getMock();
+		$presence_mock = $this->makeEmpty( User_Present::class );
+		$errlog_mock   = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Mocked -> {$msg}" );
+				},
+			)
+		);
+		$var_mock      = $this->makeEmpty(
+			Variables::class,
+			array( 'get' => $variable_content )
+		);
 
-		try {
-			Functions\expect( 'get_transient' )
-				->with( Mockery::contains( 'e20r_import_filename' ) )
-				->once()
-				->andReturn( $transient_result );
-		} catch ( Exception $e ) {
-			echo 'Error mocking get_transient(): ' . $e->getMessage(); // phpcs:ignore
+		if ( empty( $variable_content ) ) {
+			try {
+				Functions\expect( 'get_transient' )
+					->with( Mockery::contains( 'e20r_import_filename' ) )
+					->once()
+					->andReturn( $transient_result );
+			} catch ( Exception $e ) {
+				echo 'Error mocking get_transient(): ' . $e->getMessage(); // phpcs:ignore
+			}
 		}
 
-		if ( empty( $transient_result ) && empty( $function_arg ) ) {
+		if ( empty( $transient_result ) && empty( $variable_content ) ) {
 			try {
 				Functions\expect( 'sanitize_file_name' )
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -124,25 +129,26 @@ class CSV_UnitTest extends Unit {
 			}
 		}
 
-		try {
-			Functions\expect( 'file_exists' )
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				->with( Mockery::contains( $_REQUEST['filename'] ) )
-				->once()
-				->andReturn( $file_exists );
-		} catch ( Exception $e ) {
-			echo 'Error mocking file_exists(): ' . $e->getMessage(); // phpcs:ignore
+		if ( ! empty( $_REQUEST['filename'] ) ) {
+			try {
+				Functions\expect( 'file_exists' )
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					->with( Mockery::contains( $_REQUEST['filename'] ) )
+					->once()
+					->andReturn( $file_exists );
+			} catch ( Exception $e ) {
+				echo 'Error mocking file_exists(): ' . $e->getMessage(); // phpcs:ignore
+			}
 		}
+		Functions\when( 'wp_upload_dir' )
+			->justReturn(
+				array(
+					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+					'basedir' => '/var/www/html/wp-content/uploads',
+				)
+			);
 
-		$errlog_mock->method( 'debug' )
-					->willReturn( null );
-
-		$var_mock->method( 'get' )
-				->with( Mockery::contains( 'filename' ) )
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				->willReturn( basename( $_REQUEST['filename'] ) );
-
-		$csv    = new CSV();
+		$csv    = new CSV( $var_mock, $errlog_mock, $presence_mock );
 		$result = $csv->verify_import_file_path();
 
 		$this->assertEquals( $expected_result, $result );
@@ -158,7 +164,7 @@ class CSV_UnitTest extends Unit {
 	 */
 	public function fixture_import_file_names() : array {
 		return array(
-			// files_array, function_arg, transient_result, file_exists, expected_result
+			// files_array, variable_content, transient_result, file_exists, expected_result
 			array(
 				array(
 					'members_csv' => array(
@@ -206,10 +212,10 @@ class CSV_UnitTest extends Unit {
 						'name'     => '/var/www/html/wp-content/uploads/e20r_import/from_function_argument.csv',
 					),
 				),
-				'/var/www/html/wp-content/uploads/e20r_import/from_function_argument.csv',
-				'/var/www/html/wp-content/uploads/e20r_import/from_function_argument.csv',
+				'/var/www/html/wp-content/uploads/e20r_import/from_variable.csv',
+				'/var/www/html/wp-content/uploads/e20r_import/from_variable.csv',
 				true,
-				'/var/www/html/wp-content/uploads/e20r_imports/from_function_argument.csv',
+				'/var/www/html/wp-content/uploads/e20r_imports/from_variable.csv',
 			),
 			// Test sanitize_filename option (i.e. $_REQUEST['filename'] contains information)
 			//files_array, function_arg, transient_result, file_exists, expected_result
@@ -240,6 +246,57 @@ class CSV_UnitTest extends Unit {
 				false,
 			),
 		);
+	}
+
+	/**
+	 * Tests what happens if nothing is configured
+	 *
+	 * @covers CSV::verify_import_file_path()
+	 *
+	 * @return void
+	 * @test
+	 */
+	public function it_should_return_false() {
+		$presence_mock = $this->makeEmpty( User_Present::class );
+		$errlog_mock   = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Mocked -> {$msg}" );
+				},
+			)
+		);
+		$var_mock      = $this->makeEmpty(
+			Variables::class,
+			array( 'get' => null )
+		);
+
+		try {
+			Functions\expect( 'get_transient' )
+				->with( Mockery::contains( 'e20r_import_filename' ) )
+				->andReturn( false );
+		} catch ( Exception $e ) {
+			echo 'Error mocking get_transient(): ' . $e->getMessage(); // phpcs:ignore
+		}
+
+		try {
+			Functions\expect( 'file_exists' )
+				->andReturn( false );
+		} catch ( Exception $e ) {
+			echo 'Error mocking file_exists(): ' . $e->getMessage(); // phpcs:ignore
+		}
+
+		Functions\when( 'wp_upload_dir' )
+			->justReturn(
+				array(
+					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
+					'basedir' => '/var/www/html/wp-content/uploads',
+				)
+			);
+
+		$csv = new CSV( $var_mock, $errlog_mock, $presence_mock );
+		self::assertFalse( $csv->verify_import_file_path() );
 	}
 
 }
