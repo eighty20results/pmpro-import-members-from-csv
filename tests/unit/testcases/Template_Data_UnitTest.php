@@ -136,7 +136,6 @@ class Template_Data_UnitTest extends Unit {
 		Functions\when( 'apply_filters' )
 			->returnArg( 1 );
 
-
 		$user      = $this->create_mocked_wp_users( 1 );
 		$user_meta = $this->fixture_user_meta();
 
@@ -304,8 +303,9 @@ class Template_Data_UnitTest extends Unit {
 			$id = ( $base_id + $i );
 
 			if ( class_exists( '\WP_User' ) ) {
-				$user = $this->construct( WP_User::class,
-				array( $id )
+				$user = $this->construct(
+					WP_User::class,
+					array( $id )
 				);
 			} else {
 				$user     = new stdClass();
@@ -420,7 +420,6 @@ class Template_Data_UnitTest extends Unit {
 		$fixture   = array();
 
 		foreach ( $user_list as $user ) {
-			echo "Adding user: {$user->display_name}";
 			$order     = $this->fixture_pmpro_order( $user );
 			$fixture[] = array( $user, $order, $user_meta );
 		}
