@@ -16,7 +16,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Exceptions\InvalidSettingsKey
+ * @package E20R\Exceptions\AutloaderNotFound
  */
 
 namespace E20R\Exceptions;
@@ -42,6 +42,10 @@ if ( ! class_exists( 'E20R\Exception\AutoloaderNotFound' ) ) {
 		 * @param Throwable|null $previous Previous exception that called this one
 		 */
 		public function __construct( string $message = '', int $code = 0, ?Throwable $previous = null ) { // phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod.Found
+			$message = esc_attr__(
+				'Error: Could not find the auto-loader instance for this plugin!',
+				'pmpro-import-members-from-csv'
+			);
 			parent::__construct( $message, $code, $previous );
 		}
 	}
