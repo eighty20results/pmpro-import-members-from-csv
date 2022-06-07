@@ -1,6 +1,7 @@
 {
   "redefinable-internals": [
 	"file_exists",
-	"md5"
+	"md5",
+	"get_current_user"
   ]
 }
