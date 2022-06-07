@@ -26,6 +26,7 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Variables;
+use MemberOrder;
 use PMProEmail;
 use WP_User;
 
@@ -65,24 +66,19 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Email_Templates constructor.
 		 *
-		 * @param Import|null $import Instance of the Import() class
-		 *
-		 * @throws InvalidInstantiation Thrown when the Import() class isn't present and instantiated when creating this class
-		 * @throws InvalidSettingsKey Thrown when the Import::get() method attempts to access an invalid class property
+		 * @param Variables|null $variables Instance of the Variables() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
 		 */
-		public function __construct( $import = null ) {
-			if ( null === $import ) {
-				throw new InvalidInstantiation(
-					esc_attr__(
-						'The Import() class was not instantiated correctly',
-						'pmpro-import-members-from-csv'
-					)
-				);
+		public function __construct( $variables = null, $error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
+			$this->error_log = $error_log;
 
-			$this->import    = $import;
-			$this->variables = $this->import->get( 'variables' );
-			$this->error_log = $this->import->get( 'error_log' );
+			if ( null === $variables ) {
+				$variables = new Variables( $error_log );
+			}
+			$this->variables = $variables;
 		}
 
 		/**
@@ -118,7 +114,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 				return false;
 			}
 
-			if ( ! isset( $fields['membership_status'] ) || ( isset( $fields['membership_status'] ) && 'active' !== $fields['membership_status'] ) ) {
+			if ( ! isset( $fields['membership_status'] ) || 'active' !== $fields['membership_status'] ) {
 				$this->error_log->debug( "The membership_status field wasn't set to active: {$fields['membership_status']}" );
 				return false;
 			}
@@ -189,7 +185,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		public function substitute_data( $substitution_text, $user, $fields ) {
 
 			// PMPro not active
-			if ( ! class_exists( '\MemberOrder' ) ) {
+			if ( ! class_exists( MemberOrder::class ) ) {
 				return $substitution_text;
 			}
 
@@ -198,19 +194,16 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 			}
 
 			if ( 1 !== preg_match( '/!![a-zA-Z\-_].*!!/', $substitution_text ) ) {
-				$this->error_log->debug( 'No Metadata substitution data found' );
 				return $substitution_text;
 			}
 
 			// Substitute all membership information from the user's metadata
 			foreach ( $fields as $meta_key => $meta_value ) {
-				$this->error_log->debug( "For metadata: Try to substitute !!{$meta_key}!! with {$meta_value}" );
 				$substitution_text = str_replace( "!!{$meta_key}!!", $meta_value, $substitution_text );
 			}
 
 			// Substitute WP_User information from the user's WP_User data
 			foreach ( $user->to_array() as $user_key => $user_value ) {
-				$this->error_log->debug( "For user data: Try to substitute !!{$user_key}!! with {$user_value}" );
 				$substitution_text = str_replace( "!!{$user_key}!!", $user_value, $substitution_text );
 			}
 
@@ -351,10 +344,10 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 			$pmpro_email_templates_defaults['imported_member'] = array(
 				'subject'     => esc_attr__( 'Welcome to !!sitename!!', 'pmpro-import-members-from-csv' ),
-				'help_text'   => esc_attr__( 'This email message sent to each user/member who is added/updated during the import operation, if the appropriate option has been selected on the Import PMPro members from a CSV file page.', 'pmpro-import-members-from-csv' ),
+				'help_text'   => esc_attr__( 'This email message sent to each user/member who is added/updated during the import operation, if the appropriate option has been selected on the import PMPro members from a CSV file page.', 'pmpro-import-members-from-csv' ),
 				'description' => esc_attr__( 'Import: Welcome Imported Member', 'pmpro-import-members-from-csv' ),
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				'body'        => file_get_contents( $this->import->get( 'plugin_path' ) . '/emails/imported_member.html' ),
+				'body'        => file_get_contents( basename( E20R_IMPORT_PLUGIN_FILE ) . '/emails/imported_member.html' ),
 			);
 		}
 
@@ -367,8 +360,8 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 			$this->error_log->add_error_msg(
 				sprintf(
-				// translators: %s - Error message supplied
-					__( 'Unable to send Email message from Import operation: %s', 'pmpro-import-members-from-csv' ),
+				// translators: %1$s - Error message supplied
+					esc_attr__( 'Unable to send Email message from import operation: %1$s', 'pmpro-import-members-from-csv' ),
 					$error->get_error_message( 'wp_mail_failed' )
 				),
 				'warning'

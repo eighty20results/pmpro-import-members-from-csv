@@ -219,7 +219,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			$this->data = $data;
 
 			if ( null === $email_templates ) {
-				$email_templates = new Email_Templates( $this );
+				$email_templates = new Email_Templates( $this->variables, $this->error_log );
 			}
 			$this->email_templates = $email_templates;
 
