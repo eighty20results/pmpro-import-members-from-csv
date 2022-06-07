@@ -27,6 +27,7 @@ use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
 use E20R\Utilities\Utilities;
+use WP_Error;
 
 if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validation' ) ) {
 	/**
@@ -40,6 +41,13 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 * @var null|Variables $variables
 		 */
 		private $variables = null;
+
+		/**
+		 * Instance of the WP_Error() class
+		 *
+		 * @var null|WP_Error
+		 */
+		private $wp_error = null;
 
 		/**
 		 * Constructor for the Users_Validation class
@@ -100,102 +108,68 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		/**
 		 * Verify that the record contains a valid email address or user_login AND that the user doesn't exist (if we're updating)
 		 *
+		 * @param bool $success Whether the validation is successful or not
+		 * @param int $user_id ID of WP_User record being imported/updated
 		 * @param array $record The supplied user array (record) from the .CSV file row
+		 * @param string|null $field_name The field name to test (deprecated)
 		 *
 		 * @return bool|int
 		 *
 		 * @throws InvalidSettingsKey Raised if the 'update_users' key is not a valid setting/variable
 		 */
-		public function validate_email( $record ) {
+		public function validate_email( $success, $user_id, $record, $field_name = null, $wp_error = null ) {
 
 			global $active_line_number;
 
-			$update = (bool) $this->variables->get( 'update_users' );
+			$allow_update = (bool) $this->variables->get( 'update_users' );
 
-			if ( isset( $record['user_login'] ) && ! empty( 'user_login' ) && false === $update && false !== get_user_by( 'login', $record['user_login'] ) ) {
-				return Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN;
+			if ( isset( $record['user_login'] ) && ! empty( 'user_login' ) && false === $allow_update && false !== get_user_by( 'login', $record['user_login'] ) ) {
+				$this->status_msg( Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN, $allow_update );
+				$success = false;
 			}
 
-			if ( isset( $record['user_email'] ) && ! empty( 'user_email' ) && false === $update && false !== get_user_by( 'login', $record['user_email'] ) ) {
-				return Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL;
+			if ( isset( $record['user_email'] ) && ! empty( 'user_email' ) && false === $allow_update && false !== get_user_by( 'login', $record['user_email'] ) ) {
+				$this->status_msg( Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL, $allow_update );
+				$success = false;
 			}
 
 			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
 			if ( empty( $user_data['user_login'] ) && empty( $user_data['user_email'] ) ) {
-				return Status::E20R_ERROR_NO_EMAIL_OR_LOGIN;
+				$this->status_msg( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, $allow_update );
+				$success = false;
 			}
 
-			return true;
+			return $success;
 		}
 
 		/**
 		 * Find and Validate the supplied user id
 		 *
-		 * @param bool $has_error
-		 * @param int $user_id
-		 * @param array $record
-		 * @param null|string|string[] $field_name
+		 * @param bool $success Whether the validation is successful or not
+		 * @param int $user_id ID of WP User record
+		 * @param array $record The data we're importing and validating
+		 * @param null|string|string[] $field_name Name of the field to validate
 		 *
 		 * @return bool|int
 		 * @throws InvalidSettingsKey Thrown if Variables::get() references an invalid property
 		 */
-		public function validate_user_id( $has_error, $user_id, $record, $field_name = null, $wp_error = null ) {
-
-			global $e20r_import_err;
-			global $active_line_number;
-
-			if ( null === $wp_error ) {
-				$wp_error = new \WP_Error();
-			}
-
-			if ( empty( $field_name ) ) {
-				return $has_error;
-			}
-
-			if ( ! ( isset( $record['ID'] ) || isset( $record['user_email'] ) || isset( $record['user_login'] ) ) ) {
-				$this->error_log->debug( 'Cannot find one of the expected column(s): ID, user_email, user_login' );
-				return $has_error;
-			}
+		public function validate_user_id( $success, $user_id, $record, $field_name = null, $wp_error = null ) {
 
 			$allow_update = (bool) $this->variables->get( 'update_users' );
 			// TODO: Remove duplication of the following code from lines 214-216 in User_Present.php file
+
 			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
 			$has_email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
 			$has_login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 
 			if ( false === $has_id && false === $has_login && false === $has_email ) {
-				$msg = sprintf(
-					// translators: %1$d: Current line in CSV file being imported
-					esc_attr__(
-						'Error: No way to identify the user has been supplied for record (line #%1$d)',
-						'pmpro-import-members-from-csv'
-					),
-					$active_line_number
-				);
-				$new_error = $wp_error;
-				$new_error->add( 'error_no_id', $msg );
-				$e20r_import_err[ "error_no_id_{$active_line_number}" ] = $new_error;
-				$this->error_log->debug( $msg );
-
-				return Status::E20R_ERROR_NO_USER_ID;
+				$this->status_msg( Status::E20R_ERROR_NO_USER_ID, $allow_update );
+				$success = false;
 			}
 
 			if ( false === $has_email && true === $has_login ) {
-				$msg = sprintf(
-				// translators: %1$d: User ID, %2$d: Active line number in CSV file
-					esc_attr__(
-						'Error: No Email address supplied for user %1$d (line %2$d)',
-						'pmpro-import-members-from-csv'
-					),
-					$user_id,
-					$active_line_number
-				);
-				$new_error = $wp_error;
-				$new_error->add( 'error_no_email', $msg );
-				$e20r_import_err[ "error_no_email_{$active_line_number}" ] = $new_error;
-				$this->error_log->debug( $msg );
-
-				return Status::E20R_ERROR_NO_EMAIL;
+				$this->status_msg( Status::E20R_ERROR_NO_EMAIL, $allow_update );
+				$success = false;
 			}
 
 			$found_by_email = ( true === $has_email && get_user_by( 'Email', $record['user_email'] ) );
@@ -203,67 +177,163 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 			$found_by_id    = ( true === $has_id && get_user_by( 'ID', $record['ID'] ) );
 
 			if ( false === $allow_update && ( true === $found_by_email || true === $found_by_id || true === $found_by_login ) ) {
-				$this->error_log->debug( 'User exists, but not allowing updates!' );
-				return Status::E20R_ERROR_USER_EXISTS_NO_UPDATE;
+				$this->status_msg( Status::E20R_ERROR_USER_EXISTS_NO_UPDATE, $allow_update );
+				$success = false;
 			}
 
-			return true;
+			return $success;
 		}
 
 		/**
 		 * Process the status for user validations and set a status message
 		 *
-		 * @param int $status
-		 * @param bool $allow_update
+		 * @param int $status Received status code for the validation being executed
+		 * @param bool $allow_update Whether we allow updates to the user record or not
 		 *
-		 * @return bool
+		 * @return void
 		 */
-		public static function status_msg( $status, $allow_update ) {
+		public function status_msg( $status, $allow_update ) {
 
 			global $e20r_import_err;
+			global $e20r_import_warn;
 			global $active_line_number;
 
-			$should_exit = false;
+			if ( ! is_array( $e20r_import_err ) ) {
+				$e20r_import_err = array();
+			}
+
+			if ( ! is_array( $e20r_import_warn ) ) {
+				$e20r_import_warn = array();
+			}
 
 			switch ( $status ) {
+				case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
+					$msg = sprintf(
+					// translators: %1$d: Current line number in the CSV file being imported
+						esc_attr__(
+							'Neither user_email, nor user_login information provided in import file (from CSV file line: %1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'missing_email_login', $msg );
+					$e20r_import_err[ "user_email_missing_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					break;
+				case Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL:
+					$msg = sprintf(
+					// translators: %1$d: Current line number in the CSV file being imported
+						esc_attr__(
+							'User exists (user_email), and updates are disallowed (from CSV file line: %1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'email_exists_no_updates', $msg );
+					$e20r_import_warn[ "existing_user_email_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					break;
+				case Status::E20R_ERROR_USER_NOT_FOUND:
+					$msg = sprintf(
+					// translators: %1$d: Current line number in the CSV file being imported
+						esc_attr__(
+							'WP User ID was not found in database (from CSV file line: %1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'error_no_email', $msg );
+					$e20r_import_err[ "user_missing_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					break;
+				case Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN:
+					$msg = sprintf(
+					// translators: %1$d - Current line number in the CSV file being imported
+						esc_attr__(
+							'User exists (user_login), and updates are disallowed (from CSV file line: %2$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'login_exists_no_updates', $msg );
+					$e20r_import_warn[ "existing_user_login_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					break;
+				case Status::E20R_ERROR_NO_EMAIL:
+					$msg = sprintf(
+					// translators: %1$d: Active line number in CSV file
+						esc_attr__(
+							'Error: No Email address supplied for user (line %1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'error_no_email', $msg );
+					$e20r_import_err[ "error_no_email_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					break;
+				case Status::E20R_ERROR_NO_USER_ID:
+					$msg = sprintf(
+					// translators: %1$d: Current line in CSV file being imported
+						esc_attr__(
+							'Missing ID, user_login and/or user_email information column (line #%1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
+					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'error_no_id', $msg );
+					$e20r_import_err[ "error_no_id_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					break;
 				case Status::E20R_ERROR_ID_NOT_NUMBER:
-					$msg = __(
-						"The value specified in the 'ID' column is not numeric (integer)",
-						'pmpro-import-members-from-csv'
+					$msg = sprintf(
+					// translators: %1$d: Active line number in CSV file
+						esc_attr__(
+							'The value specified in the \'ID\' column is not numeric (integer) - (line #%1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
 					);
+					$new_error = $this->wp_error;
+					$new_error->add( 'error_id_not_numeric', $msg );
+					$e20r_import_err[ "error_id_not_numeric_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
 					break;
-
 				case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
-					$msg         = __(
-						'User ID specified and user record exists but the "Update User Record" option is not selected',
-						'pmpro-import-members-from-csv'
+					$msg = sprintf(
+					// translators: %1$d: Active line number in CSV file
+						esc_attr__(
+							'User ID specified and user record exists but the "Update User Record" option is not selected (line #%1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
 					);
-					$should_exit = true;
+					$new_error = $this->wp_error;
+					$new_error->add( 'warn_user_exists_no_update', $msg );
+					$e20r_import_warn[ "warn_user_exists_no_update_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
 					break;
-
 				case Status::E20R_ERROR_USER_EXISTS_NO_UPDATE:
-					$msg = __(
-						'User exists, but the "Update User Record" option is not selected.',
-						'pmpro-import-members-from-csv'
+					$msg = sprintf(
+					// translators: %1$d: Active line number in CSV file
+						esc_attr__(
+							'User exists, but the "Update User Record" option is not selected. (line #%1$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$active_line_number
 					);
-
-					$should_exit = true;
+					$new_error = $this->wp_error;
+					$new_error->add( 'warn_user_exists_no_update', $msg );
+					$e20r_import_warn[ "warn_user_exists_no_update_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
 					break;
-				default:
-					$msg         = null;
-					$should_exit = false;
 			}
-
-			// Process the resulting error/warning message
-			if ( ! empty( $msg ) ) {
-
-				// Save the error message (based on the supplied status)
-				$e20r_import_err[ "user_check_{$active_line_number}" ] = $msg;
-
-				return $should_exit;
-			}
-
-			return false;
 		}
 	}
 }
