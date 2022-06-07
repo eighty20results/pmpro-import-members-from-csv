@@ -120,7 +120,7 @@ class Generate_Password_UnitTest extends Unit {
 		);
 
 		if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
-			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../' );
+			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../class.pmpro-import-members.php' );
 		}
 	}
 
