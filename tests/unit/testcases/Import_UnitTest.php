@@ -159,6 +159,10 @@ class Import_UnitTest extends Unit {
 	 */
 	public function load_mocks() : void {
 
+		if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
+			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../' );
+		}
+
 		$this->mocked_errorlog = $this->makeEmpty(
 			Error_Log::class,
 			array(
@@ -217,22 +221,7 @@ class Import_UnitTest extends Unit {
 
 		stubs(
 			array(
-				'__'                         => null,
-				'_e'                         => null,
-				'_ex'                        => null,
-				'_x'                         => null,
-				'_n'                         => null,
-				'_nx'                        => null,
-				'translate'                  => null,
-				'esc_html__'                 => null,
-				'esc_html_x'                 => null,
-				'esc_attr__'                 => null,
-				'esc_attr_x'                 => null,
-				'esc_html_e'                 => null,
-				'esc_attr_e'                 => null,
 				'get_transient'              => '/var/www/html/wp-content/uploads/e20r_import/example_file.csv',
-				'esc_url'                    => null,
-				'esc_url_raw'                => null,
 				'wp_upload_dir'              => function() {
 					return array(
 						'baseurl' => 'https://localhost:7537/wp-content/uploads/',
@@ -370,6 +359,7 @@ class Import_UnitTest extends Unit {
 			->justReturn( 'https://localhost.local:7537/wp-content/plugins/pmpro-import-members-from-csv/' );
 		Functions\when( 'plugin_dir_path' )
 			->justReturn( '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/' );
+
 		$import = new Import( $this->mocked_variables, $this->mocked_pmpro, $this->mocked_data, $this->mocked_import_user, $this->mocked_import_member, $this->mocked_csv, $this->mocked_email_templates, $this->mocked_validate_data, $this->mocked_page, $this->mocked_ajax );
 		$result = $import->plugin_row_meta( $default_row_meta, $file_name );
 
@@ -444,9 +434,6 @@ class Import_UnitTest extends Unit {
 	 * @return string[]
 	 */
 	private function fixture_default_plugin_row_meta() {
-		Functions\when( 'plugin_dir_url' )
-			->justReturn( 'https://localhost.local:7537/wp-content/plugins/pmpro-import-members-from-csv/' );
-
 		return array(
 			'donate'        => sprintf(
 				'<a href="%1$s" title="%2$s">%3$s</a>',
@@ -462,13 +449,13 @@ class Import_UnitTest extends Unit {
 			),
 			'filters'       => sprintf(
 				'<a href="%1$s" title="%2$s">%3$s</a>',
-				plugin_dir_url( E20R_IMPORT_PLUGIN_FILE ) . 'docs/FILTERS.md',
+				'https://localhost.local:7537/wp-content/plugins/pmpro-import-members-from-csv/docs/FILTERS.md',
 				'View the Filter documentation',
 				'Filters'
 			),
 			'actions'       => sprintf(
 				'<a href="%1$s" title="%2$s">%3$s</a>',
-				plugin_dir_url( E20R_IMPORT_PLUGIN_FILE ) . 'docs/ACTIONS.md',
+				'https://localhost.local:7537/wp-content/plugins/pmpro-import-members-from-csv/docs/ACTIONS.md',
 				'View the Actions documentation',
 				'Actions'
 			),
