@@ -276,12 +276,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			$this->validators = array();
 
 			if ( empty( $e20r_import_loader ) ) {
-				throw new AutoloaderNotFound(
-					esc_attr__(
-						'Error: Cannot locate an instance of the auto-loader for this plugin!',
-						'pmpro-import-members-from-csv'
-					)
-				);
+				throw new AutoloaderNotFound();
 			}
 
 			// BUG FIX: PHP Warning during PHPStan testing
