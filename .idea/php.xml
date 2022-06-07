@@ -140,9 +140,6 @@
       <path value="$PROJECT_DIR$/inc/wp_plugins/woocommerce" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utilities" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/paid-memberships-pro" />
-      <path value="$PROJECT_DIR$/inc/xrstf/composer-php52" />
-      <path value="$PROJECT_DIR$/inc/lucatume/args" />
-      <path value="$PROJECT_DIR$/inc/lucatume/function-mocker" />
       <path value="$PROJECT_DIR$/inc/phpunit/php-invoker" />
       <path value="$PROJECT_DIR$/inc/sebastian/cli-parser" />
       <path value="$PROJECT_DIR$/inc/sebastian/complexity" />
