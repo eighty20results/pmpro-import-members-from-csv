@@ -38,6 +38,6 @@ WP_VERSION ?= latest
 DB_VERSION ?= latest
 WP_IMAGE_VERSION ?= 1.0
 
-PHP_CODE_PATHS := *.php src/E20R/**/*.php src/E20R/**/**/*.php src/E20R/**/**/**/*.php
+PHP_CODE_PATHS := *.php src/E20R/**/*.php src/E20R/**/**/*.php src/E20R/**/**/**/*.php tests/**/*.php tests/**/**/*.php
 PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*
 E20R_MAIN_BRANCH_NAME := main
