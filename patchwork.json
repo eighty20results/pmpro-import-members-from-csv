@@ -1,9 +1,6 @@
 {
   "redefinable-internals": [
 	"file_exists",
-	"get_transient",
-	"wp_upload_dir",
-	"get_current_user",
 	"md5"
   ]
 }
