@@ -36,6 +36,7 @@ use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
+use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
@@ -61,13 +62,6 @@ class Email_Templates_UnitTest extends Unit {
 	 * @var null|Variables
 	 */
 	private $mocked_variables = null;
-
-	/**
-	 * Mocked Import() class
-	 *
-	 * @var null|Import
-	 */
-	private $mocked_import = null;
 
 	/**
 	 * Mocked PMPro MemberOrder()
@@ -105,7 +99,11 @@ class Email_Templates_UnitTest extends Unit {
 	 */
 	public function load_mocks() : void {
 
-		$this->mocked_errorlog = $this->makeEmpty(
+		if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
+			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../' );
+		}
+
+		$this->mocked_errorlog  = $this->makeEmpty(
 			Error_Log::class,
 			array(
 				'debug' => function( $msg ) {
@@ -114,63 +112,7 @@ class Email_Templates_UnitTest extends Unit {
 				},
 			)
 		);
-
-		$mocked_variables = $this->makeEmpty(
-			Variables::class
-		);
-
-		$mocked_pmpro = $this->makeEmpty(
-			PMPro::class
-		);
-
-		$mocked_data = $this->makeEmpty(
-			Data::class
-		);
-
-		$mocked_import_user = $this->makeEmpty(
-			Import_User::class
-		);
-
-		$mocked_import_member = $this->makeEmpty(
-			Import_Member::class
-		);
-
-		$mocked_csv = $this->makeEmpty(
-			CSV::class
-		);
-
-		$mocked_email_templates = $this->makeEmpty(
-			Email_Templates::class
-		);
-
-		$mocked_validate_data = $this->makeEmpty(
-			Validate_Data::class
-		);
-
-		$mocked_page = $this->makeEmpty(
-			Page::class
-		);
-
-		$mocked_ajax = $this->makeEmpty(
-			Ajax::class
-		);
-
-		$this->mocked_import = $this->constructEmpty(
-			Import::class,
-			array( $mocked_variables, $mocked_pmpro, $mocked_data, $mocked_import_user, $mocked_import_member, $mocked_csv, $mocked_email_templates, $mocked_validate_data, $mocked_page, $mocked_ajax, $this->mocked_errorlog ),
-			array(
-				'get' => function( $key ) use ( $mocked_variables ) {
-					if ( 'variables' === $key ) {
-						return $mocked_variables;
-					}
-					if ( 'error_log' === $key ) {
-						return $this->mocked_errorlog;
-					}
-
-					return null;
-				},
-			)
-		);
+		$this->mocked_variables = $this->makeEmpty( Variables::class );
 	}
 
 	/**
@@ -196,35 +138,47 @@ class Email_Templates_UnitTest extends Unit {
 	 * Unit test for the Email_Templates::load_hooks() method (Check for expected actions)
 	 *
 	 * @return void
-	 * @throws InvalidInstantiation Thrown if the instantiation of Import() is unexpected
-	 * @throws InvalidSettingsKey   Thrown if the Import::get() method attempts to access an invalid property
-	 *
 	 * @test
+	 * @covers \E20R\Import_Members\Email\Email_Templates::load_hooks
 	 */
 	public function it_should_have_loaded_action_hooks() {
-		$template = new Email_Templates( $this->mocked_import );
-		$template->load_hooks();
+		try {
+			Monkey\Actions\expectAdded( 'wp_loaded' )
+				->with( Mockery::contains( array( Email_Templates::class, 'add_email_templates' ) ) )
+				->once();
+			Monkey\Actions\expectAdded( 'wp_mail_failed' )
+				->with( Mockery::contains( array( Email_Templates::class, 'mail_failure_handler' ) ) )
+				->once();
+		} catch ( Monkey\Expectation\Exception\ExpectationArgsRequired $e ) {
+			$this->fail( $e->getMessage() );
+		}
 
-		self::assertSame( 11, has_action( 'wp_loaded', array( $template, 'add_email_templates' ) ) );
-		self::assertSame( 10, has_action( 'wp_mail_failed', array( $template, 'mail_failure_handler' ) ) );
+		$template = new Email_Templates( $this->mocked_variables, $this->mocked_errorlog );
+		$template->load_hooks();
 	}
 
 	/**
-	 * Unit test for the Email_Templates::load_hooks() method (check for expected filters)
+	 * Unit test for the Email_Templates::load_hooks() method (Check for expected actions)
 	 *
 	 * @return void
-	 * @throws InvalidInstantiation Thrown if the instantiation of Import() failed
-	 * @throws InvalidSettingsKey Thrown if the Import::get() method attempts to access an invalid property
 	 * @test
+	 * @covers \E20R\Import_Members\Email\Email_Templates::load_hooks
 	 */
 	public function it_should_have_loaded_filter_hooks() {
-		$template = new Email_Templates( $this->mocked_import );
+		try {
+			Monkey\Filters\expectAdded( 'e20r_import_message_body' )
+				->with( Mockery::contains( array( Email_Templates::class, 'substitute_data' ) ) )
+				->once();
+			Monkey\Filters\expectAdded( 'e20r_import_message_subject' )
+				->with( Mockery::contains( array( Email_Templates::class, 'substitute_data' ) ) )
+				->once();
+		} catch ( Monkey\Expectation\Exception\ExpectationArgsRequired $e ) {
+			$this->fail( $e->getMessage() );
+		}
+
+		$template = new Email_Templates( $this->mocked_variables, $this->mocked_errorlog );
 		$template->load_hooks();
-
-		self::assertSame( 1, has_filter( 'e20r_import_message_body', array( $template, 'substitute_data' ) ) );
-		self::assertSame( 1, has_filter( 'e20r_import_message_subject', array( $template, 'substitute_data' ) ) );
 	}
-
 	/**
 	 * It should test string substitution for supplied variable(s)
 	 *
@@ -239,7 +193,7 @@ class Email_Templates_UnitTest extends Unit {
 	 * @test
 	 */
 	public function it_should_substitute_data_in_string( $text, $user_object, $fields_to_substitute, $expected_text ) {
-		$templates = new Email_Templates( $this->mocked_import );
+		$templates = new Email_Templates( $this->mocked_variables, $this->mocked_errorlog );
 		$result    = $templates->substitute_data( $text, $user_object, $fields_to_substitute );
 		self::assertIsString( $result );
 		self::assertSame( $expected_text, $result );
