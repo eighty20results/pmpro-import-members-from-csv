@@ -38,6 +38,3 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 }
 
 require_once __DIR__ . '/../inc/autoload.php';
-
-// Load the plugin source(s)
-require_once __DIR__ . '/../class.pmpro-import-members.php';
