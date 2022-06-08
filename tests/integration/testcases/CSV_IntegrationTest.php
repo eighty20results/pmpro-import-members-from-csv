@@ -32,8 +32,10 @@ use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
 use Mockery;
 use org\bovigo\vfs\vfsStream;
 use SplFileObject;
+use WP_Error;
 use WP_Mock;
 use WP_Mock\Functions;
+
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 use function Symfony\Component\String\s;
@@ -238,33 +240,92 @@ class CSV_IntegrationTest extends WPTestCase {
 	 *
 	 * @param string $file_name The name of the file we're processing
 	 * @param array $file_args File arguments we support/allow
-	 * @param int[] $import_results Results from the mocked Import_User::import() method
+	 * @param int $line_number The "active_line_number" global value we need to use
+	 * @param int $resulting_uid The UID to return from the mocked Import_User::import() method
+	 * @param array $csv_content Array of CSV field values that match the headers
+	 * @param array $expected The expected result retuned from CSV::process()
+	 *
 	 * @return void
 	 *
 	 * @dataProvider fixture_process_test_data
 	 *
+	 * @covers       CSV::process
 	 * @test
+	 * @throws \Exception
 	 */
-	public function it_should_successfully_process_csv_file( $file_name, $file_args, $line_number, $resulting_uid, $headers, $content ) {
+	public function it_should_successfully_process_csv_file( $file_name, $file_args, $line_number, $resulting_uid, $csv_content, $expected ) {
 
-		$m_user_import = self::makeEmpty(
-			Import_User::class,
-			array(
-				'import' => $resulting_uid,
-			)
+		WP_Mock::alias(
+			'get_option',
+			function( $option, $default ) use ( $file_name, $line_number ) {
+				$value = $default;
+
+				switch ( $option ) {
+					case "e20rcsv_{$file_name}":
+						$value = $line_number;
+						break;
+					case 'e20r_import_errors':
+						global $e20r_import_err;
+						$value = $e20r_import_err;
+						break;
+					default:
+						$this->errorlog->debug( "Unexpected option name: {$option}" );
+				}
+
+				return $value;
+			}
+		);
+		WP_Mock::alias(
+			'apply_filters',
+			function( $filter_name, $filter_value ) use ( $csv_content, $resulting_uid ) {
+				if ( 'e20r_import_users_validate_field_data' === $filter_name ) {
+					$this->errorlog->debug( 'Filter handler for unique identity field validation' );
+					if ( in_array( 'user_login', array_keys( $csv_content ), true ) ) {
+						return true;
+					}
+					if ( in_array( 'user_email', array_keys( $csv_content ), true ) ) {
+						return true;
+					}
+					if ( in_array( 'ID', array_keys( $csv_content ), true ) ) {
+						return true;
+					}
+					return false;
+				}
+
+				if ( in_array(
+					$filter_name,
+					array(
+						'is_iu_import_userdata',
+						'pmp_im_import_userdata',
+						'e20r_import_userdata',
+					),
+					true
+				) ) {
+					$this->errorlog->debug( 'Filter handler for user data filtering' );
+					return $filter_value;
+				}
+
+				if ( in_array(
+					$filter_name,
+					array(
+						'is_iu_import_usermeta',
+						'pmp_im_import_usermeta',
+						'e20r_import_usermeta',
+					),
+					true
+				) ) {
+					return $filter_value;
+				}
+
+				if ( 'e20r_import_wp_user_data' === $filter_name ) {
+					$this->errorlog->debug( 'Filter handler for adding/updating WP User record(s)' );
+					return $resulting_uid;
+				}
+
+				return $filter_value;
+			}
 		);
 
-		if ( ! function_exists( 'get_option' ) ) {
-			expect( 'get_option' )
-				->with( array( "e20rcsv_{$file_name}", null ) )
-				->atLeast()
-				->once()
-				->andReturn( $line_number );
-		} else {
-			$this->fail( 'get_option() is defined before this test is executed!' );
-		}
-
-		// FIXME: Need to make sure we mock the full set of SplFileObject() methods we use, in the right order
 		$input_file = Mockery::mock( SplFileObject::class, array( 'php://memory' ) );
 		$input_file->shouldReceive( 'setCsvControl' )
 			->with( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE )
@@ -274,30 +335,29 @@ class CSV_IntegrationTest extends WPTestCase {
 			->once()
 			->shouldReceive( 'eof' )
 			->with()
-			->andReturn( false )
-			->once()
+			->andReturn( false, false, true )
 			->shouldReceive( 'fgetcsv' )
 			->with()
-			->andReturn( $headers )
-			->shouldReceive( 'eof' )
-			->with()
-			->andReturn( false )
+			->andReturn( array_keys( $csv_content ), array_values( $csv_content ) )
 			->shouldReceive( 'key' )
-			->with()
-			->andReturn( 1 )
-			->once()
-			->shouldReceive( 'fgetcsv' )
-			->with()
-			->andReturn( $headers )
-			->shouldReceive( 'eof' )
-			->with()
-			->andReturn( true );
+			->andReturn( 1 );
 
+		// Executing apply_filters( 'e20r_import_users_validate_field_data' ) filter as a mocked function
 		try {
 			$this->csv = new CSV( $this->variables, $this->errorlog );
-			$result    = $this->csv->process( $file_name, $file_args, $m_user_import, $input_file );
+			$result    = $this->csv->process( $file_name, $file_args, $input_file );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
+		}
+
+		self::assertArrayHasKey( 'user_ids', $result );
+		self::assertArrayHasKey( 'errors', $result );
+		self::assertArrayHasKey( 'warnings', $result );
+		foreach ( $result['errors'] as $header => $error_object ) {
+			self::assertIsObject( $error_object, 'Not a WP_Error() object!' );
+			self::assertObjectHasAttribute( 'errors', $error_object );
+			self::assertObjectHasAttribute( 'error_data', $error_object );
+			self::assertObjectHasAttribute( 'additional_data', $error_object );
 		}
 	}
 
@@ -307,8 +367,34 @@ class CSV_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_process_test_data() {
 		return array(
-			// file_name, file_args, line_number, resulting_uid, headers, content
-			array( 'test_file_1.csv', array(), 1, 2, array(), array() ),
+			// file_name, file_args, line_number, resulting_uid, content, expected
+			array(
+				'test_file_1.csv',
+				array(),
+				1,
+				2,
+				array(),
+				array(
+					'user_ids' => array(),
+					'errors'   => array( 'header_missing_1' => new WP_Error( 'e20r_im_header', 'Missing header line in the CSV file being imported!' ) ),
+					'warnings' => array(),
+				),
+			),
+			array(
+				'test_file_1.csv',
+				array(),
+				1,
+				2,
+				array(
+					'user_email' => 'name.surname@example.com',
+					'user_login' => 'name.surname',
+				),
+				array(
+					'user_ids' => array( 2 ),
+					'errors'   => array( 'header_missing_1' => new WP_Error( 'e20r_im_header', 'Missing header line in the CSV file being imported!' ) ),
+					'warnings' => array(),
+				),
+			),
 		);
 	}
 }
