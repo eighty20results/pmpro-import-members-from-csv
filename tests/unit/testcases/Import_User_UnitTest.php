@@ -21,7 +21,6 @@
 
 namespace E20R\Tests\Unit;
 
-use Codeception\Test\Unit;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Email\Email_Templates;
@@ -29,7 +28,7 @@ use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
 use E20R\Import_Members\Modules\PMPro\PMPro;
-use E20R\Import_Members\Modules\Users\Create_Password;
+use E20R\Import_Members\Modules\Users\Generate_Password;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Process\Ajax;
@@ -37,10 +36,14 @@ use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
+
+use Codeception\Test\Unit;
+use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Brain\Monkey\Actions;
+use Brain\Monkey\Filters as BMFilters;
 
 use WP_Error;
 use WP_Mock;
@@ -121,6 +124,20 @@ class Import_User_UnitTest extends Unit {
 	 * @throws \Exception
 	 */
 	public function load_mocks() : void {
+
+		if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
+			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../class.pmpro-import-members.php' );
+		}
+
+		if ( ! defined( 'E20R_IM_CSV_DELIMITER' ) ) {
+			define( 'E20R_IM_CSV_DELIMITER', ',' );
+		}
+		if ( ! defined( 'E20R_IM_CSV_ESCAPE' ) ) {
+			define( 'E20R_IM_CSV_ESCAPE', '\\' );
+		}
+		if ( ! defined( 'E20R_IM_CSV_ENCLOSURE' ) ) {
+			define( 'E20R_IM_CSV_ENCLOSURE', '"' );
+		}
 
 		try {
 			$this->mocked_errorlog = $this->makeEmpty(
@@ -223,7 +240,7 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function it_should_create_new_user( $allow_update, $user_line, $meta_line, $expected ) {
 
-		$mocked_variables = $this->makeEmpty(
+		$mocked_variables        = $this->makeEmpty(
 			Variables::class,
 			array(
 				'get' => function( $param ) use ( $allow_update ) {
@@ -247,22 +264,20 @@ class Import_User_UnitTest extends Unit {
 				},
 			)
 		);
-
 		$mocked_passwd_validator = $this->makeEmpty(
-			Create_Password::class,
+			Generate_Password::class,
 			array(
 				'validate' => true,
 			)
 		);
 
 		Functions\expect( 'wp_insert_user' )
-			->once()
 			->andReturnUsing(
 				function( $data ) use ( $expected ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
 					return $expected;
 				}
-			);
+			)
+			->once();
 
 		$meta_headers = array();
 		$data_headers = array();
@@ -330,9 +345,6 @@ class Import_User_UnitTest extends Unit {
 		Functions\expect( 'email_exists' )
 			->andReturn( isset( $import_data['user_email'] ) );
 
-		Functions\when( 'esc_attr__' )
-			->returnArg();
-
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
 			'import',
@@ -372,7 +384,7 @@ class Import_User_UnitTest extends Unit {
 		);
 
 		try {
-			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
+			$result = $import_user->maybe_add_or_update( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
@@ -387,6 +399,7 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function fixture_create_user_import() {
 		return array(
+			// allow_update, user_line, meta_line, expected
 			array(
 				false,
 				0,
@@ -439,7 +452,7 @@ class Import_User_UnitTest extends Unit {
 			)
 		);
 		$mocked_passwd_validator = $this->makeEmpty(
-			Create_Password::class,
+			Generate_Password::class,
 			array(
 				'validate' => true,
 			)
@@ -505,22 +518,19 @@ class Import_User_UnitTest extends Unit {
 			);
 
 		$this->load_stubs();
-		Actions\expectDone( 'e20r_before_user_import' );
-		Actions\expectDone( 'pmp_im_pre_member_import' );
-		Actions\expectDone( 'is_iu_pre_user_import' );
+		Actions\expectDone( 'e20r_before_user_import' )->once();
+		Actions\expectDone( 'pmp_im_pre_member_import' )->once();
+		Actions\expectDone( 'is_iu_pre_user_import' )->once();
 
-		Actions\expectDone( 'e20r_after_user_import' );
-		Actions\expectDone( 'pmp_im_post_member_import' );
-		Actions\expectDone( 'is_iu_post_user_import' );
+		Actions\expectDone( 'e20r_after_user_import' )->once();
+		Actions\expectDone( 'pmp_im_post_member_import' )->once();
+		Actions\expectDone( 'is_iu_post_user_import' )->once();
 
 		Functions\expect( 'username_exists' )
 			->andReturn( isset( $import_data['user_login'] ) );
 
 		Functions\expect( 'email_exists' )
 			->andReturn( isset( $import_data['user_email'] ) );
-
-		Functions\when( 'esc_attr__' )
-			->returnArg();
 
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
@@ -560,7 +570,7 @@ class Import_User_UnitTest extends Unit {
 		);
 
 		try {
-			$result = $import_user->import( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
+			$result = $import_user->maybe_add_or_update( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
@@ -635,5 +645,33 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function it_should_create_new_user_with_pre_hashed_password() {
 		$this->markTestSkipped( 'Must use the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method!' );
+	}
+
+	/**
+	 * Unit test for the load_actions() function
+	 *
+	 * @throws \Exception
+	 *
+	 * @test
+	 */
+	public function it_should_load_filter_handlers() {
+		$mocked_variables              = $this->makeEmpty( Variables::class );
+		$mocked_passwd_validator       = $this->makeEmpty( Generate_Password::class );
+		$mocked_user_present_validator = $this->makeEmpty( User_Present::class );
+
+		$import_user = $this->constructEmptyExcept(
+			Import_User::class,
+			'load_hooks',
+			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator )
+		);
+
+		BMFilters\expectAdded( 'e20r_import_usermeta' )
+			->with( Mockery::contains( array( $import_user, 'import_usermeta' ) ) )
+			->once();
+		BMFilters\expectAdded( 'e20r_import_wp_user_data' )
+			->with( Mockery::contains( array( $import_user, 'maybe_add_or_update' ) ) )
+			->once();
+
+		$import_user->load_actions();
 	}
 }
