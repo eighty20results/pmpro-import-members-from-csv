@@ -160,7 +160,7 @@ class Import_UnitTest extends Unit {
 	public function load_mocks() : void {
 
 		if ( ! defined( 'E20R_IMPORT_PLUGIN_FILE' ) ) {
-			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../' );
+			define( 'E20R_IMPORT_PLUGIN_FILE', dirname( __FILE__ ) . '/../../../class.pmpro-import-members.php' );
 		}
 
 		$this->mocked_errorlog = $this->makeEmpty(
@@ -359,8 +359,10 @@ class Import_UnitTest extends Unit {
 			->justReturn( 'https://localhost.local:7537/wp-content/plugins/pmpro-import-members-from-csv/' );
 		Functions\when( 'plugin_dir_path' )
 			->justReturn( '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/' );
+		Functions\when( 'esc_attr__' )->returnArg( 1 );
+		Functions\when( 'esc_url_raw' )->returnArg( 1 );
 
-		$import = new Import( $this->mocked_variables, $this->mocked_pmpro, $this->mocked_data, $this->mocked_import_user, $this->mocked_import_member, $this->mocked_csv, $this->mocked_email_templates, $this->mocked_validate_data, $this->mocked_page, $this->mocked_ajax );
+		$import = new Import( $this->mocked_variables, $this->mocked_pmpro, $this->mocked_data, $this->mocked_import_user, $this->mocked_import_member, $this->mocked_csv, $this->mocked_email_templates, $this->mocked_validate_data, $this->mocked_page, $this->mocked_ajax, $this->mocked_errorlog );
 		$result = $import->plugin_row_meta( $default_row_meta, $file_name );
 
 		$result_count = ( count( $default_row_meta ) + 6 );
