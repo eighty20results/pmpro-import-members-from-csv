@@ -129,7 +129,7 @@ class CSV_UnitTest extends Unit {
 			}
 		}
 
-		if ( ! empty( $_REQUEST['filename'] ) ) {
+		if ( ! empty( $_REQUEST['filename'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			try {
 				Functions\expect( 'file_exists' )
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
