@@ -22,6 +22,7 @@
 
 namespace E20R\Tests\Integration\Fixtures;
 
+use Codeception\TestCase\WPTestCase;
 use E20R\Import_Members\Error_Log;
 use mysqli_result;
 use SplFileObject;
@@ -91,17 +92,32 @@ class Manage_Test_Data {
 	private $sql_array = array();
 
 	/**
+	 * Instance of the running test case...
+	 *
+	 * @var WPTestCase|null
+	 */
+	private $running_test = null;
+	/**
 	 * Constructor
 	 *
 	 * @param int|null $line User to add
 	 */
-	public function __construct( $line = null, $errorlog = null ) {
+	public function __construct( $running_test = null, $line = null, $errorlog = null ) {
 		if ( null === $errorlog ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			$errorlog = new Error_Log();
 		}
 		$this->errorlog = $errorlog;
 
+		if ( null !== $running_test ) {
+
+			if ( ! is_a( $running_test, WPTestCase::class ) ) {
+				$this->errorlog->debug( 'Error: the supplied TestCase object is of the wrong type!' );
+				return false;
+			}
+
+			$this->running_test = $running_test;
+		}
 		$this->user_line                    = $line;
 		list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
 	}
@@ -215,7 +231,65 @@ class Manage_Test_Data {
 		$this->sql_array[] = sprintf( "('%1\$s')", implode( "','", $data_list ) );
 
 		$this->users_to_configure = count( $this->sql_array );
+
 		return $this->add_to_db( $wpdb->users );
+	}
+
+	/**
+	 * Read CSV file data and return as an array to caller
+	 *
+	 * @param int $line_to_load The line of CSV values from the test_data_to_load.csv file to use
+	 *
+	 * @return array
+	 */
+	public function get_user_record_data( $line_to_load = null ) {
+
+		$this->sql_array = array();
+
+		$column_map = array(
+			'ID'                  => 'ID',
+			'user_login'          => 'user_login',
+			'user_pass'           => 'user_pass',
+			'user_nicename'       => 'user_nicename',
+			'user_email'          => 'user_email',
+			'user_url'            => 'user_url',
+			'user_registered'     => 'user_registered',
+			'user_activation_key' => 'null',
+			'user_status'         => 'membership_status',
+			'display_name'        => 'display_name',
+		);
+
+		if ( null !== $line_to_load ) {
+			$this->read_line_from_csv( $line_to_load, __DIR__ . '/test_data_to_load.csv' );
+		}
+
+		$data_list = array();
+		// $this->errorlog->debug( "Data read from test_data_to_load.csv: " . print_r( $this->data, true ) );
+
+		foreach ( $column_map as $db_col => $csv_col ) {
+
+			switch ( $csv_col ) {
+				case 'user_pass':
+					$value = wp_hash_password( $this->default_password );
+					break;
+				case 'null':
+					$value = null;
+					break;
+				default:
+					$value = $this->data[ $csv_col ] ?? '';
+			}
+
+			if ( 'null' !== $csv_col ) {
+				if ( null !== $value ) {
+					$data_list[ $csv_col ] = $value;
+				} else {
+					$data_list[ $csv_col ] = 'NULL';
+				}
+			}
+		}
+
+		$this->users_to_configure = count( $data_list );
+		return $data_list;
 	}
 
 	/**
@@ -362,6 +436,7 @@ class Manage_Test_Data {
 
 		if ( null === $wpdb ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
+			$this->errorlog->debug( 'No WPDB defined?!?' );
 			trigger_error( 'WordPress environment is not running. Invalid test' );
 		}
 
@@ -377,7 +452,7 @@ class Manage_Test_Data {
 
 		$sql = preg_replace( '/(.*), $/', '$1;', $sql );
 
-		// $this->errorlog->debug( "SQL: '{$sql}'" );
+		$this->errorlog->debug( "SQL: '{$sql}'" );
 		// Insert user metadata
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->query( $sql );

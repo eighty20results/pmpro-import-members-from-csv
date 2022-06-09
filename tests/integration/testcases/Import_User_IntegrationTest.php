@@ -109,7 +109,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 		$this->errorlog  = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		$this->variables = new Variables( $this->errorlog );
 		$this->import    = new Import_User( $this->variables, $this->errorlog );
-		$this->test_data = new Manage_Test_Data( null, $this->errorlog );
+		$this->test_data = new Manage_Test_Data( $this, null, $this->errorlog );
 	}
 
 	/**
@@ -119,6 +119,8 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 */
 	public function load_stubs() : void {
 	}
+
+	// FIXME: Add test for an existing user record with a new password and check the $e20r_import_warn status
 
 	/**
 	 * Test of the happy-path when importing a user who doesn't exist in the DB already
@@ -188,9 +190,12 @@ class Import_User_IntegrationTest extends WPTestCase {
 
 		if ( 0 === $expected_id ) {
 			$this->test_data->set_line( $user_line );
-			$this->errorlog->debug( "Adding user record we need to make sure we disallow updates. Line # {$user_line}" );
-			$this->test_data->insert_user_records( $user_line );
-			$this->test_data->insert_member_data();
+			$user_data = $this->test_data->get_user_record_data( $user_line );
+			$this->errorlog->debug( 'Loading user to (not) update: ' . print_r( $user_data, true ) );
+			$could_add = $this->factory()->user->create( $user_data );
+			$this->errorlog->debug( "Added user record {$could_add} we need to make sure we disallow updates. Line # {$user_line}" );
+			$member_status = $this->test_data->insert_member_data();
+			$this->errorlog->debug( "Added member data. " . print_r( $member_status, true ) );
 		}
 
 		$this->run_import_function(
@@ -244,8 +249,8 @@ class Import_User_IntegrationTest extends WPTestCase {
 		}
 
 		$this->errorlog->debug( "Adding user record we need for update test. Line # {$user_line}" );
-		$this->test_data->set_line( $user_line );
-		$this->test_data->insert_user_records( $user_line );
+		$user_data = $this->test_data->get_user_record_data( $user_line );
+		$this->factory()->user->create( $user_data );
 		$this->test_data->insert_member_data();
 
 		$this->run_import_function(
@@ -291,7 +296,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 *
 	 * @return void
 	 */
-	private function run_import_function( $allow_update, $clear_user, $disable_hashing, $user_line, $meta_line, $expected_id, $expected_email = null, $expected_login = null ) {
+	private function run_import_function( $allow_update, $clear_user, $disable_hashing, $user_line = null, $meta_line = null, $expected_id, $expected_email = null, $expected_login = null ) {
 
 		$meta_headers = array();
 		$user_headers = array();
@@ -316,7 +321,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 		}
 
 		try {
-			$result = $this->import->import( $import_data, $import_meta, ( $user_headers + $meta_headers ) );
+			$result = $this->import->maybe_add_or_update( $import_data, $import_meta, ( $user_headers + $meta_headers ) );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
