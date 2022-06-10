@@ -75,6 +75,14 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * @var \array[][][][][][]
 	 */
 	private $structure;
+
+	/**
+	 * Test data management instance
+	 *
+	 * @var Manage_Test_Data|null
+	 */
+	private $test_data = null;
+
 	/**
 	 * Codeception setUp method
 	 *
@@ -147,7 +155,7 @@ class CSV_IntegrationTest extends WPTestCase {
 			)
 		);
 		$this->variables = new Variables( $this->errorlog );
-		$this->test_data = new Manage_Test_Data( null, $this->errorlog );
+		$this->test_data = new Manage_Test_Data( $this, null, $this->errorlog );
 	}
 
 	/**

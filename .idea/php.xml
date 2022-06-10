@@ -145,6 +145,7 @@
       <path value="$PROJECT_DIR$/inc/sebastian/complexity" />
       <path value="$PROJECT_DIR$/inc/sebastian/code-unit" />
       <path value="$PROJECT_DIR$/inc/sebastian/lines-of-code" />
+      <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utliities" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1">

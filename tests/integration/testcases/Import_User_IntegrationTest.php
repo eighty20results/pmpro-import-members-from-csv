@@ -191,11 +191,10 @@ class Import_User_IntegrationTest extends WPTestCase {
 		if ( 0 === $expected_id ) {
 			$this->test_data->set_line( $user_line );
 			$user_data = $this->test_data->get_user_record_data( $user_line );
-			$this->errorlog->debug( 'Loading user to (not) update: ' . print_r( $user_data, true ) );
 			$could_add = $this->factory()->user->create( $user_data );
 			$this->errorlog->debug( "Added user record {$could_add} we need to make sure we disallow updates. Line # {$user_line}" );
-			$member_status = $this->test_data->insert_member_data();
-			$this->errorlog->debug( "Added member data. " . print_r( $member_status, true ) );
+			// $member_status = $this->test_data->insert_member_data();
+			// $this->errorlog->debug( "Added member data. " . print_r( $member_status, true ) );
 		}
 
 		$this->run_import_function(
@@ -250,8 +249,18 @@ class Import_User_IntegrationTest extends WPTestCase {
 
 		$this->errorlog->debug( "Adding user record we need for update test. Line # {$user_line}" );
 		$user_data = $this->test_data->get_user_record_data( $user_line );
-		$this->factory()->user->create( $user_data );
-		$this->test_data->insert_member_data();
+		if ( empty( $user_data['ID'] ) ) {
+			$existing_user_id = $this->factory()->user->create( $user_data );
+			if ( is_wp_error( $existing_user_id ) ) {
+				$this->errorlog->debug( 'Error adding existing user to update: ' . $existing_user_id->get_error_message() );
+				$this->errorlog->debug( 'Supplied User ID: ' . $user_data['ID'] );
+			} else {
+				$this->errorlog->debug( "Added existing user to update. Given User ID: {$existing_user_id}" );
+			}
+		} else {
+			$this->test_data->insert_user_records( $user_line );
+		}
+		// $this->test_data->insert_member_data();
 
 		$this->run_import_function(
 			$allow_update,

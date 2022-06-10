@@ -110,7 +110,6 @@ class Manage_Test_Data {
 		$this->errorlog = $errorlog;
 
 		if ( null !== $running_test ) {
-
 			if ( ! is_a( $running_test, WPTestCase::class ) ) {
 				$this->errorlog->debug( 'Error: the supplied TestCase object is of the wrong type!' );
 				return false;
@@ -267,8 +266,15 @@ class Manage_Test_Data {
 		// $this->errorlog->debug( "Data read from test_data_to_load.csv: " . print_r( $this->data, true ) );
 
 		foreach ( $column_map as $db_col => $csv_col ) {
-
+			$value = null;
 			switch ( $csv_col ) {
+				case 'ID':
+					if ( empty( $this->data[ $csv_col ] ) ) {
+						// Ignore
+						$csv_col = 'null';
+					}
+					$value = $this->data[ $csv_col ] ?? '';
+					break;
 				case 'user_pass':
 					$value = wp_hash_password( $this->default_password );
 					break;
@@ -279,6 +285,7 @@ class Manage_Test_Data {
 					$value = $this->data[ $csv_col ] ?? '';
 			}
 
+			$this->errorlog->debug( "CSV Col: {$csv_col} and value: {$value}" );
 			if ( 'null' !== $csv_col ) {
 				if ( null !== $value ) {
 					$data_list[ $csv_col ] = $value;
