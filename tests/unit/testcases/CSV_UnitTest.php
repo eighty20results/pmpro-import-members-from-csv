@@ -273,6 +273,13 @@ class CSV_UnitTest extends Unit {
 		);
 
 		try {
+			Functions\expect( 'sanitize_file_name' )
+				->andReturnFirstArg();
+		} catch ( Exception $e ) {
+			echo 'Error mocking sanitize_file_name(): ' . $e->getMessage(); // phpcs:ignore
+		}
+
+		try {
 			Functions\expect( 'get_transient' )
 				->with( Mockery::contains( 'e20r_import_filename' ) )
 				->andReturn( false );
