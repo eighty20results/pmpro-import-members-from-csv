@@ -28,7 +28,9 @@ use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Variables;
 
+use E20R\Tests\Fixtures\Factory\E20R_TestCase;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
+use E20R\Tests\Fixtures\Factory\E20R_UnitTest_Factory_For_PMProLevel;
 
 use WP_Error;
 use MemberOrder;
@@ -37,7 +39,7 @@ use WP_User;
 use function fixture_read_from_user_csv;
 use function fixture_read_from_meta_csv;
 
-class Import_User_IntegrationTest extends WPTestCase {
+class Import_User_IntegrationTest extends E20R_TestCase {
 
 	/**
 	 * Default Error_Log() class
@@ -88,6 +90,8 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 * @return void
 	 */
 	public function setUp() : void {
+		parent::setUp();
+
 		$this->test_data = new Manage_Test_Data();
 
 		parent::setUp();
@@ -97,8 +101,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 		$this->test_data->tables_exist();
 
 		// Insert membership level data
-		$this->test_data->set_line();
-		$this->test_data->insert_level_data();
+		$this->factory()->pmprolevel->create_many( 2 );
 	}
 
 	/**
@@ -232,7 +235,7 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 * @param bool $allow_update We can/can not update existing user(s)
 	 * @param bool $clear_user  Whether we should attempt to delete any existing user record before importing
 	 * @param bool $disable_hashing Update 'password_hashing_disabled' setting to this value
-	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
+	 * @param int  $users_to_create Fake users to create for this test to function
 	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
 	 * @param int  $expected_id Result we expect to see from the test execution
 	 * @param string $expected_email The email address we expect the resulting WP_User class to contain
@@ -241,30 +244,15 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_update_user_import
 	 * @test
 	 */
-	public function it_should_update_user( $allow_update, $clear_user, $disable_hashing, $user_line, $meta_line, $expected_id, $expected_email, $expected_login ) {
+	public function it_should_update_user( $allow_update, $clear_user, $disable_hashing, $users_to_create, $meta_line, $expected_id, $expected_email, $expected_login ) {
 
 		if ( true !== $allow_update ) {
 			$this->fail( 'Should allow updating existing user data' );
 		}
 
-		$this->errorlog->debug( "Adding user record we need for update test. Line # {$user_line}" );
-		$user_data = $this->test_data->get_user_record_data( $user_line );
-		if ( empty( $user_data['ID'] ) ) {
-			$existing_user_id = $this->factory()->user->create( $user_data );
-			if ( is_wp_error( $existing_user_id ) ) {
-				$this->errorlog->debug( 'Error adding existing user to update: ' . $existing_user_id->get_error_message() );
-				$this->errorlog->debug( 'Supplied User ID: ' . $user_data['ID'] );
-			} else {
-				$this->errorlog->debug( "Added existing user to update. Given User ID: {$existing_user_id}" );
-			}
-		} else {
-			$this->test_data->insert_user_records( $user_line );
-		}
-		// $this->test_data->insert_member_data();
-
+		$this->insert_test_user_data( $users_to_create );
 		$this->run_import_function(
 			$allow_update,
-			$clear_user,
 			$disable_hashing,
 			$user_line,
 			$meta_line,
@@ -281,21 +269,39 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_update_user_import() {
 		return array(
-			// allow_update, clear_user, disable_hashing, user_line, meta_line, expected_id, expected_email, expected_login
-			array( true, false, false, 0, 0, 12, 'test_user_1@example.com', 'test_user_1' ),
-			array( true, false, false, 1, 1, 1002, 'kari_normann@example.com', 'kari_normann' ),
-			array( true, false, false, 2, 2, 1003, 'olga@owndomain.com', 'olga@owndomain.com' ),
-			array( true, false, false, 3, 3, 1004, 'peter@owndomain.com', 'peter@owndomain.com' ),
-			array( true, false, false, 5, 5, 1005, 'test_user_2@example.com', 'test_user_2' ),
-			array( true, false, true, 6, 6, 1006, 'test_user_3@example.com', 'test_user_3' ),
+			// allow_update, clear_user, disable_hashing, users_to_create, meta_line, expected_id, expected_email, expected_login
+			array( true, false, false, 0, 0, 1, 'user_1@example.org', 'user_1' ),
+			array( true, false, false, 1, 1, 2, 'user_2@example.org', 'user_2' ),
+			array( true, false, false, 2, 2, 3, 'user_3@example.org', 'user_3' ),
+			array( true, false, false, 3, 3, 4, 'user_4@example.org', 'user_4' ),
+			array( true, false, false, 4, 4, 5, 'user_5@example.org', 'user_5' ), // Un-hashed password
+			array( true, false, true, 5, 5, 6, 'user_6@example.org', 'user_6' ),
+			array( true, false, false, 6, 6, 7, 'user_7@example.org', 'user_7' ),
+			array( true, false, false, 6, 6, 8, 'user_8@example.org', 'user_8' ),
 		);
 	}
 
 	/**
+	 * Insert test data (User) in WP Users table
+	 *
+	 * @param int $users_to_create Number of fake user records to create/mock
+	 *
+	 * @return boolean
+	 */
+	public function insert_test_user_data( $users_to_create = 1 ) {
+
+		$existing_user_id = $this->factory()->user->create_many( $users_to_create );
+		if ( is_wp_error( $existing_user_id ) ) {
+			$this->errorlog->debug( 'Error adding existing user to update: ' . $existing_user_id->get_error_message() );
+			return false;
+		}
+
+		return true;
+	}
+	/**
 	 * Shared execution for testing Import_User::import() across scenarios
 	 *
 	 * @param bool   $allow_update We can/can not update existing user(s)
-	 * @param bool   $clear_user  Whether we should attempt to delete any existing user record before importing
 	 * @param int    $disable_hashing Update 'password_hashing_disabled' setting to this value
 	 * @param int    $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
 	 * @param int    $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
@@ -305,15 +311,18 @@ class Import_User_IntegrationTest extends WPTestCase {
 	 *
 	 * @return void
 	 */
-	private function run_import_function( $allow_update, $clear_user, $disable_hashing, $user_line = null, $meta_line = null, $expected_id, $expected_email = null, $expected_login = null ) {
+	private function run_import_function( $allow_update, $disable_hashing, $user_line = null, $meta_line = null, $expected_id, $expected_email = null, $expected_login = null ) {
 
 		$meta_headers = array();
 		$user_headers = array();
 		$import_data  = array();
 		$import_meta  = array();
 
+		$this->read_line_from_csv( $line_to_load, __DIR__ . '/test_data_to_load.csv' );
+
 		// Read from one of the test file(s)
 		if ( null !== $user_line ) {
+
 			list( $user_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
 		}
 
