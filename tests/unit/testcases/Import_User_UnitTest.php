@@ -347,7 +347,7 @@ class Import_User_UnitTest extends Unit {
 
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
-			'import',
+			'maybe_add_or_update',
 			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator ),
 			array(
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
@@ -534,7 +534,7 @@ class Import_User_UnitTest extends Unit {
 
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
-			'import',
+			'maybe_add_or_update',
 			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator ),
 			array(
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
