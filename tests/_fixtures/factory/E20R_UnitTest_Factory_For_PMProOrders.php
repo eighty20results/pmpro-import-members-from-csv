@@ -38,7 +38,7 @@ class E20R_UnitTest_Factory_For_PMProOrders extends E20R_UnitTest_Factory_For_Th
 	 * @param WP_UnitTest_Factory $factory
 	 */
 	public function __construct( $factory = null ) {
-		parent::__construct( $factory );
+		// parent::__construct( $factory );
 		$this->default_generation_definitions = array(
 			'id'           => new WP_UnitTest_Generator_Sequence( '%s' ),
 			'level_name'   => new WP_UnitTest_Generator_Sequence( 'Test PMPro Level %s' ),

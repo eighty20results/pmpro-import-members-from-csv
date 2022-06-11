@@ -2,6 +2,9 @@
 
 namespace E20R\Tests\Fixtures\Factory;
 
+/**
+ * Provides E20R/PMPro-specific factories.
+ */
 class E20R_UnitTest_Factory extends \WP_UnitTest_Factory {
 
 	/**
@@ -20,11 +23,11 @@ class E20R_UnitTest_Factory extends \WP_UnitTest_Factory {
 	public $pmpromebers = null;
 
 	public function __construct() {
-		parent::__construct();
 		$this->tables_exist();
 		$this->pmprolevels = new E20R_UnitTest_Factory_For_PMProLevel( $this );
 		$this->pmproorders = new E20R_UnitTest_Factory_For_PMProOrders( $this );
 		$this->pmpromebers = new E20R_UnitTest_Factory_For_PMProMembers( $this );
+		parent::__construct();
 	}
 
 	/**

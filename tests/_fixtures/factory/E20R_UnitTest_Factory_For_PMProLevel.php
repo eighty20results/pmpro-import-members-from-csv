@@ -38,7 +38,7 @@ class E20R_UnitTest_Factory_For_PMProLevel extends E20R_UnitTest_Factory_For_Thi
 	 * @param E20R_UnitTest_Factory $factory
 	 */
 	public function __construct( $factory = null ) {
-		parent::__construct( $factory );
+		// parent::__construct( $factory );
 		$this->default_generation_definitions = array(
 			'id'              => new E20R_UnitTest_Generator_Sequence( '%s' ),
 			'level_name'      => new E20R_UnitTest_Generator_Sequence( 'Test PMPro Level %s' ),
