@@ -244,8 +244,8 @@ class Manage_Test_Data {
 	public function get_user_record_data( $line_to_load = null ) {
 
 		$this->sql_array = array();
-
-		$column_map = array(
+		$data_list       = array();
+		$column_map      = array(
 			'ID'                  => 'ID',
 			'user_login'          => 'user_login',
 			'user_pass'           => 'user_pass',
@@ -261,9 +261,6 @@ class Manage_Test_Data {
 		if ( null !== $line_to_load ) {
 			$this->read_line_from_csv( $line_to_load, __DIR__ . '/test_data_to_load.csv' );
 		}
-
-		$data_list = array();
-		// $this->errorlog->debug( "Data read from test_data_to_load.csv: " . print_r( $this->data, true ) );
 
 		foreach ( $column_map as $db_col => $csv_col ) {
 			$value = null;
@@ -285,7 +282,6 @@ class Manage_Test_Data {
 					$value = $this->data[ $csv_col ] ?? '';
 			}
 
-			$this->errorlog->debug( "CSV Col: {$csv_col} and value: {$value}" );
 			if ( 'null' !== $csv_col ) {
 				if ( null !== $value ) {
 					$data_list[ $csv_col ] = $value;
