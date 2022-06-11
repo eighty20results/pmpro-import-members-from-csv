@@ -93,6 +93,7 @@
 			"NamespaceInSourceDir\\": "",
 			"E20R\\": "src/E20R",
 			"E20R\\Tests\\": "tests",
+			"E20R\\Tests\\Fixtures\\Factory\\": "tests/_fixtures/factory",
 			"E20R\\Tests\\Unit\\": "tests/unit/testcases",
 			"E20R\\Tests\\Integration\\": "tests/integration/testcases",
 			"E20R\\Tests\\Functional\\": "tests/functional/testcases",
