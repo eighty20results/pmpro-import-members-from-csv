@@ -70,7 +70,7 @@ jobs:
         run: make code-standard-tests
 
       - name: Run PHP Static Code Analysis Tests
-        run: make phpstan-tests
+        run: make static-analysis-tests
 
       - name: Run Unit Tests with Code Coverage check
         run: make unit-tests
