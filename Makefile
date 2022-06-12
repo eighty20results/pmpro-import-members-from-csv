@@ -118,7 +118,7 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	shell \
 	lint-tests \
 	code-standard-tests \
-	static-analysis-tests \
+	static-analysis \
 	unit-tests \
 	integration-tests \
 	acceptance-tests \
@@ -461,7 +461,7 @@ db-backup: prerequisite
 #
 # Using the local environment to execute the PHPStan tests (code analysis)
 #
-static-analysis-tests: composer-dev wp-deps
+static-analysis: composer-dev wp-deps
 	@echo "Loading the static code analysis tests for $(PROJECT)"
 	@$(PHP_BIN) ./$(COMPOSER_DIR)/bin/phpstan analyze \
 		--ansi \
@@ -595,7 +595,7 @@ build-test: docker-deps start-stack db-import
 #
 # Using codeception to execute all defined tests for the plugin
 #
-tests: prerequisite clean wp-deps code-standard-tests static-analysis-tests unit-tests db-import integration-tests functional-tests api-tests acceptance-tests stop-stack
+tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests db-import integration-tests functional-tests api-tests acceptance-tests stop-stack
 
 #
 # Generate a GIT commit log in build_readmes/current.txt
