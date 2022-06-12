@@ -38,7 +38,7 @@ class E20R_IntegrationTest_Factory_For_PMProLevels extends E20R_IntegrationTest_
 		$this->default_generation_definitions = array(
 			'id'              => new E20R_IntegrationTest_Generator_Sequence( '%s' ),
 			'level_name'      => new E20R_IntegrationTest_Generator_Sequence( 'Test PMPro Level %s' ),
-			'description'     => new E20R_IntegrationTest_Generator_Sequence( 'Test PMPro level # %s' ),
+			'description'     => new E20R_IntegrationTest_Generator_Sequence( 'Test PMPro level # %s is a test level for E20R integration testing including PMPro' ),
 			'confirmation'    => new E20R_IntegrationTest_Generator_Sequence( 'Confirmed member of site using PMPro membership level %s' ),
 			'initial_payment' => 10.00,
 			'billing_amount'  => 5.00,
