@@ -440,6 +440,7 @@ class Manage_Test_Data {
 		if ( null === $wpdb ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
 			$this->errorlog->debug( 'No WPDB defined?!?' );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
 			trigger_error( 'WordPress environment is not running. Invalid test' );
 		}
 
@@ -469,7 +470,7 @@ class Manage_Test_Data {
 	 *
 	 * @return mixed
 	 */
-	private function read_line_from_csv( $line_id, $file_name = __DIR__ . '/test_data_to_load.csv' ) {
+	public function read_line_from_csv( $line_id, $file_name = __DIR__ . '/test_data_to_load.csv' ) {
 
 		$file_object = new SplFileObject( $file_name, 'r' );
 		$data_array  = array();
@@ -503,6 +504,20 @@ class Manage_Test_Data {
 		}
 
 		return array( $this->headers, $this->data );
+	}
+
+	/**
+	 * Read from class properties
+	 *
+	 * @param string $param
+	 *
+	 * @return false|mixed
+	 */
+	public function get( $param ) {
+		if ( ! property_exists( $this, $param ) ) {
+			return false;
+		}
+		return $this->{$param};
 	}
 
 	/**
