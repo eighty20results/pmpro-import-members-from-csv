@@ -22,14 +22,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @package E20R\Tests\Fixtures\Factory\E20R_UnitTest_Generator_Sequence
+ * @package E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence
  */
 namespace E20R\Tests\Fixtures\Factory;
 
 /**
  * Generator sequence for the factory class
  */
-class E20R_UnitTest_Generator_Sequence {
+class E20R_IntegrationTest_Generator_Sequence {
 	public static $incr = -1;
 	public $next;
 	public $template_string;

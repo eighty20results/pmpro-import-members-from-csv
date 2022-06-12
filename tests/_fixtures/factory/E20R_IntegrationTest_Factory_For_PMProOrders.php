@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @package E20R\Tests\Fixtures\Factory\E20R_UnitTest_Generator_Sequence
+ * @package E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence
  */
 
 namespace E20R\Tests\Fixtures\Factory;
@@ -31,14 +31,11 @@ use MemberOrder;
 use \WP_UnitTest_Factory;
 use \WP_UnitTest_Generator_Sequence;
 
-class E20R_UnitTest_Factory_For_PMProOrders extends E20R_UnitTest_Factory_For_Thing {
+class E20R_IntegrationTest_Factory_For_PMProOrders extends E20R_IntegrationTest_Factory_For_Thing {
 	/**
 	 * Constructor for the WP_UnitTest_Factory_For_PMProOrder
-	 *
-	 * @param WP_UnitTest_Factory $factory
 	 */
-	public function __construct( $factory = null ) {
-		// parent::__construct( $factory );
+	public function __construct() {
 		$this->default_generation_definitions = array(
 			'id'           => new WP_UnitTest_Generator_Sequence( '%s' ),
 			'level_name'   => new WP_UnitTest_Generator_Sequence( 'Test PMPro Level %s' ),

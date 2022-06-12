@@ -22,28 +22,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @package E20R\Tests\Fixtures\Factory\E20R_UnitTest_Generator_Sequence
+ * @package E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Factory_For_PMProLevels
  */
 
 namespace E20R\Tests\Fixtures\Factory;
 
-use E20R\Tests\Fixtures\Factory\E20R_UnitTest_Factory;
-use E20R\Tests\Fixtures\Factory\E20R_UnitTest_Factory_For_Thing;
-use E20R\Tests\Fixtures\Factory\E20R_UnitTest_Generator_Sequence;
-
-class E20R_UnitTest_Factory_For_PMProLevel extends E20R_UnitTest_Factory_For_Thing {
+/**
+ * Factory for PMPro Levels during integration testing
+ */
+class E20R_IntegrationTest_Factory_For_PMProLevels extends E20R_IntegrationTest_Factory_For_Thing {
 	/**
-	 * Constructor for the WP_UnitTest_Factory_For_PMProLevel
-	 *
-	 * @param E20R_UnitTest_Factory $factory
+	 * Constructor for the E20R_IntegrationTest_Factory_For_PMProLevels
 	 */
-	public function __construct( $factory = null ) {
-		// parent::__construct( $factory );
+	public function __construct() {
 		$this->default_generation_definitions = array(
-			'id'              => new E20R_UnitTest_Generator_Sequence( '%s' ),
-			'level_name'      => new E20R_UnitTest_Generator_Sequence( 'Test PMPro Level %s' ),
-			'description'     => new E20R_UnitTest_Generator_Sequence( 'Test PMPro level # %s' ),
-			'confirmation'    => new E20R_UnitTest_Generator_Sequence( 'Confirmed member of site using PMPro membership level %s' ),
+			'id'              => new E20R_IntegrationTest_Generator_Sequence( '%s' ),
+			'level_name'      => new E20R_IntegrationTest_Generator_Sequence( 'Test PMPro Level %s' ),
+			'description'     => new E20R_IntegrationTest_Generator_Sequence( 'Test PMPro level # %s' ),
+			'confirmation'    => new E20R_IntegrationTest_Generator_Sequence( 'Confirmed member of site using PMPro membership level %s' ),
 			'initial_payment' => 10.00,
 			'billing_amount'  => 5.00,
 			'cycle_number'    => 1,

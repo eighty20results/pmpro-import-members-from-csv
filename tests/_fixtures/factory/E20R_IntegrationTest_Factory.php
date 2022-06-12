@@ -5,29 +5,29 @@ namespace E20R\Tests\Fixtures\Factory;
 /**
  * Provides E20R/PMPro-specific factories.
  */
-class E20R_UnitTest_Factory extends \WP_UnitTest_Factory {
+class E20R_IntegrationTest_Factory extends \WP_UnitTest_Factory {
 
 	/**
-	 * @var E20R_UnitTest_Factory_For_PMProLevel|null
+	 * @var E20R_IntegrationTest_Factory_For_PMProLevels|null
 	 */
 	public $pmprolevels = null;
 
 	/**
-	 * @var E20R_UnitTest_Factory_For_PMProOrders|null
+	 * @var E20R_IntegrationTest_Factory_For_PMProOrders|null
 	 */
 	public $pmproorders = null;
 
 	/**
-	 * @var E20R_UnitTest_Factory_For_PMProMembers|null
+	 * @var E20R_IntegrationTest_Factory_For_PMProMembers|null
 	 */
-	public $pmpromebers = null;
+	public $pmpromembers = null;
 
 	public function __construct() {
-		$this->tables_exist();
-		$this->pmprolevels = new E20R_UnitTest_Factory_For_PMProLevel( $this );
-		$this->pmproorders = new E20R_UnitTest_Factory_For_PMProOrders( $this );
-		$this->pmpromebers = new E20R_UnitTest_Factory_For_PMProMembers( $this );
 		parent::__construct();
+		$this->tables_exist();
+		$this->pmprolevels  = new E20R_IntegrationTest_Factory_For_PMProLevels( $this );
+		$this->pmproorders  = new E20R_IntegrationTest_Factory_For_PMProOrders( $this );
+		$this->pmpromembers = new E20R_IntegrationTest_Factory_For_PMProMembers( $this );
 	}
 
 	/**

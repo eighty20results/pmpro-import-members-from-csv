@@ -11,18 +11,16 @@ use WP_UnitTestCase;
 class E20R_TestCase extends WPTestCase {
 
 	/**
-	 * Holds the E20R_UnitTest_Factory instance.
+	 * Holds the E20R_IntegrationTest_Factory instance.
 	 *
-	 * @var E20R_UnitTest_Factory
+	 * @var E20R_IntegrationTest_Factory|null
 	 */
-	protected $factory;
+	public static $e20r_factory = null;
 
-	/**
-	 * Setup test case.
-	 */
-	public function setUp() : void {
-		parent::setUp();
-		// Add custom factories.
-		$this->factory = new E20R_UnitTest_Factory();
+	protected static function e20r_factory() {
+		if ( ! self::$e20r_factory ) {
+			self::$e20r_factory = new E20R_IntegrationTest_Factory();
+		}
+		return self::$e20r_factory;
 	}
 }

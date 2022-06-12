@@ -22,13 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @package E20R\Tests\Fixtures\Factory\E20R_UnitTest_Generator_Sequence
+ * @package E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence
  */
 namespace E20R\Tests\Fixtures\Factory;
 
 use WP_Error;
 
-abstract class E20R_UnitTest_Factory_For_Thing extends E20R_UnitTest_Factory {
+abstract class E20R_IntegrationTest_Factory_For_Thing extends E20R_IntegrationTest_Factory {
 
 	public $default_generation_definitions;
 	public $factory;
@@ -38,8 +38,8 @@ abstract class E20R_UnitTest_Factory_For_Thing extends E20R_UnitTest_Factory {
 	 *
 	 * @param object $factory Global factory that can be used to create other objects on the system
 	 * @param array $default_generation_definitions Defines what default values should the properties of the object have. The default values
-	 * can be generators -- an object with next() method. There are some default generators: {@link E20R_UnitTest_Generator_Sequence},
-	 * {@link WP_UnitTest_Generator_Locale_Name}, {@link E20R_UnitTest_Factory_Callback_After_Create}.
+	 * can be generators -- an object with next() method. There are some default generators: {@link E20R_IntegrationTest_Generator_Sequence},
+	 * {@link WP_UnitTest_Generator_Locale_Name}, {@link E20R_IntegrationTest_Factory_Callback_After_Create}.
 	 */
 	public function __construct( $factory, $default_generation_definitions = array() ) {
 		parent::__construct( $factory, $default_generation_definitions );
@@ -71,7 +71,7 @@ abstract class E20R_UnitTest_Factory_For_Thing extends E20R_UnitTest_Factory {
 		return $created;
 	}
 
-	function create_and_get( $args = array(), $generation_definitions = null ) {
+	public function create_and_get( $args = array(), $generation_definitions = null ) {
 		$object_id = $this->create( $args, $generation_definitions );
 		return $this->get_object_by_id( $object_id );
 	}
@@ -93,7 +93,7 @@ abstract class E20R_UnitTest_Factory_For_Thing extends E20R_UnitTest_Factory {
 		}
 
 		// Use the same incrementor for all fields belonging to this object.
-		$gen  = new E20R_UnitTest_Generator_Sequence();
+		$gen  = new E20R_IntegrationTest_Generator_Sequence();
 		$incr = $gen->get_incr();
 
 		foreach ( array_keys( $generation_definitions ) as $field_name ) {
@@ -123,7 +123,7 @@ abstract class E20R_UnitTest_Factory_For_Thing extends E20R_UnitTest_Factory {
 	}
 
 	public function callback( $function ) {
-		return new E20R_UnitTest_Factory_Callback_After_Create( $function );
+		return new E20R_IntegrationTest_Factory_Callback_After_Create( $function );
 	}
 
 	public function addslashes_deep( $value ) {
