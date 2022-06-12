@@ -256,8 +256,21 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				'user_email' => 'email',
 			);
 
+			if ( true === $email && true === $login ) {
+				$exists = $this->db_user( array( 'user_email', 'user_login' ), array( $record['user_email'], $record['user_login'] ) );
+				$this->error_log->debug( 'user found? ' . ( $exists ? 'Yes' : 'No' ) );
+				$status = $this->user_data_can_be_imported( true, $exists, $allow_update );
+				$this->status_msg( $status, $allow_update );
+				if ( true === $status || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $status ) {
+					$this->error_log->debug( 'User found using the email and login values' );
+					return $status;
+				}
+			}
+
 			foreach ( $id_fields as $field => $type ) {
-				$this->error_log->debug( "Data record contains the {$field} column? " . ( ${$type} ? 'Yes' : 'No' ) . ' Verifying: ' . ( ! empty( $record[ $field ] ) ? 'Yes' : 'No' ) );
+				// Using the name of the field in a dynamic variable,
+				// which was set to true/false on lines 215-217 of this file - ${$type} <=> {$ID}|{$email}|{$login}
+				$this->error_log->debug( "Data record contains the {$field} column? " . ( ${$type} ? 'Yes' : 'No' ) );
 				$has_column = ${$type};
 				$exists     = $this->db_user( $field, $record[ $field ] );
 				$status     = $this->user_data_can_be_imported( $has_column, $exists, $allow_update );
@@ -307,8 +320,8 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		/**
 		 * Find the user by searching the database (wp_users table)
 		 *
-		 * @param string $column The wp_users table column to search for
-		 * @param string $value The value we're looking for in that column
+		 * @param string|string[] $column The wp_users table column(s) to search
+		 * @param string|array[]  $value The value(s) we're looking for in that column
 		 *
 		 * @return bool
 		 * @access private
@@ -316,15 +329,28 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		private function db_user( $column, $value ) {
 			global $wpdb;
 
+			$where_clause = 'WHERE ';
+
+			if ( is_array( $column ) ) {
+				foreach ( $column as $id => $name ) {
+					if ( 'WHERE ' !== $where_clause ) {
+						$where_clause .= ' AND ';
+					}
+					$where_clause .= sprintf( '%1$s = \'%2$s\'', esc_sql( $name ), esc_sql( $value[ $id ] ) );
+				}
+			} else {
+				$where_clause .= sprintf( '%1$s = \'%2$s\'', esc_sql( $column ), esc_sql( $value ) );
+			}
+
 			$sql   = sprintf(
-				'SELECT COUNT(*) FROM %1$s WHERE %2$s = \'%3$s\'',
+				'SELECT COUNT(*) FROM %1$s %2$s',
 				$wpdb->users,
-				esc_sql( $column ),
-				esc_sql( $value )
+				$where_clause
 			);
 			$count = (int) $wpdb->get_var( $sql ); // // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-
-			$this->error_log->debug( "Found {$count} users using {$column} and '{$value}'" );
+			$this->error_log->debug( "'{$sql}' results in {$count} records... {$wpdb->last_error}" );
+			$this->error_log->debug( print_r( $wpdb->get_results( "SELECT ID, user_login, user_email FROM {$wpdb->users}", ARRAY_A ), true ) );
+			// $this->error_log->debug( "Found {$count} users using {$column} and '{$value}'" );
 			return ( 1 <= $count );
 		}
 	}
