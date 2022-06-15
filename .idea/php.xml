@@ -148,6 +148,21 @@
       <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utliities" />
     </include_path>
   </component>
+  <component name="PhpProjectServersManager">
+    <servers>
+      <server host="localhost" id="9b032a38-1e21-4ff6-9d1a-7f3f8776c8da" name="pmpro-import-members-from-csv" port="7253" use_path_mappings="true">
+        <path_mappings>
+          <mapping local-root="$PROJECT_DIR$" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv" />
+          <mapping local-root="$PROJECT_DIR$/inc/codeception/aspect-mock" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/inc/codeception/aspect-mock" />
+          <mapping local-root="$PROJECT_DIR$/inc/codeception/assert-throws" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/inc/codeception/assert-throws" />
+          <mapping local-root="$PROJECT_DIR$/inc/codeception/codeception" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/inc/codeception/codeception" />
+          <mapping local-root="$PROJECT_DIR$/inc/codeception/lib-asserts" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/inc/codeception/li-assert" />
+          <mapping local-root="$PROJECT_DIR$/inc/codeception/lib-innerbrowser" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/inc/codeception/lib-innerbrowser" />
+          <mapping local-root="$PROJECT_DIR$/inc/composer" remote-root="/var/www/html/wp-content/plugins/pmpro-import-members-from-csv/inc/composer" />
+        </path_mappings>
+      </server>
+    </servers>
+  </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.1">
     <option name="suggestChangeDefaultLanguageLevel" value="false" />
   </component>
