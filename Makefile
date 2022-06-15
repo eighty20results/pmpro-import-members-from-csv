@@ -36,6 +36,8 @@ INTEGRATION_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/integration/_bootstrap.php
 FUNCTIONAL_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/functional/_bootstrap.php
 API_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/api/_bootstrap.php
 ACCEPTANCE_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/acceptance/_bootstrap.php
+# Set the HOST IP address for use with xdebug support in integration/acceptance docker instances
+E20R_HOST_IP ?= $(${E20R_HOST_IP_CMD} ${E20R_HOST_IFACE} | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}')
 
 # Default is to not use coverage unless we know we're on a local (non-GitHub) system
 COVERAGE_SETTINGS ?=

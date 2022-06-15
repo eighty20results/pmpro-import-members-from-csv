@@ -41,3 +41,5 @@ WP_IMAGE_VERSION ?= 1.0
 PHP_CODE_PATHS := *.php src/E20R/**/*.php src/E20R/**/**/*.php src/E20R/**/**/**/*.php tests/**/*.php tests/**/**/*.php
 PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*
 E20R_MAIN_BRANCH_NAME := main
+E20R_HOST_IP_CMD := /sbin/ifconfig
+E20R_HOST_IFACE := en0
