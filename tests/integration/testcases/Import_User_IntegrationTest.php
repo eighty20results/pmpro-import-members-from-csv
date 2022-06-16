@@ -107,6 +107,13 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	private static $path = 'vfs://mocked/var/www/html/wp-content/uploads/e20r_imports/csv_test_file.csv';
 
 	/**
+	 * Array of CSV test data to use
+	 *
+	 * @var array
+	 */
+	private $csv_data;
+
+	/**
 	 * Codeception setUp method
 	 *
 	 * @return void
@@ -265,9 +272,8 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 * @param bool $allow_update We can/can not update existing user(s)
 	 * @param bool $disable_hashing Update 'password_hashing_disabled' setting to this value
 	 * @param int $users_to_create Fake users to create for this test to function
-	 * @param int $csv_line_to_read The CSV file data being imported (line # in the inc/csv_files/meta_data.csv file)
-	 * @param string $expected_email The email address we expect the resulting WP_User class to contain
-	 * @param string $expected_login The login name we expect the resulting WP_User class to contain
+	 * @param int $update_id The user ID we want to update the user record to now use
+	 * @param string $role The role info to use when updating the user
 	 *
 	 * @dataProvider fixture_update_user_import
 	 * @test
@@ -279,7 +285,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		}
 
 		// FIXME: Not setting the expected user_login and user_email values!
-		$created_user_ids = $this->insert_test_user_data( $users_to_create, $update_id, $role );
+		$created_user_ids = $this->fixture_create_user_data( $users_to_create, $update_id, $role );
 		$this->errorlog->debug( 'Inserted test user data and got the following user IDs back: ' . print_r( $created_user_ids, true ) );
 		$expected_id    = end( $created_user_ids );
 		$expected_email = "user_{$expected_id}@example.org";
@@ -289,7 +295,6 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		$this->run_import_function(
 			$allow_update,
 			$disable_hashing,
-			1,
 			$expected_id,
 			$expected_email,
 			$expected_login
@@ -320,7 +325,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 *
 	 * @return bool|int[]
 	 */
-	public function insert_test_user_data( $users_to_create = 1, $update_id = false, $roles = null ) {
+	public function fixture_create_user_data( $users_to_create = 1, $update_id = false, $roles = null ) {
 		$new_user_ids = $this->e20r_factory()->user->create_many( $users_to_create );
 		if ( is_wp_error( $new_user_ids ) ) {
 			$this->errorlog->debug( 'Error adding existing user to update: ' . $new_user_ids->get_error_message() );
@@ -328,13 +333,11 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 			return false;
 		}
 
-		$headers = $this->fixture_csv_header();
-		$this->fixture_add_to_csv_file( $headers, true );
+		$csv_headers = $this->fixture_csv_header();
 
 		foreach ( $new_user_ids as $user_id ) {
-			$this->errorlog->debug( "Adding CSV file content for {$user_id}" );
-			$csv_line = $this->fixture_create_csv_line( $user_id, $headers, $update_id, $roles );
-			$this->fixture_add_to_csv_file( $csv_line );
+			$this->errorlog->debug( "Creating CSV content for {$user_id}" );
+			$this->csv_data = $this->fixture_create_csv_line( $user_id, $csv_headers, $update_id, $roles );
 		}
 
 		// Add info to CSV file to be imported
@@ -526,14 +529,14 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 *
 	 * @return void
 	 */
-	private function run_import_function( $allow_update, $disable_hashing, $csv_line_to_read = null, $expected_id = null, $expected_email = null, $expected_login = null ) {
+	private function run_import_function( $allow_update, $disable_hashing, $expected_id = null, $expected_email = null, $expected_login = null ) {
 
 		$headers     = array();
 		$import_data = array();
 
-		if ( null !== $csv_line_to_read ) {
-			list( $headers, $import_data ) = $this->test_data->read_line_from_csv( $csv_line_to_read, self::$path );
-		}
+//		if ( null !== $csv_line_to_read ) {
+//			list( $headers, $import_data ) = $this->test_data->read_line_from_csv( $csv_line_to_read, self::$path );
+//		}
 
 		try {
 			$this->variables->set( 'update_id', $allow_update );
@@ -544,7 +547,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		}
 
 		try {
-			$result = $this->import->maybe_add_or_update( $import_data, $import_data, $headers );
+			$result = $this->import->maybe_add_or_update( $this->csv_data, $this->csv_data, array_keys( $this->csv_data ) );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
 		}
@@ -555,17 +558,17 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		self::assertSame( $expected_login, $real_user->user_login, 'Wrong WP_User->user_login value' );
 
 		// Verify that the password is as expected
-		if ( ! empty( $import_data['user_pass'] ) ) {
+		if ( ! empty( $this->csv_data['user_pass'] ) ) {
 			if ( true === $disable_hashing ) {
 				self::assertSame(
-					$import_data['user_pass'],
+					$this->csv_data['user_pass'],
 					$real_user->user_pass,
 					'Error: Unexpected password when test used a pre-hashed password'
 				);
 			} else {
 				self::assertTrue(
-					wp_check_password( $import_data['user_pass'], $real_user->user_pass, $real_user->ID ),
-					"Error: Unexpected password when test included plaintext password. '{$import_data['user_pass']}' -> '{$real_user->user_pass}'"
+					wp_check_password( $this->csv_data['user_pass'], $real_user->user_pass, $real_user->ID ),
+					"Error: Unexpected password when test included plaintext password. '{$this->csv_data['user_pass']}' -> '{$real_user->user_pass}'"
 				);
 			}
 		}
