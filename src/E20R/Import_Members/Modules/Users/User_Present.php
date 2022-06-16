@@ -257,9 +257,9 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			);
 
 			if ( true === $email && true === $login ) {
-				$exists = $this->db_user( array( 'user_email', 'user_login' ), array( $record['user_email'], $record['user_login'] ) );
+				$exists = $this->db_user_exists( array( 'user_email', 'user_login' ), array( $record['user_email'], $record['user_login'] ) );
 				$this->error_log->debug( 'user found? ' . ( $exists ? 'Yes' : 'No' ) );
-				$status = $this->user_data_can_be_imported( true, $exists, $allow_update );
+				$status = $this->data_can_be_imported( true, $exists, $allow_update );
 				$this->status_msg( $status, $allow_update );
 				if ( true === $status || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $status ) {
 					$this->error_log->debug( 'User found using the email and login values' );
@@ -272,8 +272,8 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				// which was set to true/false on lines 215-217 of this file - ${$type} <=> {$ID}|{$email}|{$login}
 				$this->error_log->debug( "Data record contains the {$field} column? " . ( ${$type} ? 'Yes' : 'No' ) );
 				$has_column = ${$type};
-				$exists     = $this->db_user( $field, $record[ $field ] );
-				$status     = $this->user_data_can_be_imported( $has_column, $exists, $allow_update );
+				$exists     = $this->db_user_exists( $field, $record[ $field ] );
+				$status     = $this->data_can_be_imported( $has_column, $exists, $allow_update );
 				$this->status_msg( $status, $allow_update );
 
 				if ( true === $status || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $status ) {
@@ -294,7 +294,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 *
 		 * @return true|int
 		 */
-		private function user_data_can_be_imported( $has_column, $user_exists, $allow_update ) {
+		private function data_can_be_imported( $has_column, $user_exists, $allow_update ) {
 
 			// The user identifying field is not present in import data
 			if ( false === $has_column ) {
@@ -326,7 +326,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 * @return bool
 		 * @access private
 		 */
-		private function db_user( $column, $value ) {
+		private function db_user_exists( $column, $value ) {
 			global $wpdb;
 
 			$where_clause = 'WHERE ';
