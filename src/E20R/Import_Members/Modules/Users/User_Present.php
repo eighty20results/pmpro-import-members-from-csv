@@ -224,14 +224,12 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			// None of the user identifiers (username or user ID) are set in import data so can't determine that user is persent
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
 			if ( false === $ID && false === $login && false === $email ) {
-				$this->error_log->debug( 'Neither of the user identification keys exist in import data' );
 				$this->status_msg( Status::E20R_USER_IDENTIFIER_MISSING, $allow_update );
 				$status = false;
 			}
 
 			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
 			if ( ! $login && ! $email ) {
-				$this->error_log->debug( 'Need either user_login or user_email to be present!' );
 				$this->status_msg( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, $allow_update );
 				$status = false;
 			}
@@ -239,13 +237,11 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
 			if ( true === $ID && false === Utilities::is_integer( $record['ID'] ) ) {
-				$this->error_log->debug( "'ID' column isn't a number" );
 				$this->status_msg( Status::E20R_ERROR_ID_NOT_NUMBER, $allow_update );
 			}
 
 			// Is the user_email supplied and is it a valid email address
 			if ( true === $email && false === is_email( $record['user_email'] ) ) {
-				$this->error_log->debug( "'user_email' column doesn't contain a valid email address" );
 				$this->status_msg( Status::E20R_ERROR_NO_EMAIL, $allow_update );
 				$status = false;
 			}
@@ -258,9 +254,9 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			if ( true === $email && true === $login ) {
 				$exists = $this->db_user_exists( array( 'user_email', 'user_login' ), array( $record['user_email'], $record['user_login'] ) );
-				$this->error_log->debug( 'user found? ' . ( $exists ? 'Yes' : 'No' ) );
 				$status = $this->data_can_be_imported( true, $exists, $allow_update );
 				$this->status_msg( $status, $allow_update );
+
 				if ( true === $status || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $status ) {
 					$this->error_log->debug( 'User found using the email and login values' );
 					return $status;
@@ -270,7 +266,6 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			foreach ( $id_fields as $field => $type ) {
 				// Using the name of the field in a dynamic variable,
 				// which was set to true/false on lines 215-217 of this file - ${$type} <=> {$ID}|{$email}|{$login}
-				$this->error_log->debug( "Data record contains the {$field} column? " . ( ${$type} ? 'Yes' : 'No' ) );
 				$has_column = ${$type};
 				$exists     = $this->db_user_exists( $field, $record[ $field ] );
 				$status     = $this->data_can_be_imported( $has_column, $exists, $allow_update );
@@ -298,19 +293,16 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			// The user identifying field is not present in import data
 			if ( false === $has_column ) {
-				$this->error_log->debug( 'Column does not contain data or is missing' );
 				return Status::E20R_USER_IDENTIFIER_MISSING;
 			}
 
 			// User doesn't exist
 			if ( false === $user_exists ) {
-				$this->error_log->debug( 'User does not exist on this system' );
 				return Status::E20R_ERROR_USER_NOT_FOUND;
 			}
 
 			// User exists on the system, but can't be updated by import data
 			if ( false === $allow_update ) {
-				$this->error_log->debug( "User exists _BUT_ we're not allowing updates" );
 				return Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED;
 			}
 
@@ -348,9 +340,6 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				$where_clause
 			);
 			$count = (int) $wpdb->get_var( $sql ); // // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$this->error_log->debug( "'{$sql}' results in {$count} records... {$wpdb->last_error}" );
-			$this->error_log->debug( print_r( $wpdb->get_results( "SELECT ID, user_login, user_email FROM {$wpdb->users}", ARRAY_A ), true ) );
-			// $this->error_log->debug( "Found {$count} users using {$column} and '{$value}'" );
 			return ( 1 <= $count );
 		}
 	}
