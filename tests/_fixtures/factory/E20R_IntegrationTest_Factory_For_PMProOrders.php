@@ -37,10 +37,10 @@ class E20R_IntegrationTest_Factory_For_PMProOrders extends E20R_IntegrationTest_
 	 */
 	public function __construct() {
 		$this->default_generation_definitions = array(
-			'id'           => new WP_UnitTest_Generator_Sequence( '%s' ),
-			'level_name'   => new WP_UnitTest_Generator_Sequence( 'Test PMPro Level %s' ),
-			'description'  => new WP_UnitTest_Generator_Sequence( 'Test PMPro level # %s' ),
-			'confirmation' => new WP_UnitTest_Generator_Sequence( 'Confirmed member of site using PMPro membership level %s' ),
+			'id'           => new WP_UnitTest_Generator_Sequence( '%s', 1 ),
+			'level_name'   => new WP_UnitTest_Generator_Sequence( 'Test PMPro Order %s', 1 ),
+			'description'  => new WP_UnitTest_Generator_Sequence( 'Test PMPro Order # %s', 1 ),
+			'confirmation' => new WP_UnitTest_Generator_Sequence( 'Confirmed member of site using PMPro order %s', 1 ),
 		);
 	}
 

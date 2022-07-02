@@ -2,6 +2,8 @@
 
 namespace E20R\Tests\Fixtures\Factory;
 
+use WP_User;
+
 /**
  * Provides E20R/PMPro-specific factories.
  */
@@ -18,6 +20,11 @@ class E20R_IntegrationTest_Factory extends \WP_UnitTest_Factory {
 	public $pmproorders = null;
 
 	/**
+	 * @var WP_User|null
+	 */
+	public $user = null;
+
+	/**
 	 * @var E20R_IntegrationTest_Factory_For_PMProMembers|null
 	 */
 	public $pmpromembers = null;
@@ -25,6 +32,7 @@ class E20R_IntegrationTest_Factory extends \WP_UnitTest_Factory {
 	public function __construct() {
 		parent::__construct();
 		$this->tables_exist();
+		$this->user         = new E20R_IntegrationTest_Factory_For_User( $this );
 		$this->pmprolevels  = new E20R_IntegrationTest_Factory_For_PMProLevels( $this );
 		$this->pmproorders  = new E20R_IntegrationTest_Factory_For_PMProOrders( $this );
 		$this->pmpromembers = new E20R_IntegrationTest_Factory_For_PMProMembers( $this );

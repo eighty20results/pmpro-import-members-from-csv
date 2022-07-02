@@ -78,4 +78,8 @@ class E20R_IntegrationTest_Generator_Sequence {
 	public function get_template_string() {
 		return $this->template_string;
 	}
+
+	public function __toString() {
+		return $this->next();
+	}
 }
