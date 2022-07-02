@@ -474,13 +474,13 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				// The *_import_userdata filter did something unexpected
 				if ( empty( $user_data ) ) {
 					$this->error_log->debug( 'Empty user data from CSV file!?!' );
-					// FIXME: throw new NoUserDataFound();
+					throw new NoUserDataFound();
 				}
 
 				// The *_import_usermeta filter did something unexpected
 				if ( empty( $user_meta ) ) {
 					$this->error_log->debug( 'Empty user metadata from CSV file!?!' );
-					// FIXME: throw new NoUserMetadataFound();
+					throw new NoUserMetadataFound();
 				}
 
 				$user_record_valid = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
