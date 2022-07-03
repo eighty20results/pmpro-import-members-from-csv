@@ -43,7 +43,7 @@ if ( ! class_exists( 'E20R\Exception\NoUserDataFound' ) ) {
 		 */
 		public function __construct( string $message = '', int $code = 0, ?Throwable $previous = null ) {
 			$message = esc_attr__(
-				"A registered filter handler for 'is_iu_import_userdata', 'pmp_im_import_userdata' or 'e20r_import_userdata' filter returns an empty array of user data",
+				"A registered filter handler for 'is_iu_import_userdata', 'pmp_im_import_userdata' or 'e20r_import_userdata' filter returns an empty array of data (invalid CSV data in file, or a problem with a user supplied filter handler?)",
 				'pmpro-import-members-from-csv'
 			);
 			parent::__construct( $message, $code, $previous );
