@@ -431,6 +431,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * @param int $line_number Line number being read
 	 * @param array $csv_header Header info from CSV file (mocked)
 	 * @param array $csv_line Data from CSV file (mocked)
+	 * @param array $metadata Mocked metadata
 	 *
 	 * @return void
 	 *
