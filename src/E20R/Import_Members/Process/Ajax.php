@@ -323,6 +323,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 			$this->error_log->debug( "Path to Import file: {$import_dir}/{$filename}" );
 
 			global $active_line_number;
+			global $e20r_import_err;
+			global $e20r_import_warn;
 
 			try {
 				$results = $this->csv->process( "{$import_dir}/{$filename}", $args );
@@ -338,8 +340,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				$this->error_log->debug( $msg );
 			} catch ( NoUserMetadataFound $e ) {
 				$msg = sprintf( 'Error: %1$s', $e->getMessage() );
-				$this->error_log->add_error_msg( $msg, 'error' );
-				$e20r_import_err[ "metadata_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_metadata', $msg );
+				$this->error_log->add_error_msg( $msg, 'warning' );
+				$e20r_import_warn[ "metadata_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_metadata', $msg );
 				$this->error_log->debug( $msg );
 			} catch ( \Exception $e ) {
 				// FIXME: No exceptions to catch during CSV::process() call. Need to add exceptions
