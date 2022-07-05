@@ -20,6 +20,7 @@
 namespace E20R\Import_Members\Process;
 
 use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\NoHeaderDataFound;
 use E20R\Exceptions\NoUserDataFound;
 use E20R\Exceptions\NoUserMetadataFound;
 use E20R\Import_Members\Error_Log;
@@ -314,7 +315,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * Import a csv file
 		 *
 		 * @param string           $file_name Name of the CSV file we're processing
-		 * @param array            $args File arguments supplied
+		 * @param array            $options Plugin options (array)
 		 * @param SplFileObject|null $file_object Optional SplFileObject() class instance
 		 *
 		 * @return array
@@ -325,7 +326,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 *
 		 * @since 0.5
 		 */
-		public function process( $file_name, $args, $file_object = null ) {
+		public function process( $file_name, $options, $file_object = null ) {
 
 			global $active_line_number;
 			global $e20r_import_err;
@@ -347,7 +348,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 			$defaults = apply_filters( 'e20r_import_default_settings', $defaults );
 
 			// Securely extract variables
-			$settings = wp_parse_args( $args, $defaults );
+			$settings = wp_parse_args( $options, $defaults );
 
 			// Cast variables to expected type
 			$suppress_pwdmsg = (bool) $settings['suppress_pwdmsg'];
@@ -397,8 +398,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$active_line_number++;
 				$error_key = null;
 
-				$this->error_log->debug( "Active line # is now: {$active_line_number}" );
-
 				// Read a line from the file and remove the BOM character
 				$line = $file_object->fgetcsv();
 
@@ -442,7 +441,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$user_data = array();
 				$user_meta = array();
 
-				$this->error_log->debug( "Processing next user data. (previous line #: {$active_line_number})" );
 				try {
 					$this->clean_data(
 						$line,
@@ -451,6 +449,15 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 						$headers,
 						$this->variables->get( 'user_fields' )
 					);
+				} catch ( NoHeaderDataFound $e ) {
+					$this->error_log->add_error_msg(
+						sprintf(
+						// translators: %1$s - CSV file name
+							esc_attr__( "CSV column headers not found in '%1\$s'", 'pmpro-import-members-from-csv' ),
+							$file_name
+						)
+					);
+					break;
 				} catch ( InvalidSettingsKey $e ) {
 					$this->error_log->add_error_msg(
 						sprintf(
@@ -473,7 +480,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 
 				// The *_import_userdata filter did something unexpected
 				if ( empty( $user_data ) ) {
-					$this->error_log->debug( 'Empty user data from CSV file!?!' );
+					$this->error_log->debug( 'Invalid line of CSV data found in import file!' );
 					throw new NoUserDataFound();
 				}
 
@@ -483,9 +490,12 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					throw new NoUserMetadataFound();
 				}
 
-				$user_record_valid = apply_filters( 'e20r_import_users_validate_field_data', false, null, $user_data );
-
-				$this->error_log->debug( "Processed line #{$active_line_number} and user ID existence status: '{$user_record_valid}': " . ( $user_record_valid ? $user_record_valid : 'False' ) );
+				$user_record_valid = apply_filters(
+					'e20r_import_users_validate_field_data',
+					false,
+					null,
+					$user_data
+				);
 
 				if ( true === $user_record_valid ) {
 					// Using a filter to trigger an add, or update for the actual WordPress user
@@ -601,6 +611,8 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @param array $user_meta - User meta data to Import (by reference)
 		 * @param array $headers
 		 * @param array $user_data_fields
+		 *
+		 * @throws NoHeaderDataFound
 		 */
 		private function clean_data( $line, &$user_data, &$user_meta, $headers, $user_data_fields ) {
 
@@ -620,7 +632,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					$this->error_log->debug( $msg );
 					$active_line_number ++;
 
-					return;
+					throw new NoHeaderDataFound();
 				}
 
 				$column_name = $headers[ $ckey ];
