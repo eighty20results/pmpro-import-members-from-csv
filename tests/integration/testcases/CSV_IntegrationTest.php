@@ -24,6 +24,9 @@ namespace E20R\Tests\Integration;
 use Brain\Monkey\Expectation\Exception\ExpectationArgsRequired;
 use Codeception\TestCase\WPTestCase;
 use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\NoHeaderDataFound;
+use E20R\Exceptions\NoUserDataFound;
+use E20R\Exceptions\NoUserMetadataFound;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Process\CSV;
@@ -429,6 +432,207 @@ class CSV_IntegrationTest extends WPTestCase {
 					'errors'   => array( 'header_missing_1' => new WP_Error( 'e20r_im_header', 'Missing header line in the CSV file being imported!' ) ),
 					'warnings' => array(),
 				),
+			),
+		);
+	}
+
+	/**
+	 * Test whether the expected exceptions are thrown during import operation attempts without data included
+	 *
+	 * @param string $file_name Mocked CSV file name to import
+	 * @param array $options Mocked plugin settings
+	 * @param int $line_number Line number being read
+	 * @param array $csv_header Header info from CSV file (mocked)
+	 * @param array $csv_line Data from CSV file (mocked)
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidSettingsKey Thrown when attempting to update a setting that doesn't exist (N/A in this test)
+	 *
+	 * @dataProvider fixture_exception_trigger_data
+	 * @test
+	 */
+	public function it_should_trigger_exceptions_during_processing( $file_name, $options, $line_number, $csv_header, $csv_line, $metadata ) {
+
+		if ( empty( $csv_header ) ) {
+			$this->expectException( NoHeaderDataFound::class );
+		}
+
+		if ( empty( $csv_line ) ) {
+			$this->expectException( NoUserDataFound::class );
+		}
+
+		if ( empty( $metadata ) ) {
+			$this->expectException( NoUserMetadataFound::class );
+		}
+
+		WP_Mock::alias(
+			'get_option',
+			function( $option, $default ) use ( $file_name, $line_number ) {
+				$value = $default;
+
+				switch ( $option ) {
+					case "e20rcsv_{$file_name}":
+						$value = $line_number;
+						break;
+					case 'e20r_import_errors':
+						global $e20r_import_err;
+						$value = $e20r_import_err;
+						break;
+					default:
+						$this->errorlog->debug( "Unexpected option name: {$option}" );
+				}
+
+				return $value;
+			}
+		);
+		WP_Mock::alias(
+			'apply_filters',
+			function( $filter_name, $filter_value ) use ( $csv_line ) {
+				$this->errorlog->debug( "Running {$filter_name} filter..." );
+				if ( 'e20r_import_users_validate_field_data' === $filter_name ) {
+					$this->errorlog->debug( 'Filter handler for unique identity field validation' );
+					return in_array( 'user_login', array_keys( $csv_line ), true ) ||
+						in_array( 'user_email', array_keys( $csv_line ), true ) ||
+						in_array( 'ID', array_keys( $csv_line ), true );
+				}
+
+				if ( in_array(
+					$filter_name,
+					array(
+						'is_iu_import_userdata',
+						'pmp_im_import_userdata',
+						'e20r_import_userdata',
+					),
+					true
+				) ) {
+					$this->errorlog->debug( 'Filter handler for user data filtering' );
+					return $csv_line;
+				}
+
+				if ( in_array(
+					$filter_name,
+					array(
+						'is_iu_import_usermeta',
+						'pmp_im_import_usermeta',
+						'e20r_import_usermeta',
+					),
+					true
+				) ) {
+					$this->errorlog->debug( 'Executing the *_import_usermeta filter(s)' );
+					return $csv_line;
+				}
+
+				if ( 'e20r_import_wp_user_data' === $filter_name ) {
+					$this->errorlog->debug( 'Filter handler for adding/updating WP User record(s)' );
+					return 2;
+				}
+
+				return $filter_value;
+			}
+		);
+
+		$file_handle = Mockery::mock( SplFileObject::class, array( 'php://memory' ) );
+		$file_handle->shouldReceive( 'setCsvControl' )
+					->with( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE )
+					->once()
+					->shouldReceive( 'setFlags' )
+					->with( SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY )
+					->once()
+					->shouldReceive( 'eof' )
+					->andReturn( false, false, true )
+					->shouldReceive( 'fgetcsv' )
+					->with()
+					->andReturn( $csv_header )
+					->shouldReceive( 'eof' )
+					->with()
+					->andReturn( false )
+					->shouldReceive( 'fgetcsv' )
+					->with()
+					->andReturn( $csv_line )
+					->shouldReceive( 'key' )
+					->with()
+					->andReturn( 1 );
+
+		add_filter(
+			'e20r_import_userdata',
+			function( $user_data, $user_meta = array(), $settings = array() ) use ( $csv_line ) {
+				global $active_line_number;
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->errorlog->debug( "Triggered by e20r_import_userdata filter, reading line # {$active_line_number} with content: " . print_r( $user_data, true ) );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->errorlog->debug( print_r( $user_data, true ) );
+				return $csv_line;
+			}
+		);
+
+		add_filter(
+			'e20r_import_usermeta',
+			function( $user_meta, $user_data = array(), $settings = array() ) use ( $metadata ) {
+				global $active_line_number;
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->errorlog->debug( "Triggered by e20r_import_usermeta filter, reading line # {$active_line_number} with content: " );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->errorlog->debug( print_r( $user_data, true ) );
+				return $metadata;
+			}
+		);
+
+		// Executing apply_filters( 'e20r_import_userdata' ) filter as a mocked function
+		// Executing apply_filters( 'e20r_import_usermeta' ) filter as a mocked function
+		// Executing apply_filters( 'e20r_import_users_validate_field_data' ) filter as a mocked function
+		$this->csv = new CSV( $this->variables, $this->errorlog );
+		$result    = $this->csv->process( $file_name, $options, $file_handle );
+	}
+
+	/**
+	 * Fixture triggering header and user/metadata exception(s)
+	 *
+	 * @return array
+	 */
+	public function fixture_exception_trigger_data() {
+		return array(
+			// No header - triggers NoHeaderDataFound
+			array(
+				'test_file_1.csv',
+				array(
+					'suppress_pwdmsg' => true,
+					'partial'         => false,
+					'per_partial'     => 10,
+					'site_id'         => 0,
+				),
+				1,
+				null, // Header info
+				array( 'name.surname@example.com', 'name.surname' ),
+				array( 'billing_email.surname@example.com', 'billing.surname' ),
+			),
+			// No user data - triggers NoUserDataFound
+			array(
+				'test_file_1.csv',
+				array(
+					'suppress_pwdmsg' => true,
+					'partial'         => false,
+					'per_partial'     => 10,
+					'site_id'         => 0,
+				),
+				1,
+				array( 'user_email', 'user_login' ),
+				null,
+				array( 'billing_email.surname@example.com', 'billing.surname' ),
+			),
+			// No user metadata - triggers NoUserMetadataFound
+			array(
+				'test_file_1.csv',
+				array(
+					'suppress_pwdmsg' => true,
+					'partial'         => false,
+					'per_partial'     => 10,
+					'site_id'         => 0,
+				),
+				1,
+				array( 'user_email', 'user_login' ),
+				array( 'name.surname@example.com', 'name.surname' ),
+				null,
 			),
 		);
 	}
