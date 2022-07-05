@@ -404,19 +404,6 @@ class CSV_IntegrationTest extends WPTestCase {
 			// file_name, file_args, line_number, resulting_uid, headers, csv_line expected
 			array(
 				'test_file_1.csv',
-				array(),
-				1,
-				2,
-				array(), // No headers supplied so should exit...
-				array(),
-				array(
-					'user_ids' => array(),
-					'errors'   => array( 'header_missing_1' => new WP_Error( 'e20r_im_header', 'Missing header line in the CSV file being imported!' ) ),
-					'warnings' => array(),
-				),
-			),
-			array(
-				'test_file_1.csv',
 				array(
 					'suppress_pwdmsg' => true,
 					'partial'         => false,
