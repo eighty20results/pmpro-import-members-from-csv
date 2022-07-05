@@ -453,72 +453,6 @@ class CSV_IntegrationTest extends WPTestCase {
 			$this->expectException( NoUserMetadataFound::class );
 		}
 
-		WP_Mock::alias(
-			'get_option',
-			function( $option, $default ) use ( $file_name, $line_number ) {
-				$value = $default;
-
-				switch ( $option ) {
-					case "e20rcsv_{$file_name}":
-						$value = $line_number;
-						break;
-					case 'e20r_import_errors':
-						global $e20r_import_err;
-						$value = $e20r_import_err;
-						break;
-					default:
-						$this->errorlog->debug( "Unexpected option name: {$option}" );
-				}
-
-				return $value;
-			}
-		);
-		WP_Mock::alias(
-			'apply_filters',
-			function( $filter_name, $filter_value ) use ( $csv_line ) {
-				$this->errorlog->debug( "Running {$filter_name} filter..." );
-				if ( 'e20r_import_users_validate_field_data' === $filter_name ) {
-					$this->errorlog->debug( 'Filter handler for unique identity field validation' );
-					return in_array( 'user_login', array_keys( $csv_line ), true ) ||
-						in_array( 'user_email', array_keys( $csv_line ), true ) ||
-						in_array( 'ID', array_keys( $csv_line ), true );
-				}
-
-				if ( in_array(
-					$filter_name,
-					array(
-						'is_iu_import_userdata',
-						'pmp_im_import_userdata',
-						'e20r_import_userdata',
-					),
-					true
-				) ) {
-					$this->errorlog->debug( 'Filter handler for user data filtering' );
-					return $csv_line;
-				}
-
-				if ( in_array(
-					$filter_name,
-					array(
-						'is_iu_import_usermeta',
-						'pmp_im_import_usermeta',
-						'e20r_import_usermeta',
-					),
-					true
-				) ) {
-					$this->errorlog->debug( 'Executing the *_import_usermeta filter(s)' );
-					return $csv_line;
-				}
-
-				if ( 'e20r_import_wp_user_data' === $filter_name ) {
-					$this->errorlog->debug( 'Filter handler for adding/updating WP User record(s)' );
-					return 2;
-				}
-
-				return $filter_value;
-			}
-		);
-
 		$file_handle = Mockery::mock( SplFileObject::class, array( 'php://memory' ) );
 		$file_handle->shouldReceive( 'setCsvControl' )
 					->with( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE )
@@ -544,11 +478,6 @@ class CSV_IntegrationTest extends WPTestCase {
 		add_filter(
 			'e20r_import_userdata',
 			function( $user_data, $user_meta = array(), $settings = array() ) use ( $csv_line ) {
-				global $active_line_number;
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->errorlog->debug( "Triggered by e20r_import_userdata filter, reading line # {$active_line_number} with content: " . print_r( $user_data, true ) );
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->errorlog->debug( print_r( $user_data, true ) );
 				return $csv_line;
 			}
 		);
@@ -556,11 +485,6 @@ class CSV_IntegrationTest extends WPTestCase {
 		add_filter(
 			'e20r_import_usermeta',
 			function( $user_meta, $user_data = array(), $settings = array() ) use ( $metadata ) {
-				global $active_line_number;
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->errorlog->debug( "Triggered by e20r_import_usermeta filter, reading line # {$active_line_number} with content: " );
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->errorlog->debug( print_r( $user_data, true ) );
 				return $metadata;
 			}
 		);
