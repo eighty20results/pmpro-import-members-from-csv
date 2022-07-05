@@ -247,10 +247,11 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * Happy path for CSV::process() method
 	 *
 	 * @param string $file_name The name of the file we're processing
-	 * @param array $file_args File arguments we support/allow
+	 * @param array $options The plugin options we'll use
 	 * @param int $line_number The "active_line_number" global value we need to use
 	 * @param int $resulting_uid The UID to return from the mocked Import_User::import() method
-	 * @param array $csv_content Array of CSV field values that match the headers
+	 * @param array $csv_headers The Array of CSV headers to use
+	 * @param array $csv_line Array of CSV field values that match the headers
 	 * @param array $expected The expected result retuned from CSV::process()
 	 *
 	 * @return void
@@ -261,7 +262,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * @test
 	 * @throws \Exception
 	 */
-	public function it_should_successfully_process_csv_file( $file_name, $file_args, $line_number, $resulting_uid, $csv_content, $expected ) {
+	public function it_should_successfully_process_csv_file( $file_name, $options, $line_number, $resulting_uid, $csv_headers, $csv_line, $expected ) {
 
 		WP_Mock::alias(
 			'get_option',
@@ -285,16 +286,17 @@ class CSV_IntegrationTest extends WPTestCase {
 		);
 		WP_Mock::alias(
 			'apply_filters',
-			function( $filter_name, $filter_value ) use ( $csv_content, $resulting_uid ) {
+			function( $filter_name, $filter_value ) use ( $csv_line, $resulting_uid ) {
+				$this->errorlog->debug( "Running {$filter_name} filter..." );
 				if ( 'e20r_import_users_validate_field_data' === $filter_name ) {
 					$this->errorlog->debug( 'Filter handler for unique identity field validation' );
-					if ( in_array( 'user_login', array_keys( $csv_content ), true ) ) {
+					if ( in_array( 'user_login', array_keys( $csv_line ), true ) ) {
 						return true;
 					}
-					if ( in_array( 'user_email', array_keys( $csv_content ), true ) ) {
+					if ( in_array( 'user_email', array_keys( $csv_line ), true ) ) {
 						return true;
 					}
-					if ( in_array( 'ID', array_keys( $csv_content ), true ) ) {
+					if ( in_array( 'ID', array_keys( $csv_line ), true ) ) {
 						return true;
 					}
 					return false;
@@ -310,7 +312,7 @@ class CSV_IntegrationTest extends WPTestCase {
 					true
 				) ) {
 					$this->errorlog->debug( 'Filter handler for user data filtering' );
-					return $filter_value;
+					return $csv_line;
 				}
 
 				if ( in_array(
@@ -322,7 +324,8 @@ class CSV_IntegrationTest extends WPTestCase {
 					),
 					true
 				) ) {
-					return $filter_value;
+					$this->errorlog->debug( 'Executing the *_import_usermeta filter(s)' );
+					return $csv_line;
 				}
 
 				if ( 'e20r_import_wp_user_data' === $filter_name ) {
@@ -334,26 +337,47 @@ class CSV_IntegrationTest extends WPTestCase {
 			}
 		);
 
-		$input_file = Mockery::mock( SplFileObject::class, array( 'php://memory' ) );
-		$input_file->shouldReceive( 'setCsvControl' )
+		$file_handle = Mockery::mock( SplFileObject::class, array( 'php://memory' ) );
+		$file_handle->shouldReceive( 'setCsvControl' )
 			->with( E20R_IM_CSV_DELIMITER, E20R_IM_CSV_ENCLOSURE, E20R_IM_CSV_ESCAPE )
 			->once()
 			->shouldReceive( 'setFlags' )
 			->with( SplFileObject::READ_AHEAD | SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY )
 			->once()
 			->shouldReceive( 'eof' )
-			->with()
 			->andReturn( false, false, true )
 			->shouldReceive( 'fgetcsv' )
 			->with()
-			->andReturn( array_keys( $csv_content ), array_values( $csv_content ) )
+			->andReturn( $csv_headers )
+			->shouldReceive( 'eof' )
+			->with()
+			->andReturn( false )
+			->shouldReceive( 'fgetcsv' )
+			->with()
+			->andReturn( $csv_line )
 			->shouldReceive( 'key' )
+			->with()
 			->andReturn( 1 );
 
+
+		add_filter(
+			'e20r_import_userdata',
+			function( $user_data, $user_meta = array(), $settings = array() ) use ( $csv_line ) {
+				global $active_line_number;
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->errorlog->debug( "Triggered by e20r_import_userdata filter, reading line # {$active_line_number} with content: " . print_r( $user_data, true ) );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->errorlog->debug( print_r( $user_data, true ) );
+				return $csv_line;
+			}
+		);
+
+		// Executing apply_filters( 'e20r_import_userdata' ) filter as a mocked function
+		// Executing apply_filters( 'e20r_import_usermeta' ) filter as a mocked function
 		// Executing apply_filters( 'e20r_import_users_validate_field_data' ) filter as a mocked function
 		try {
 			$this->csv = new CSV( $this->variables, $this->errorlog );
-			$result    = $this->csv->process( $file_name, $file_args, $input_file );
+			$result    = $this->csv->process( $file_name, $options, $file_handle );
 		} catch ( InvalidSettingsKey $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
 		}
@@ -375,12 +399,13 @@ class CSV_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_process_test_data() {
 		return array(
-			// file_name, file_args, line_number, resulting_uid, content, expected
+			// file_name, file_args, line_number, resulting_uid, headers, csv_line expected
 			array(
 				'test_file_1.csv',
 				array(),
 				1,
 				2,
+				array(), // No headers supplied so should exit...
 				array(),
 				array(
 					'user_ids' => array(),
@@ -390,13 +415,16 @@ class CSV_IntegrationTest extends WPTestCase {
 			),
 			array(
 				'test_file_1.csv',
-				array(),
+				array(
+					'suppress_pwdmsg' => true,
+					'partial'         => false,
+					'per_partial'     => 10,
+					'site_id'         => 0,
+				),
 				1,
 				2,
-				array(
-					'user_email' => 'name.surname@example.com',
-					'user_login' => 'name.surname',
-				),
+				array( 'user_email', 'user_login' ),
+				array( 'name.surname@example.com', 'name.surname' ),
 				array(
 					'user_ids' => array( 2 ),
 					'errors'   => array( 'header_missing_1' => new WP_Error( 'e20r_im_header', 'Missing header line in the CSV file being imported!' ) ),
