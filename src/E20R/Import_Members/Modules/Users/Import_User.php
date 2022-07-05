@@ -95,7 +95,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * Load action and filter hooks for Import
 		 */
 		public function load_actions() {
-			add_filter( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), - 1, 3 );
+			add_filter( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), -1, 3 );
 			add_filter( 'e20r_import_wp_user_data', array( $this, 'maybe_add_or_update' ), -1, 3 );
 		}
 
