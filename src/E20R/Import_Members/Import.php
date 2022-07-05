@@ -417,6 +417,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 
 			// In case the ReflectionMethod doesn't return anything if the class doesn't exist
 			if ( empty( $check ) ) {
+				$this->error_log->debug( 'E20R Licensing module is missing. Not activating...' );
 				return;
 			}
 
