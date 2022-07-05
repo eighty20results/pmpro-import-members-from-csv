@@ -39,8 +39,8 @@ ACCEPTANCE_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/acceptance/_bootstrap.php
 # Set the HOST IP address for use with xdebug support in integration/acceptance docker instances
 E20R_HOST_IP ?= $(${E20R_HOST_IP_CMD} ${E20R_HOST_IFACE} | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}')
 
-# Default is to not use coverage unless we know we're on a local (non-GitHub) system
-COVERAGE_SETTINGS ?=
+# Default is to use coverage
+COVERAGE_SETTINGS ?= --coverage-xml coverage.xml
 
 UNIT_TEST_CASE_PATH := tests/unit/testcases/
 INTEGRATION_TEST_CASE_PATH := tests/integration/testcases/
@@ -51,13 +51,11 @@ API_TEST_CASE_PATH := tests/api/testcases/
 ifneq ($(wildcard ./tests/docker/docker.hub.key),)
 $(info Path to key for docker hub exists)
 CONTAINER_ACCESS_TOKEN := $(shell cat ./tests/docker/docker.hub.key)
-# COVERAGE_SETTINGS := --coverage-xml coverage.xml
 endif
 
 ifneq ($(wildcard ./docker.hub.key),)
 $(info Path to key for docker hub exists)
 CONTAINER_ACCESS_TOKEN := $(shell cat ./docker.hub.key)
-# COVERAGE_SETTINGS := --coverage-xml coverage.xml
 endif
 
 ifeq ($(DOCKER_USER),)
@@ -71,7 +69,6 @@ DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
 $(info Setting CONTAINER_ACCESS_TOKEN from environment variable)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
-COVERAGE_SETTINGS :=
 endif
 
 DOWNLOAD_MODULE := 1
@@ -509,11 +506,11 @@ unit: wp-deps
 	fi
 
 coverage: wp-deps
-	if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
-		echo "Running Unit tests for $(PROJECT)"; \
+	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
+		echo "Test coverage for $(PROJECT)"; \
 		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
         	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ wordpress \
-			php -dpcov.enabled=1 -dpcov.directory=. -dpcov.exclude="~inc~" $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit -c codeception.dist.yml --steps --verbose --debug --coverage-text --no-exit -- $(UNIT_TEST_CASE_PATH) ; \
+			php -dpcov.enabled=1 -dpcov.directory=. -dpcov.exclude="~inc~" $(COMPOSER_DIR)/bin/codecept $(UNIT_BOOTSTRAP_SETTINGS) run unit -c codeception.dist.yml --steps --no-exit --verbose --debug $(COVERAGE_SETTINGS) -- $(UNIT_TEST_CASE_PATH) ; \
 	fi
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin

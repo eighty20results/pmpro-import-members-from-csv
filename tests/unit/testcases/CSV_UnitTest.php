@@ -20,6 +20,7 @@ namespace E20R\Test\Unit;
 
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Error_Log;
@@ -78,13 +79,13 @@ class CSV_UnitTest extends Unit {
 	 * Test whether the correct path is returned for the Import file specified
 	 *
 	 * @param string[] $files_array The contents of the $_FILES[] variable during the test
-	 * @param string   $variable_content Returned from Variables::get() function
-	 * @param mixed    $transient_result The return value for the get_transient() call
-	 * @param string   $expected_result The expected URL for the file path this test should have generated
+	 * @param string $variable_content Returned from Variables::get() function
+	 * @param mixed $transient_result The return value for the get_transient() call
+	 * @param string $expected_result The expected URL for the file path this test should have generated
 	 *
 	 * @dataProvider fixture_import_file_names
 	 * @test
-	 * @covers CSV::verify_import_file_path
+	 * @throws InvalidSettingsKey
 	 */
 	public function it_should_use_request_variable_for_import_file_path( $files_array, $variable_content, $transient_result, $file_exists, $expected_result ) {
 
@@ -251,10 +252,10 @@ class CSV_UnitTest extends Unit {
 	/**
 	 * Tests what happens if nothing is configured
 	 *
-	 * @covers CSV::verify_import_file_path()
-	 *
 	 * @return void
+	 *
 	 * @test
+	 * @throws InvalidSettingsKey
 	 */
 	public function it_should_return_false() {
 		$presence_mock = $this->makeEmpty( User_Present::class );

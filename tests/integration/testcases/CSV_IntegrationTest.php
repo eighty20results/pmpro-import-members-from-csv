@@ -32,6 +32,7 @@ use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Variables;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
+use Exception;
 use Mockery;
 use org\bovigo\vfs\vfsStream;
 use SplFileObject;
@@ -173,18 +174,18 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * Test for CSV::verify_import_file_path()
 	 *
 	 * @param string $file_name File name we're passing to the method being tested
-	 * @param bool   $file_exists The return value for the mocked 'file_exists()' function
-	 * @param bool   $from_settings Whether to use the Variables() class (settings) to retrieve the file name
-	 * @param bool   $from_transient Whether to use get_transient() to retrieve the filename
+	 * @param bool $file_exists The return value for the mocked 'file_exists()' function
+	 * @param bool $from_settings Whether to use the Variables() class (settings) to retrieve the file name
+	 * @param bool $from_transient Whether to use get_transient() to retrieve the filename
 	 * @param string|null $request_value The value to assign to the $_REQUEST['filename'] global variable
 	 * @param string|false $expected_filename The expected return value from the test
 	 *
 	 * @return void
 	 *
 	 * @dataProvider fixture_upload_settings
-	 * @covers CSV::verify_import_file_path()
 	 *
 	 * @test
+	 * @throws InvalidSettingsKey
 	 */
 	public function it_should_validate_filename_settings( $file_name, $file_exists, $from_settings, $from_transient, $request_value, $expected_filename ) {
 
@@ -261,9 +262,8 @@ class CSV_IntegrationTest extends WPTestCase {
 	 *
 	 * @dataProvider fixture_process_test_data
 	 *
-	 * @covers       CSV::process
 	 * @test
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function it_should_successfully_process_csv_file( $file_name, $options, $line_number, $resulting_uid, $csv_headers, $csv_line, $expected ) {
 

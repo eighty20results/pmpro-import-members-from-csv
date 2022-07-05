@@ -26,6 +26,11 @@ settings:
 coverage:
   enabled: true
   colors: true
+  include:
+    - inc/wp_plugins/paid-memberships-pro/*
+    - inc/wp_plugins/00-e20r-utilities/*
+    - src/*
+    - ./*.php
   remote_context_options:
     http:
       timeout: 60
@@ -34,10 +39,6 @@ coverage:
   low_limit: 16
   work_dir: tests/_output/
   show_only_summary: true
-  include:
-    - inc/wp_plugins/
-    - src/*
-    - "*.php"
   exclude:
     - tests/*
     - languages/*
