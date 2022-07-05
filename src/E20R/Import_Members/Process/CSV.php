@@ -320,6 +320,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 *
 		 * @return array
 		 *
+		 * @throws NoHeaderDataFound Thrown if the CSV file lacks the header row
 		 * @throws NoUserDataFound Thrown if one of the filter handlers returns an empty array of user data
 		 * @throws NoUserMetadataFound Thrown when one of the filter handlers returns and empty array of user metadata
 		 * @throws InvalidSettingsKey Thrown if the property specified in the Variable::get() doesn't exist
@@ -405,11 +406,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				// If another line is empty, just skip it
 				if ( empty( $line ) ) {
 					if ( true === $first ) {
-						$msg = esc_attr__( 'Missing header line in the CSV file being imported!', 'pmpro-import-members-from-csv' );
-						$this->error_log->add_error_msg( $msg, 'error' );
-						$e20r_import_err[ "header_missing_{$active_line_number}" ] = new WP_Error( 'e20r_im_header', $msg );
-						$this->error_log->debug( $msg );
-						break;
+						throw new NoHeaderDataFound();
 					}
 					$this->error_log->debug( "Line # {$active_line_number} is empty" );
 					continue;
