@@ -359,7 +359,6 @@ class CSV_IntegrationTest extends WPTestCase {
 			->with()
 			->andReturn( 1 );
 
-
 		add_filter(
 			'e20r_import_userdata',
 			function( $user_data, $user_meta = array(), $settings = array() ) use ( $csv_line ) {
