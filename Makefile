@@ -40,7 +40,8 @@ ACCEPTANCE_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/acceptance/_bootstrap.php
 E20R_HOST_IP ?= $(${E20R_HOST_IP_CMD} ${E20R_HOST_IFACE} | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}')
 
 # Default is to use coverage
-COVERAGE_SETTINGS ?= --coverage-xml coverage.xml
+COV_PHP_VERSION ?= none
+COVERAGE_SETTINGS ?= --coverage-xml coverage-$(COV_PHP_VERSION).xml --coverage-html
 
 UNIT_TEST_CASE_PATH := tests/unit/testcases/
 INTEGRATION_TEST_CASE_PATH := tests/integration/testcases/
