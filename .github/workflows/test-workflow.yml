@@ -80,6 +80,15 @@ jobs:
       - name: Run all Standard Tests
         run: make tests
 
+      - name: Upload coverage statistics to codecov.io
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODE_COV_TOKEN }}
+          directory: ./tests/_output
+          files: coverage*.xml
+          verbose: true
+
       - name: Download artifacts
         uses: actions/download-artifact@v2
 
