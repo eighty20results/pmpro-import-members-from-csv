@@ -25,6 +25,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests/integration/inc" isTestSource="true" packagePrefix="E20R\Tests\Integration\Fixtures\" />
       <sourceFolder url="file://$MODULE_DIR$/tests/_fixtures/factory" isTestSource="true" packagePrefix="E20R\Tests\Fixtures\Factory\" />
       <sourceFolder url="file://$MODULE_DIR$/src/E20R/Exceptions" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/javascript" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.circleci" />
       <excludeFolder url="file://$MODULE_DIR$/.github" />

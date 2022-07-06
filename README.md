@@ -173,15 +173,15 @@ Most often it's the date/time format for the `membership_startdate` and `members
 
 If you use MS Excel(tm) to prepare your .CSV file, you're in for a treat...
 
-In my experience, MS Excel(tm) is _really_ good at changing the date format in a spreadsheet column to whatever it
+In my experience, MS Excel(tm) is _great_ at changing the date format in a spreadsheet column to whatever it
 thinks works best (i.e. human readable). (If my sarcasm doesn't shine through; This actually __isn't__ a good thing!)
 
-However, human readable is often problematic for CSV imports, so you **have to make sure** the date format follows the
+However, human-readable is often problematic for CSV imports, so you **have to make sure** the date format follows the
 `YYYY-MM-DD HH:ii:ss` template (where ii = 2 digit minute value). For startdate I'd recommend using `00:00:00` and
 for the enddate I'd suggest using `23:59:59`.
 
-`Just to be clear: The __only__ date format for the `membership_startdate`, `membership_enddate` and the` <br />
-`user_registered` columns that this plugin will accept is the MySQL datetime format: YYYY-MM-DD HH:ii:ss.
+Just to be clear: The __only__ date format for the `membership_startdate`, `membership_enddate` and the <br />
+`user_registered` columns that this plugin will accept is the MySQL datetime format: `YYYY-MM-DD HH:ii:ss`.
 
 *Use anything else and your membership data will not be imported*!
 
@@ -451,11 +451,14 @@ Nag tracking can be disabled altogether with the `e20r_import_donation_tracking_
 
 ### Can I import and add multiple WordPress roles to a user's record?
 
-Yes you can. 
+Yes you can.
 
-Use a `;` (semi-colon) to separate the role names to add, and the plugin will assign any of the roles included to the user record being imported or updated.
+Use a `;` (semicolon) to separate the role names to add.
 
-It assumes every one of those roles have been defined and exist on the system itself.
+__Note__: This functionality assumes that every one of the semicolon separated roles have been defined and exist on the
+system itself, prior to the import operation.
+
+If the specified role(s) exists, we will assign all the roles specified to the user record being imported or updated.
  
 ### Installation
 
