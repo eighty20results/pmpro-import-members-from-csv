@@ -83,7 +83,8 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODE_COV_TOKEN }}
-          files: /home/runner/work/pmpro-import-members-from-csv/pmpro-import-members-from-csv/tests/_output/coverage*.xml
+          directory: ./tests/_output
+          files: coverage*.xml
           verbose: true
 
       - name: Download artifacts
