@@ -41,7 +41,7 @@ jobs:
           coverage: pcov
 
       - name: Make sure coverage directory exists
-        run: mkdir -p ./tests/_output/
+        run: mkdir -p tests/_output/
 
       - name: Login to Docker HUB
         uses: docker/login-action@v1
@@ -83,7 +83,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODE_COV_TOKEN }}
-          files: ./tests/_output/coverage*.xml
+          files: /home/runner/work/pmpro-import-members-from-csv/pmpro-import-members-from-csv/tests/_output/coverage*.xml
           verbose: true
 
       - name: Download artifacts
