@@ -40,6 +40,9 @@ jobs:
           tools: composer:v2
           coverage: pcov
 
+      - name: Make sure coverage directory exists
+        run: mkdir -p ./tests/_output/
+
       - name: Login to Docker HUB
         uses: docker/login-action@v1
         with:
