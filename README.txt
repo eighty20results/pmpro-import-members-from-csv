@@ -27,7 +27,7 @@ problem after the import. If there are any errors/issues, information about the 
 settings (see the FAQ/description below). If you configure the plugin settings correctly, this will only result in
 overwriting/changing the existing member data.
 
-Using a CSV (Comma Separated Values) file, the will add users with basic user information as well as user meta data
+Using a CSV (Comma Separated Values) file, the plugin will add users with basic user information as well as user metadata
 fields, the user role (if applicable) and the specified Paid Memberships Pro member configuration/information. It can
 also generate an order record to ensure your recurring subscriptions continue to get attributed to the imported member.
 
