@@ -32,6 +32,7 @@ coverage:
     - src/*
     - ./*.php
   exclude:
+    - inc/*
     - tests/*
     - languages/*
   remote_context_options:
