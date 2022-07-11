@@ -30,13 +30,13 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Date_Format' ) ) {
 		 * Test the date supplied for MySQL compliance
 		 *
 		 * @param string $date The actual DateTime string supplied
-		 * @param string $format The expected format for the supplied DateTime string
+		 * @param string $format The expected format for the supplied DateTime string (default: 'YYYY-MM-DD HH:MM:SS')
 		 *
 		 * @return bool
 		 *
 		 * @credit Stack Overflow: User @glavić - https://stackoverflow.com/a/12323025
 		 */
-		public static function validate( $date, $format = 'Y-m-d H:i:s' ) {
+		public function validate( $date, $format = 'Y-m-d H:i:s' ) {
 			$check_date = \DateTime::createFromFormat( $format, $date );
 			return ( false !== $check_date ) && ( $check_date->format( $format ) === $date );
 		}
