@@ -143,7 +143,8 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	 * @param null|WP_Error $wp_error Instance of the WP_Error() class (or null) value
 	 *
 	 * @return void
-	 * @throws \E20R\Exceptions\InvalidSettingsKey
+	 * @throws \E20R\Exceptions\InvalidSettingsKey Thrown if the get() method attempts to retrieve a value for the wrong class parameter
+	 * @throws \E20R\Exceptions\InvalidInstantiation Thrown if the required Variables() and Error_Log() classes are missing
 	 */
 	public function it_should_instantiate( $error_log, $variables, $wp_error ) {
 
@@ -181,6 +182,11 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	 */
 	public function it_should_set_status_msg( $status, $allow_updates, $line_num, $expected ) {
 
+		global $active_line_number;
+		global $e20r_import_warn;
+
+		$active_line_number = $line_num;
+
 		$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		$variables = new Variables( $error_log );
 		$wp_error  = new WP_Error();
@@ -188,13 +194,19 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 		$generate_password = new Generate_Password( $variables, $error_log, $wp_error );
 		$generate_password->status_msg( $status, $allow_updates );
 
-		global $active_line_number;
-		global $e20r_import_warn;
-
 		if ( $expected ) {
 			self::assertArrayHasKey( "overwriting_password_{$active_line_number}", $e20r_import_warn );
-			self::assertSame( $expected, is_a( WP_Error::class, $e20r_import_warn[ "overwriting_password_{$active_line_number}" ] ) );
-			self::assertStringContainsStringIgnoringCase( 'Warning: Changing password for an existing user', $e20r_import_warn[ "overwriting_password_{$active_line_number}" ]->getMessage() );
+			self::assertSame(
+				$expected,
+				is_a(
+					$e20r_import_warn[ "overwriting_password_{$active_line_number}" ],
+					WP_Error::class
+				)
+			);
+			self::assertStringContainsStringIgnoringCase(
+				'Warning: Changing password for an existing user',
+				$e20r_import_warn[ "overwriting_password_{$active_line_number}" ]->get_error_message()
+			);
 		}
 
 		if ( ! $expected ) {
@@ -255,8 +267,10 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 			array( $this->fixture_record( true, 'password' ), false, new WP_User(), false ),
 			array( $this->fixture_record( true, '' ), false, new WP_User(), false ),
 			array( $this->fixture_record( true, ' ' ), false, new WP_User(), false ),
-			array( $empty_record, true, null, false ),
-			array( null, true, null, false ),
+			array( $empty_record, true, null, true ),
+			array( null, true, null, true ),
+			array( $empty_record, true, new WP_User(), false ),
+			array( null, true, new WP_User(), false ),
 		);
 	}
 
