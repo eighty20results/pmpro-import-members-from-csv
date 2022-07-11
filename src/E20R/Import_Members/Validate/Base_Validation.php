@@ -21,9 +21,10 @@
 
 namespace E20R\Import_Members\Validate;
 
+use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Import;
+use E20R\Import_Members\Variables;
 
 if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 	/**
@@ -40,6 +41,13 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		protected $error_log = null;
 
 		/**
+		 * The Variables() class
+		 *
+		 * @var null|Variables $variables
+		 */
+		protected $variables = null;
+
+		/**
 		 * List of error types we should ignore
 		 *
 		 * @var array
@@ -51,13 +59,27 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		 *
 		 * @param null|Error_Log $error_log Instance of the Error_Log() class
 		 *
+		 * @throws InvalidInstantiation Thrown if the class is instantiated incorrectly
 		 */
-		public function __construct( $error_log = null ) {
+		public function __construct( $variables = null, $error_log = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 
+			if ( ! is_a( $error_log, Error_Log::class ) ) {
+				throw new InvalidInstantiation( sprintf( '%1$s is an invalid class type for %2$s', Variables::class, self::class ) );
+			}
+
 			$this->error_log = $error_log;
+
+			if ( null === $variables ) {
+				$variables = new Variables( $this->error_log );
+			}
+
+			if ( ! is_a( $variables, Variables::class ) ) {
+				throw new InvalidInstantiation( sprintf( '%1$s is an invalid class type for %2$s', Variables::class, self::class ) );
+			}
+			$this->variables = $variables;
 		}
 
 		/**
