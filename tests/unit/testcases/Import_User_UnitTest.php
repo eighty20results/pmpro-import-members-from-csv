@@ -646,35 +646,4 @@ class Import_User_UnitTest extends Unit {
 	public function it_should_create_new_user_with_pre_hashed_password() {
 		$this->markTestSkipped( 'Must use the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method!' );
 	}
-
-	/**
-	 * Unit test for the load_actions() function
-	 *
-	 * @throws \Exception
-	 *
-	 * @test
-	 */
-	public function it_should_load_filter_handlers() {
-
-		$mocked_variables              = $this->makeEmpty( Variables::class );
-		$mocked_passwd_validator       = $this->makeEmpty( Generate_Password::class );
-		$mocked_user_present_validator = $this->makeEmpty( User_Present::class );
-		$import_user                   = $this->constructEmptyExcept(
-			Import_User::class,
-			'load_hooks',
-			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator )
-		);
-
-		BMFilters\expectAdded( 'e20r_import_usermeta' )
-			->with( array( $import_user, 'import_usermeta' ) )
-			->once();
-		BMFilters\expectAdded( 'e20r_import_wp_user_data' )
-			->with( Mockery::contains( array( $import_user, 'maybe_add_or_update' ) ) )
-			->once();
-
-		$import_user->load_actions();
-
-//		self::assertTrue( has_filter( 'e20r_import_wp_user_data', array( $import_user, 'maybe_add_or_update' ), -1 ) );
-//		self::assertTrue( has_filter( 'e20r_import_usermeta', array( $import_user, 'import_usermeta' ), -1 ) );
-	}
 }

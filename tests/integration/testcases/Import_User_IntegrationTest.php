@@ -26,6 +26,7 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\Users\Import_User;
+use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Variables;
 
 use E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence;
@@ -559,5 +560,26 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Test for the load_actions() function
+	 *
+	 * @throws \Exception
+	 *
+	 * @test
+	 */
+	public function it_should_load_filter_handlers() {
+
+		$mocked_user_present_validator = $this->makeEmpty( User_Present::class );
+		$import_user                   = new Import_User(
+			$this->variables,
+			$this->errorlog,
+			$mocked_user_present_validator
+		);
+
+		$import_user->load_actions();
+		self::assertNotFalse( has_filter( 'e20r_import_usermeta' ) );
+		self::assertNotFalse( has_filter( 'e20r_import_wp_user_data' ) );
 	}
 }
