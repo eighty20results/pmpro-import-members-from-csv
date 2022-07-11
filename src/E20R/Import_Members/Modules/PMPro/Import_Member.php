@@ -23,7 +23,7 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
 use WP_Error;
@@ -71,11 +71,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		private $variables = null;
 
 		/**
-		 * Instance of the Validate_Data() class
+		 * Instance of the Date_Format() class
 		 *
-		 * @var Validate_Data|null
+		 * @var Date_Format|null
 		 */
-		private $validate_data = null;
+		private $validate_date = null;
 
 		/**
 		 * Instance of the Email_Templates class
@@ -103,7 +103,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			$this->error_log       = $import->get( 'error_log' );
 			$this->variables       = $import->get( 'variables' );
 			$this->data            = $import->get( 'data' );
-			$this->validate_data   = $import->get( 'validate_data' );
+			$this->validate_date   = $import->get( 'validate_date' );
 			$this->email_templates = $import->get( 'email_templates' );
 		}
 
@@ -835,7 +835,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 			// Update order timestamp?
 			if ( ! empty( $record['membership_timestamp'] ) ) {
-				if ( true === $this->validate_data->date( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
+				if ( true === $this->validate_date->validate( $record['membership_timestamp'], 'Y-m-d H:i:s' ) ) {
 					$timestamp = strtotime( $record['membership_timestamp'], time() );
 				} else {
 					$timestamp = is_numeric( $record['membership_timestamp'] ) ? $record['membership_timestamp'] : null;
