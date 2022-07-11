@@ -31,6 +31,7 @@ use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Validate\Column_Values\PMPro_Validation;
 use E20R\Import_Members\Validate\Column_Values\Users_Validation;
 use E20R\Import_Members\Validate\Column_Values\BuddyPress_Validation;
+use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Validate\Validate;
 use E20R\Licensing\License;
 
@@ -128,11 +129,11 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		private $email_templates = null;
 
 		/**
-		 * Collection of various data validation methods
+		 * Collection of Date validation methods
 		 *
-		 * @var null|Validate_Data
+		 * @var null|Date_Format
 		 */
-		private $validate_data = null;
+		private $validate_date = null;
 
 		/**
 		 * Class handling import operations for PMPro Member data
@@ -163,7 +164,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param null|Data            $data
 		 * @param null|Import_User     $import_user
 		 * @param null|Import_Member   $import_member
-		 * @param null|Validate_Data   $validate_data
+		 * @param null|Date_Format     $validate_date
 		 * @param null|CSV             $csv
 		 * @param null|Email_Templates $email_templates
 		 * @param null|Page            $page
@@ -183,7 +184,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			$import_member = null,
 			$csv = null,
 			$email_templates = null,
-			$validate_data = null,
+			$validate_date = null,
 			$page = null,
 			$ajax = null,
 			$error_log = null
@@ -223,10 +224,10 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			}
 			$this->email_templates = $email_templates;
 
-			if ( null === $validate_data ) {
-				$validate_data = new Validate_Data( $this->error_log );
+			if ( null === $validate_date ) {
+				$validate_date = new Date_Format( $this->error_log );
 			}
-			$this->validate_data = $validate_data;
+			$this->validate_date = $validate_date;
 
 			$this->plugin_path               = \plugin_dir_path( E20R_IMPORT_PLUGIN_FILE );
 			$this->column_validation_classes = apply_filters(
@@ -294,7 +295,8 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 					$this->error_log->debug( 'Attempting to enable a validator class: ' . $name );
 					$class_name = sprintf( '%1$s\\%2$s', 'E20R\\Import_Members\\Validate\\Column_Values', $name );
 
-					$this->validators[ $name ] = new $class_name( $this );
+					$this->validators[ $name ] = new $class_name( $this->variables, $this->error_log );
+
 
 					add_action( 'plugins_loaded', array( $this->validators[ $name ], 'load_actions' ), 99 );
 					$this->error_log->debug( "Loaded {$name} column validation class" );
