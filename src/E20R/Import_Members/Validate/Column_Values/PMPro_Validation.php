@@ -22,10 +22,10 @@
 namespace E20R\Import_Members\Validate\Column_Values;
 
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
+use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Validate\Time;
-use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Variables;
 use WP_Error;
 use function \add_filter;
 use function \apply_filters;
@@ -37,12 +37,33 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 	class PMPro_Validation extends Base_Validation {
 
 		/**
+		 * Date format validation logic
+		 *
+		 * @var Date_Format|null $date_validator
+		 */
+		private $date_validator = null;
+
+		/**
+		 * Time format validation logic
+		 *
+		 * @var Time|null $time_validator
+		 */
+		private $time_validator = null;
+
+		/**
 		 * Constructor for the PMPro CSV column value validation
 		 *
-		 * @param Import|null $import Instance of the main Import() class
+		 * @param Variables|null $variables Instance of the Variables() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
+		 *
+		 * @throws \E20R\Exceptions\InvalidInstantiation When/If the classes aren't loaded appropriately
 		 */
-		public function __construct( $import ) {
-			parent::__construct( $import );
+		public function __construct( $variables = null, $error_log = null ) {
+			parent::__construct( $variables, $error_log );
+
+			// Add date format validator
+			$this->date_validator = new Date_Format();
+			$this->time_validator = new Time();
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
@@ -190,11 +211,9 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 				$e20r_import_err = array();
 			}
 
-			$validate = $this->import->get( 'validate_data' );
-
 			if (
 				! empty( $fields['membership_startdate'] ) &&
-				false === $validate->date( $fields['membership_startdate'] )
+				false === $this->date_validator->validate( $fields['membership_startdate'] )
 			) {
 
 				$msg = sprintf(
@@ -209,7 +228,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 
 				$e20r_import_err['startdate_format_error'] = new WP_Error( 'e20r_im_member', $msg );
 
-				$should_be = Time::convert( $fields['membership_startdate'] );
+				$should_be = $this->time_validator->convert( $fields['membership_startdate'] );
 				$should_be = ( false === $should_be ? time() : $should_be );
 
 				$e20r_import_err['startdate_format'] = sprintf(
@@ -246,8 +265,6 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 
 			$this->error_log->debug( "Running 'has_no_startdate' validations" );
 
-			$validate = $this->import->get( 'validate_data' );
-
 			if ( ! is_array( $e20r_import_err ) ) {
 				$e20r_import_err = array();
 			}
@@ -272,7 +289,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 			if (
 				isset( $fields['membership_startdate'] ) &&
 				! empty( $fields['membership_startdate'] ) &&
-				false === $validate->date( $fields['membership_enddate'] )
+				false === $this->date_validator->validate( $fields['membership_enddate'] )
 			) {
 
 				$msg = sprintf(
@@ -303,7 +320,6 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 		 */
 		public function has_invalid_enddate( $has_error, $user_id, $fields ) {
 
-			$validate = $this->import->get( 'validate_data' );
 			$this->error_log->debug( "Running 'has_invalid_enddate' validations" );
 
 			global $e20r_import_err;
@@ -323,7 +339,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 			 */
 			if (
 				! empty( $fields['membership_enddate'] ) &&
-				false === $validate->date( $fields['membership_enddate'] )
+				false === $this->date_validator->validate( $fields['membership_enddate'] )
 			) {
 
 				$msg = sprintf(
@@ -336,7 +352,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 				$e20r_import_err['bad_format_enddate'] = new WP_Error( 'e20r_im_member', $msg );
 				$has_error                             = ( ! $this->ignore_validation_error( 'bad_format_enddate' ) );
 
-				$should_be = Time::convert( $fields['membership_enddate'] );
+				$should_be = $this->time_validator->convert( $fields['membership_enddate'] );
 				$should_be = ( false === $should_be ? time() : $should_be );
 
 				$e20r_import_err['unrecognized_enddate'] = sprintf(
@@ -916,15 +932,6 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 			}
 
 			return $has_error;
-		}
-
-		/**
-		 * Disable the __clone() magic method
-		 *
-		 * @access private
-		 */
-		private function __clone() {
-			// TODO: Implement __clone() method.
 		}
 	}
 }
