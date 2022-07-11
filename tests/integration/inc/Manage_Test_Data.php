@@ -24,6 +24,7 @@ namespace E20R\Tests\Integration\Fixtures;
 
 use Codeception\TestCase\WPTestCase;
 use E20R\Import_Members\Error_Log;
+use Exception;
 use mysqli_result;
 use SplFileObject;
 
@@ -112,13 +113,13 @@ class Manage_Test_Data {
 		if ( null !== $running_test ) {
 			if ( ! is_a( $running_test, WPTestCase::class ) ) {
 				$this->errorlog->debug( 'Error: the supplied TestCase object is of the wrong type!' );
-				return false;
+				throw new Exception( 'Error: Supplied TestCase object is of wrong type' );
 			}
 
 			$this->running_test = $running_test;
 		}
-		$this->user_line                           = $line;
-		return list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
+		$this->user_line                    = $line;
+		list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
 	}
 
 	/**
