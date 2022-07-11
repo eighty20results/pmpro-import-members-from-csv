@@ -117,8 +117,8 @@ class Manage_Test_Data {
 
 			$this->running_test = $running_test;
 		}
-		$this->user_line                    = $line;
-		list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
+		$this->user_line                           = $line;
+		return list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
 	}
 
 	/**
@@ -456,7 +456,7 @@ class Manage_Test_Data {
 
 		$sql = preg_replace( '/(.*), $/', '$1;', $sql );
 
-		$this->errorlog->debug( "SQL: '{$sql}'" );
+		// $this->errorlog->debug( "SQL: '{$sql}'" );
 		// Insert user metadata
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->query( $sql );
