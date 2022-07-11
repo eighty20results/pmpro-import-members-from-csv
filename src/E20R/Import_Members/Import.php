@@ -225,7 +225,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 			$this->email_templates = $email_templates;
 
 			if ( null === $validate_date ) {
-				$validate_date = new Date_Format( $this->error_log );
+				$validate_date = new Date_Format( $this->variables, $this->error_log );
 			}
 			$this->validate_date = $validate_date;
 
