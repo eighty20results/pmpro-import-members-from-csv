@@ -34,7 +34,7 @@ use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
-use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Variables;
 
 use Codeception\Test\Unit;
@@ -178,8 +178,8 @@ class Import_User_UnitTest extends Unit {
 			Email_Templates::class
 		);
 
-		$mocked_validate_data = $this->makeEmpty(
-			Validate_Data::class
+		$mocked_validate_date = $this->makeEmpty(
+			Date_Format::class
 		);
 
 		$mocked_page = $this->makeEmpty(
