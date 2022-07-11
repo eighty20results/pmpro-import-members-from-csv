@@ -229,6 +229,41 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	}
 
 	/**
+	 * Tests that the e20r_import_warn global variable is set correctly
+	 *
+	 * @param int $status the Status() value to test
+	 * @param bool $allow_updates Whether to allow updating the user record or not
+	 * @param int $line_no The (fake) active line being imported from the CSV file
+	 * @param bool $ignored We ignore it for this test
+	 * @return void
+	 * @throws \E20R\Exceptions\InvalidInstantiation
+	 *
+	 * @test
+	 * @dataProvider fixture_status_msgs
+	 */
+	public function it_should_fix_import_warn_array( $status, $allow_updates, $line_no, $ignored ) {
+
+		global $e20r_import_warn;
+		global $active_line_number;
+
+		$active_line_number = 1;
+		$e20r_import_warn   = null;
+
+		$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		$variables = new Variables( $error_log );
+		$wp_error  = new WP_Error();
+
+		$generate_password = new Generate_Password( $variables, $error_log, $wp_error );
+		$generate_password->status_msg( Status::E20R_USER_EXISTS_NEW_PASSWORD, false );
+
+		self::assertIsArray( $e20r_import_warn );
+
+		if ( Status::E20R_USER_EXISTS_NEW_PASSWORD === $status ) {
+			self::assertArrayHasKey( "overwriting_password_{$active_line_number}", $e20r_import_warn );
+		}
+	}
+
+	/**
 	 * Test that the validation logic for Generate_Password::validate() results in correct decision wrt to creating a new password for the user or not
 	 *
 	 * @param array $record The mocked user import record to validate
