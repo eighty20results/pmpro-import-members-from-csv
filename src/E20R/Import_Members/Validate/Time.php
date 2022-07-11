@@ -33,7 +33,7 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Time' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function validate( $time_string ) {
+		public function validate( $time_string ) {
 
 			$time = strtotime( $time_string );
 
@@ -51,7 +51,7 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Time' ) ) {
 		 *
 		 * @return false|int
 		 */
-		public static function convert( $time_string ) {
+		public function convert( $time_string ) {
 
 			$timestamp = strtotime( $time_string, time() );
 
