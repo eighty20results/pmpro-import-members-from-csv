@@ -23,6 +23,7 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
+use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Validate\Time;
 use WP_Error;
@@ -60,16 +61,32 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		private $generate_passwd = null;
 
 		/**
+		 * The methods used to validate time data
+		 *
+		 * @var Time|null $time_format
+		 */
+		private $time_format = null;
+
+		/**
+		 * The methods used to validate date data
+		 *
+		 * @var Date_Format|null $date_format
+		 */
+		private $date_format = null;
+
+		/**
 		 * Import_User constructor.
 		 *
 		 * @param null|Variables $variables Instance of the Variables() class
 		 * @param null|Error_Log $error_log Instance of the Error_Log() class
 		 * @param null|User_Present $user_presence Instance of the tests for user existence on the system
 		 * @param null|Generate_Password $generate_passwd Instance of the tests for the user password
+		 * @param null|Time $time_format Instance of the Time() validator class
+		 * @param null|Date_Format $date_format Instance of the Date_Format() validator class
 		 *
 		 * @access private
 		 */
-		public function __construct( $variables = null, $error_log = null, $user_presence = null, $generate_passwd = null ) {
+		public function __construct( $variables = null, $error_log = null, $user_presence = null, $generate_passwd = null, $time_format = null, $date_format = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
@@ -89,6 +106,16 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$generate_passwd = new Generate_Password( $this->variables, $this->error_log );
 			}
 			$this->generate_passwd = $generate_passwd;
+
+			if ( null === $time_format ) {
+				$time_format = new Time();
+			}
+			$this->time_format = $time_format;
+
+			if ( null === $date_format ) {
+				$date_format = new Date_Format();
+			}
+			$this->date_format = $date_format;
 		}
 
 		/**
@@ -376,7 +403,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					wp_new_user_notification( $user_id, null, $msg_target );
 				}
 
-				if ( ! empty( $user_data['user_registered'] ) && true === Time::validate( $user_data['user_registered'] ) ) {
+				if ( ! empty( $user_data['user_registered'] ) && true === $this->time_format->validate( $user_data['user_registered'] ) ) {
 
 					// Update/set the user_registered value if the user is registered already.
 					$update_registered = array(
@@ -389,7 +416,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					if ( is_wp_error( $status ) ) {
 						$e20r_import_err[] = $status;
 
-						$should_be = Time::convert( $user_data['user_registered'] );
+						$should_be = $this->time_format->convert( $user_data['user_registered'] );
 						$should_be = ( false === $should_be ? time() : $should_be );
 
 						$display_errors['user_registered'] = sprintf(
