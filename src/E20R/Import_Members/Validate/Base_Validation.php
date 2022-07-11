@@ -40,13 +40,6 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		protected $error_log = null;
 
 		/**
-		 * Instance of the main Import() class
-		 *
-		 * @var null|Import
-		 */
-		protected $import = null;
-
-		/**
 		 * List of error types we should ignore
 		 *
 		 * @var array
@@ -56,13 +49,15 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		/**
 		 * Base_Validation constructor.
 		 *
-		 * @param null|Import $import Instance of the Import() class
+		 * @param null|Error_Log $error_log Instance of the Error_Log() class
 		 *
-		 * @throws InvalidSettingsKey Thrown when the Import::get() operation uses the wrong property
 		 */
-		public function __construct( $import ) {
-			$this->import    = $import;
-			$this->error_log = $this->import->get( 'error_log' );
+		public function __construct( $error_log = null ) {
+			if ( null === $error_log ) {
+				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+
+			$this->error_log = $error_log;
 		}
 
 		/**
@@ -95,5 +90,21 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		 * @return array
 		 */
 		abstract public function load_ignored_module_errors( $ignored_error_list, $module_name = 'base' );
+
+		/**
+		 * Returns the class parameter value requested
+		 *
+		 * @param string $param Name of class parameter
+		 *
+		 * @return mixed
+		 * @throws InvalidSettingsKey Thrown if the current class lacks the specified parameter
+		 */
+		public function get( $param ) {
+			if ( ! property_exists( $this, $param ) ) {
+				throw new InvalidSettingsKey( sprintf( '%1$s is an invalid property in %2$s', $param, self::class ) );
+			}
+
+			return $this->{$param};
+		}
 	}
 }
