@@ -54,11 +54,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 		public function __construct( $variables = null, $error_log = null, $wp_error = null ) {
 			parent::__construct( $variables, $error_log );
 
-			if ( null === $variables ) {
-				$variables = new Variables( $this->error_log );
-			}
-			$this->variables = $variables;
-
 			if ( null === $wp_error ) {
 				$wp_error = new WP_Error();
 			}
