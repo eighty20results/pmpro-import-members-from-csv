@@ -214,6 +214,7 @@ class Import_User_UnitTest extends Unit {
 				'is_multisite'         => false,
 				'maybe_unserialize'    => null,
 				'update_user_meta'     => true,
+				'esc_url_raw'          => null,
 			)
 		);
 
