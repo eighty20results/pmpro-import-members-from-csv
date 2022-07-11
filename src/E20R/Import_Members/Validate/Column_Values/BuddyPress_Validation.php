@@ -37,8 +37,8 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Vali
 		 *
 		 * @param Error_Log|null $error_log Instance of the Error_Log() class
 		 */
-		public function __construct( $error_log = null ) {
-			parent::__construct( $error_log );
+		public function __construct( $variables = null, $error_log = null ) {
+			parent::__construct( $variables, $error_log );
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
