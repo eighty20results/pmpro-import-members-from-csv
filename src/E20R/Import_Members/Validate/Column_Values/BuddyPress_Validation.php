@@ -21,6 +21,7 @@
 
 namespace E20R\Import_Members\Validate\Column_Values;
 
+use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Modules\BuddyPress\BuddyPress;
@@ -34,10 +35,10 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\BuddyPress_Vali
 		/**
 		 * Constructor for validation of BuddyPress columns in the import .csv file
 		 *
-		 * @param Import|null    $import  Instance of the Import() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
 		 */
-		public function __construct( $import ) {
-			parent::__construct( $import );
+		public function __construct( $error_log = null ) {
+			parent::__construct( $error_log );
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
