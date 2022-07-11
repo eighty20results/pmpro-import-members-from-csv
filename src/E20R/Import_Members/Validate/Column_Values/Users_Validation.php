@@ -22,7 +22,7 @@
 namespace E20R\Import_Members\Validate\Column_Values;
 
 use E20R\Exceptions\InvalidSettingsKey;
-use E20R\Import_Members\Import;
+use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Status;
@@ -36,13 +36,6 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 	class Users_Validation extends Base_Validation {
 
 		/**
-		 * Instance of the Variables() class
-		 *
-		 * @var null|Variables $variables
-		 */
-		private $variables = null;
-
-		/**
 		 * Instance of the WP_Error() class
 		 *
 		 * @var null|WP_Error
@@ -52,14 +45,13 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		/**
 		 * Constructor for the Users_Validation class
 		 *
-		 * @param Import|null $import Instance of the Import() class
+		 * @param Variables|null $variables Instance of the Variables() class
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
 		 *
 		 * @throws InvalidSettingsKey Thrown when the Import::get() operation uses the wrong property
 		 */
-		public function __construct( $import ) {
-			parent::__construct( $import );
-
-			$this->variables = $this->import->get( 'variables' );
+		public function __construct( $variables = null, $error_log = null ) {
+			parent::__construct( $variables, $error_log );
 
 			add_filter(
 				'e20r_import_errors_to_ignore',
