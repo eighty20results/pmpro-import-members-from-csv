@@ -23,6 +23,7 @@ namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
+use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use WP_Error;
 
@@ -31,21 +32,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 	 * Class Generate_Password
 	 * @package E20R\Import_Members\Modules\Users
 	 */
-	class Generate_Password {
-
-		/**
-		 * Instance of the Error_Log() class
-		 *
-		 * @var Error_Log|null
-		 */
-		private $error_log = null;
-
-		/**
-		 * Instance of the Variables() class
-		 *
-		 * @var Variables|null
-		 */
-		private $variables = null;
+	class Generate_Password extends Base_Validation {
 
 		/**
 		 * Instance of the WP_Error() class
@@ -61,10 +48,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 		 * @param WP_Error|null $wp_error Mockable error object
 		 */
 		public function __construct( $variables = null, $error_log = null, $wp_error = null ) {
-			if ( null === $error_log ) {
-				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			}
-			$this->error_log = $error_log;
+			parent::__construct( $variables, $error_log );
 
 			if ( null === $variables ) {
 				$variables = new Variables( $this->error_log );
@@ -134,6 +118,25 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 			}
 
 			return false;
+		}
+
+		/**
+		 * Load actions triggering functionality in this class (none)
+		 *
+		 * @return void
+		 */
+		public function load_actions() {}
+
+		/**
+		 * List of modules we can ignore in this validator
+		 *
+		 * @param array $ignored_error_list
+		 * @param string $module_name
+		 *
+		 * @return array
+		 */
+		public function load_ignored_module_errors( $ignored_error_list, $module_name = 'base' ) {
+			return $ignored_error_list;
 		}
 	}
 }
