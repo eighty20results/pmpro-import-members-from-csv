@@ -294,4 +294,41 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 
 		return $record;
 	}
+
+	/**
+	 * Test the default "load_ignored_module_errors" method
+	 *
+	 * @param array $ignore_list List of error names to ignore
+	 * @param array $expected The expected array of module errors we should ignore
+	 *
+	 * @return void
+	 * @throws \E20R\Exceptions\InvalidInstantiation
+	 *
+	 * @test
+	 * @dataProvider fixture_errors_to_ignore
+	 */
+	public function it_should_return_no_new_errors( $ignore_list, $expected ) {
+		$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		$variables = new Variables( $error_log );
+		$wp_error  = new WP_Error();
+
+		$generate_password = new Generate_Password( $variables, $error_log, $wp_error );
+
+		$result = $generate_password->load_ignored_module_errors( $ignore_list, basename( self::class ) );
+
+		self::assertSame( $expected, $result );
+	}
+
+	/**
+	 * Fixture for the 'it_should_return_no_new_errors' test method
+	 *
+	 * @return array[]
+	 */
+	public function fixture_errors_to_ignore() {
+		return array(
+			array( null, array() ),
+			array( array( 'no_specific_error' ), array( 'no_specific_error' ) ),
+			array( 'incorrect_error', array( 'incorrect_error' ) ),
+		);
+	}
 }

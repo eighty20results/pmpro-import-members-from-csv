@@ -140,6 +140,17 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 		 * @return array
 		 */
 		public function load_ignored_module_errors( $ignored_error_list, $module_name = 'base' ) {
+
+			if ( ! is_array( $ignored_error_list ) ) {
+				$new_list = array();
+
+				if ( ! empty( $ignored_error_list ) ) {
+					$new_list[] = $ignored_error_list;
+				}
+
+				$ignored_error_list = $new_list;
+			}
+
 			return $ignored_error_list;
 		}
 	}
