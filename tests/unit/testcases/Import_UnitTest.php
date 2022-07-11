@@ -33,7 +33,7 @@ use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
-use E20R\Import_Members\Validate_Data;
+use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Variables;
 use Mockery;
 use WP_Mock;
@@ -103,11 +103,11 @@ class Import_UnitTest extends Unit {
 	private $mocked_email_templates = null;
 
 	/**
-	 * Mocked Validate_Data() class
+	 * Mocked Date_Format() class
 	 *
-	 * @var null|Validate_Data
+	 * @var null|Date_Format
 	 */
-	private $mocked_validate_data = null;
+	private $mocked_validate_date = null;
 
 	/**
 	 * Mocked Page() class
@@ -201,8 +201,8 @@ class Import_UnitTest extends Unit {
 			Email_Templates::class
 		);
 
-		$this->mocked_validate_data = $this->makeEmpty(
-			Validate_Data::class
+		$this->mocked_validate_date = $this->makeEmpty(
+			Date_Format::class
 		);
 
 		$this->mocked_page = $this->makeEmpty(
@@ -362,7 +362,7 @@ class Import_UnitTest extends Unit {
 		Functions\when( 'esc_attr__' )->returnArg( 1 );
 		Functions\when( 'esc_url_raw' )->returnArg( 1 );
 
-		$import = new Import( $this->mocked_variables, $this->mocked_pmpro, $this->mocked_data, $this->mocked_import_user, $this->mocked_import_member, $this->mocked_csv, $this->mocked_email_templates, $this->mocked_validate_data, $this->mocked_page, $this->mocked_ajax, $this->mocked_errorlog );
+		$import = new Import( $this->mocked_variables, $this->mocked_pmpro, $this->mocked_data, $this->mocked_import_user, $this->mocked_import_member, $this->mocked_csv, $this->mocked_email_templates, $this->mocked_validate_date, $this->mocked_page, $this->mocked_ajax, $this->mocked_errorlog );
 		$result = $import->plugin_row_meta( $default_row_meta, $file_name );
 
 		$result_count = ( count( $default_row_meta ) + 6 );
