@@ -297,7 +297,6 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 
 					$this->validators[ $name ] = new $class_name( $this->variables, $this->error_log );
 
-
 					add_action( 'plugins_loaded', array( $this->validators[ $name ], 'load_actions' ), 99 );
 					$this->error_log->debug( "Loaded {$name} column validation class" );
 					// Process the next entry
@@ -332,7 +331,13 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 */
 		public function get( $param = 'plugin_path' ) {
 			if ( ! property_exists( $this, $param ) ) {
-				throw new InvalidSettingsKey( esc_attr__( 'Error: The requested parameter does not exist!', 'pmpro-import-members-from-csv' ) );
+				throw new InvalidSettingsKey(
+					sprintf(
+						esc_attr__( "Error: The requested parameter '%1\$s' does not exist in the %2\$s class!", 'pmpro-import-members-from-csv' ),
+						$param,
+						self::class
+					)
+				);
 			}
 
 			return $this->{$param};
