@@ -21,10 +21,8 @@
 
 namespace E20R\Tests\Integration;
 
-use Codeception\TestCase\WPTestCase;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Import;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Variables;
@@ -32,7 +30,6 @@ use E20R\Import_Members\Variables;
 use E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence;
 use E20R\Tests\Fixtures\Factory\E20R_TestCase;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
-use E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Factory_For_PMProLevels;
 
 use org\bovigo\vfs\vfsStream;
 use WP_Error;
@@ -581,5 +578,72 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		$import_user->load_actions();
 		self::assertNotFalse( has_filter( 'e20r_import_usermeta' ) );
 		self::assertNotFalse( has_filter( 'e20r_import_wp_user_data' ) );
+	}
+
+	/**
+	 * Attempt to import, but "fail" (bail or exit) and return null
+	 *
+	 * @param string[] $user_data The user data being imported
+	 * @param string[] $meta The user metadata being imported
+	 * @param string[] $import_headers The column header names being imported
+	 *
+	 * @return void
+	 *
+	 * @test
+	 * @dataProvider fixture_returns_null_when_imported
+	 */
+	public function it_should_not_import_and_return_null( $user_data, $meta, $import_headers, $allow_update, $disable_hashing, $break_globals, $user_presence ) {
+
+		global $e20r_import_err;
+		global $e20r_import_warn;
+		global $active_line_number;
+
+		if ( $break_globals ) {
+			$e20r_import_warn = null;
+			$e20r_import_err  = null;
+		}
+
+		if ( empty( $user_presence ) ) {
+			$user_presence = $this->makeEmpty(
+				User_Present::class,
+				array(
+					'validate' => false,
+				)
+			);
+		}
+
+		try {
+			$this->variables->set( 'update_id', $allow_update );
+			$this->variables->set( 'update_users', $allow_update );
+			$this->variables->set( 'password_hashing_disabled', $disable_hashing );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		}
+
+		try {
+			$result = $this->import->maybe_add_or_update( $user_data, $meta, $import_headers );
+		} catch ( InvalidSettingsKey $e ) {
+			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		}
+
+		self::assertNull( $result );
+	}
+
+	/**
+	 * Fixture for the it_should_not_import_and_return_null() method
+	 *
+	 * @return array[]
+	 */
+	public function fixture_returns_null_when_imported() {
+		return array(
+			// user_data, meta, import_headers, allow_update, disable_hashing, break_globals, user_presence class,
+			array( array(), array(), array(), false, false, false, new User_Present( $this->variables, $this->errorlog ) ), // Exit on first bail-out (empty user_data)
+			array( array(), array(), array(), false, false, false, null ), // Exit because user exists but cannot be updated
+			array( array(), array(), array(), false, false, false, null ), // Exit because user was found but with different ID
+		);
+	}
+
+	private function fixture_create_meta() {
+
 	}
 }
