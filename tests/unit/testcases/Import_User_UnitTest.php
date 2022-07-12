@@ -22,6 +22,7 @@
 namespace E20R\Tests\Unit;
 
 use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
@@ -35,6 +36,7 @@ use E20R\Import_Members\Process\Ajax;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Validate\Date_Format;
+use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Variables;
 
 use Codeception\Test\Unit;
@@ -95,6 +97,20 @@ class Import_User_UnitTest extends Unit {
 	 *
 	 */
 	private $mocked_wp_error = null;
+
+	/**
+	 * Mocked Time() validator class
+	 *
+	 * @var null|Time $mocked_time_validator
+	 */
+	private $mocked_time_validator = null;
+
+	/**
+	 * Mocked Date_Format() validator class
+	 *
+	 * @var null|Date_Format $mocked_date_validator
+	 */
+	private $mocked_date_validator = null;
 
 	/**
 	 * Codeception setUp method
@@ -346,10 +362,13 @@ class Import_User_UnitTest extends Unit {
 		Functions\expect( 'email_exists' )
 			->andReturn( isset( $import_data['user_email'] ) );
 
+		$mocked_time_validator = $this->makeEmpty( Time::class );
+		$mocked_date_validator = $this->makeEmpty( Date_Format::class );
+
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
 			'maybe_add_or_update',
-			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator ),
+			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator, $mocked_time_validator, $mocked_date_validator ),
 			array(
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
 					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
@@ -459,6 +478,9 @@ class Import_User_UnitTest extends Unit {
 			)
 		);
 
+		$mocked_time_validator = $this->makeEmpty( Time::class );
+		$mocked_date_validator = $this->makeEmpty( Date_Format::class );
+
 		Functions\expect( 'wp_update_user' )
 			->andReturnUsing(
 				function( $data ) use ( $expected ) {
@@ -536,7 +558,7 @@ class Import_User_UnitTest extends Unit {
 		$import_user = $this->constructEmptyExcept(
 			Import_User::class,
 			'maybe_add_or_update',
-			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator ),
+			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator, $mocked_time_validator, $mocked_date_validator ),
 			array(
 				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
 					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
@@ -646,5 +668,66 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function it_should_create_new_user_with_pre_hashed_password() {
 		$this->markTestSkipped( 'Must use the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method!' );
+	}
+
+	/**
+	 * Test the Import_User::update_user_id() method to validate it will throw an expected exception
+	 *
+	 * @param WP_User|null $user User object
+	 * @param array $data Data being fake imported
+	 * @param string $exception The exception we expect the function to throw
+	 *
+	 * @return void
+	 *
+	 * @dataProvider fixture_fail_update_user_id
+	 * @test
+	 */
+	public function it_should_throw_exception( $user, $data, $exception ) {
+		$this->expectException( $exception );
+		$this->mocked_errorlog->debug( 'Testing update_user_id() method' );
+
+		Functions\expect( 'get_user_by' )->once()->andReturn( $user );
+
+		$m_variables = $this->makeEmpty(
+			Variables::class,
+			array(
+				'get' => true,
+			)
+		);
+
+		$mocked_time_validator         = $this->makeEmpty( Time::class );
+		$mocked_date_validator         = $this->makeEmpty( Date_Format::class );
+		$mocked_user_present_validator = $this->makeEmpty( User_Present::class );
+		$mocked_passwd_validator       = $this->makeEmpty( Generate_Password::class );
+
+		$import = $this->constructEmptyExcept(
+			Import_User::class,
+			'update_user_id',
+			array( $m_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator, $mocked_time_validator, $mocked_date_validator )
+		);
+		$import->update_user_id( $user, $data );
+	}
+
+	/**
+	 * Fixture for the it_should_throw_exception() test method
+	 *
+	 * @return array[]
+	 * @throws \Exception
+	 */
+	public function fixture_fail_update_user_id() {
+		$user             = $this->makeEmpty( WP_User::class );
+		$user->ID         = 10;
+		$user->user_email = 'tester@example.org';
+
+		return array(
+			array(
+				$user,
+				array(
+					'ID'         => 100,
+					'user_email' => 'tester@example.org',
+				),
+				UserIDAlreadyExists::class,
+			),
+		);
 	}
 }
