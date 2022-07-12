@@ -482,13 +482,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			$wp_user_id     = $wp_user->ID;
 			$import_user_id = (int) $user_data['ID'];
+			$is_updatable   = (bool) $this->variables->get( 'update_id' );
 
 			if ( $wp_user_id === $import_user_id ) {
 				return $wp_user;
 			}
 
 			$existing_user = get_user_by( 'ID', $import_user_id );
-			if ( false !== $existing_user && true === (bool) $this->variables->get( 'update_id' ) ) {
+			if ( false !== $existing_user && true === $is_updatable ) {
 				throw new UserIDAlreadyExists(
 					sprintf(
 						// translators: %1$d: line number in CSV import file %2$d: email address of existing user with same user ID
