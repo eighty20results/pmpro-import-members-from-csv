@@ -199,28 +199,13 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			 * Can the user from the import data be found on the system
 			 */
 			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
-
+			$this->user_presence->status_msg( $user_exists, $allow_update );
 			if ( Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $user_exists ) {
-				$msg = sprintf(
-				// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
-					esc_attr__(
-						'The import data specifies an existing user but the settings disallow updating their record (line: %3$d)',
-						'pmpro-import-members-from-csv'
-					),
-					$user_id,
-					$user_data['ID'],
-					$active_line_number
-				);
-
-				$new_error = $wp_error;
-				$new_error->add( 'user_exists_no_update', $msg );
-				$e20r_import_warn[ "user_exists_cannot_update_{$active_line_number}" ] = $new_error;
-				$this->error_log->debug( $msg );
 				return null;
 			}
 
 			if ( true === $user_exists ) {
-				$this->error_log->debug( 'Loading user because we know it exists already' );
+				$this->error_log->debug( 'Loading user data for existing user' );
 				$user = $this->find_user( $user_data );
 
 				if ( ! empty( $user->ID ) ) {
