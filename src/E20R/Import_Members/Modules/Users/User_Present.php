@@ -130,7 +130,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					$msg = sprintf(
 					// translators: %1$d: The line number from the CSV import file
 						esc_attr__(
-							'Warning: User at line %1$d exists but cannot be updated per our settings',
+							'The import data specifies an existing user but the plugin settings disallow updating their record (line: %1$d)',
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number
