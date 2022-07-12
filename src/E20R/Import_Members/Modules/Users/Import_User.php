@@ -217,7 +217,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$msg = sprintf(
 					// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
 					esc_attr__(
-						'The import data and the WP User data are different. Not allowed to update %1$d to %2$d (line: %3$d)',
+						'The CSV file data and the WP User ID are different. Not allowed to update user ID from %1$d to %2$d (line: %3$d)',
 						'pmpro-import-members-from-csv'
 					),
 					$user_id,
