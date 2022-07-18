@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Modules\Users;
 
+use E20R\Exceptions\CannotUpdateDB;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Error_Log;
@@ -124,6 +125,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		public function load_actions() {
 			add_filter( 'e20r_import_wp_user_data', array( $this, 'maybe_add_or_update' ), -1, 3 );
 			add_filter( 'e20r_import_usermeta', array( $this, 'import_usermeta' ), -1, 3 );
+			add_action( 'is_iu_pre_user_import', array( $this, 'deprecated_action' ), -1, 2 );
+			add_action( 'pmp_im_pre_member_import', array( $this, 'deprecated_action' ), -1, 2 );
 		}
 
 		/**
@@ -272,7 +275,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			if ( false === $user && false === $password_hashing_disabled ) {
 				$this->error_log->debug( 'Adding new user record' );
 				$user_id = wp_insert_user( $user_data );
-			} elseif ( // pre-hashed password and we'll allow both updating and adding user if other settings let us
+				// pre-hashed password and we'll allow both updating and adding user if other settings let us
+			} elseif (
 				( false === $user && true === $password_hashing_disabled ) ||
 				( false !== $user && true === $password_hashing_disabled && true === $allow_update )
 			) {
@@ -315,7 +319,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$user_id                                = null;
 			} else {
 
-				if ( ! empty( $user_id ) ) {
+				if ( ! empty( $user_id ) && is_int( $user_id ) ) {
 					$user = $this->find_user( array( 'ID' => $user_id ) );
 				}
 
@@ -334,7 +338,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				if ( ! empty( $all_roles ) ) {
 					foreach ( $all_roles as $role_name ) {
-						$this->error_log->debug( "Adding role '{$role_name}' for user ID {$user_id}" );
+						$this->error_log->debug( "Adding role '{$role_name}'" );
 						$user->add_role( $role_name );
 					}
 				}
@@ -476,6 +480,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @throws UserIDAlreadyExists Thrown if the "target" local User ID already has a user
 		 * @throws InvalidSettingsKey Thrown if the 'update_id' variable, for some inexplicable reason, no longer exists
+		 * @throws CannotUpdateDB Thrown if $wpdb->update() returns false or $wpdb is empty
 		 */
 		public function update_user_id( $wp_user, $user_data ) {
 			global $active_line_number;
@@ -501,17 +506,19 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 						$existing_user->user_email
 					)
 				);
-
 			}
 
 			global $wpdb;
-			$result = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$wpdb->users} SET ID = %d WHERE `ID` = %d",
-					$import_user_id,
-					$wp_user_id
-				)
-			);
+			if ( empty( $wpdb ) || false === $wpdb->update( $wpdb->users, array( 'ID' => $import_user_id ), array( 'ID' => $wp_user_id ), array( '%d' ), array( '%d' ) ) ) {
+				throw new CannotUpdateDB(
+					sprintf(
+						// translators: %1$s: Table name, %2$s WPDB error message
+						esc_attr__( 'Cannot update %1$s: %2$s', 'pmpro-import-members-from-csv' ),
+						$wpdb->users ?? 'wptest_users',
+						$wpdb->last_error ?? esc_attr__( '\$wpdb was not instantiated', 'pmpro-import-members-from-csv' )
+					)
+				);
+			}
 
 			return get_user_by( 'ID', $import_user_id );
 		}
@@ -838,6 +845,38 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			return $user_meta;
+		}
+
+		/**
+		 * Display/log deprecation warning when executing this action
+		 *
+		 * @param array $user_data The user data we've received from the action invocation
+		 * @param array $user_meta The metadata we've received from the action invocation
+		 *
+		 * @return void
+		 */
+		public function deprecated_action( $user_data, $user_meta ) {
+			// translators: %1$s: Name of deprecated action, %2$s Name of new/preferred action
+			$text   = esc_attr__(
+				'The "%1$s" action has been deprecated and will be removed. Please hook your action handler(s) to the "%2$s" action instead.',
+				'pmpro-import-members-from-csv'
+			);
+			$action = null;
+
+			if ( true === doing_action( 'is_iu_pre_user_import' ) ) {
+				$action = 'is_iu_pre_user_import';
+			}
+			if ( true === doing_action( 'pmp_im_pre_member_import' ) ) {
+				$action = 'pmp_im_pre_member_import';
+			}
+
+			if ( null === $action ) {
+				return;
+			}
+
+			$msg = sprintf( $text, $action, 'e20r_before_user_import' );
+			$this->error_log->add_error_msg( $msg, 'warning' );
+			do_action( $action, $user_data, $user_meta );
 		}
 	}
 }
