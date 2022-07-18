@@ -21,43 +21,27 @@
 
 namespace E20R\Tests\Unit;
 
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\CannotUpdateDB;
 use E20R\Exceptions\UserIDAlreadyExists;
-use E20R\Import_Members\Data;
-use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
-use E20R\Import_Members\Modules\PMPro\Import_Member;
-use E20R\Import_Members\Modules\PMPro\PMPro;
 use E20R\Import_Members\Modules\Users\Generate_Password;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Modules\Users\User_Present;
-use E20R\Import_Members\Process\Ajax;
-use E20R\Import_Members\Process\CSV;
-use E20R\Import_Members\Process\Page;
 use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Variables;
 
 use Codeception\Test\Unit;
-use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use Brain\Monkey\Actions;
-use Brain\Monkey\Filters as BMFilters;
 
 use WP_Error;
 use WP_Mock;
 
-use stdClass;
 use MemberOrder;
 use WP_User;
-use function Brain\Monkey\Functions\stubs;
-use function Brain\Monkey\Actions\did;
-
-use function fixture_read_from_user_csv;
-use function fixture_read_from_meta_csv;
 
 class Import_User_UnitTest extends Unit {
 	use MockeryPHPUnitIntegration;
@@ -170,42 +154,6 @@ class Import_User_UnitTest extends Unit {
 			$this->fail( 'Exception: ' . $e->getMessage() );
 		}
 
-		$mocked_pmpro = $this->makeEmpty(
-			PMPro::class
-		);
-
-		$mocked_data = $this->makeEmpty(
-			Data::class
-		);
-
-		$mocked_import_user = $this->makeEmpty(
-			Import_User::class
-		);
-
-		$mocked_import_member = $this->makeEmpty(
-			Import_Member::class
-		);
-
-		$mocked_csv = $this->makeEmpty(
-			CSV::class
-		);
-
-		$mocked_email_templates = $this->makeEmpty(
-			Email_Templates::class
-		);
-
-		$mocked_validate_date = $this->makeEmpty(
-			Date_Format::class
-		);
-
-		$mocked_page = $this->makeEmpty(
-			Page::class
-		);
-
-		$mocked_ajax = $this->makeEmpty(
-			Ajax::class
-		);
-
 		$this->mocked_wp_error = $this->makeEmptyExcept(
 			WP_Error::class,
 			'add'
@@ -230,7 +178,6 @@ class Import_User_UnitTest extends Unit {
 				'is_multisite'         => false,
 				'maybe_unserialize'    => null,
 				'update_user_meta'     => true,
-				'esc_url_raw'          => null,
 			)
 		);
 
@@ -245,429 +192,31 @@ class Import_User_UnitTest extends Unit {
 	}
 
 	/**
-	 * Test of the happy-path when importing a user who doesn't exist in the DB already
+	 * Skipped test of the happy-path when importing a user who doesn't exist in the DB already
 	 *
-	 * @param bool $allow_update We can/can not update existing user(s)
-	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
-	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
-	 * @param int  $expected Result we expect to see from the test execution
-	 *
-	 * @dataProvider fixture_create_user_import
 	 * @test
 	 */
-	public function it_should_create_new_user( $allow_update, $user_line, $meta_line, $expected ) {
-
-		$mocked_variables        = $this->makeEmpty(
-			Variables::class,
-			array(
-				'get' => function( $param ) use ( $allow_update ) {
-					if ( 'site_id' === $param ) {
-						return 0;
-					}
-
-					if ( 'update_users' === $param ) {
-						return $allow_update;
-					}
-
-					if ( 'update_id' === $param ) {
-						return $allow_update;
-					}
-
-					if ( 'password_hashing_disabled' === $param ) {
-						return false;
-					}
-
-					return false;
-				},
-			)
-		);
-		$mocked_passwd_validator = $this->makeEmpty(
-			Generate_Password::class,
-			array(
-				'validate' => true,
-			)
-		);
-
-		Functions\expect( 'wp_insert_user' )
-			->andReturnUsing(
-				function( $data ) use ( $expected ) {
-					return $expected;
-				}
-			)
-			->once();
-
-		$meta_headers = array();
-		$data_headers = array();
-		$import_data  = array();
-		$import_meta  = array();
-
-		// Read from one of the test file(s)
-		if ( null !== $user_line ) {
-			list( $data_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
-		}
-
-		if ( null !== $meta_line ) {
-			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
-		}
-
-		$mocked_user_present_validator = $this->makeEmptyExcept(
-			User_Present::class,
-			'status_msg',
-			array(
-				'validate' => isset( $import_data['ID'] ) && ! empty( $import_data['ID'] ),
-			)
-		);
-
-		Functions\when( 'get_user_by' )->alias(
-			function( $type, $value ) use ( $import_data ) {
-
-				$id   = null;
-				$name = null;
-
-				if ( 'ID' !== $type ) {
-					$this->fail( 'We should only call get_user_by() with an ID parameter for this test' );
-				}
-
-				if ( ! empty( $import_data['ID'] ) ) {
-					$this->fail( 'Should not have an ID of an existing user when calling get_user_by() during this test!' );
-				}
-
-				return $this->constructEmpty(
-					WP_Error::class,
-					array( 'Returning user not found error object as expected' )
-				);
-
-			}
-		);
-
-		Functions\when( 'wp_update_user' )
-			->justReturn(
-				function( $userdata ) {
-					$this->fail( 'Should never call wp_update_user()' );
-				}
-			);
-
-		$this->load_stubs();
-		Actions\expectDone( 'e20r_before_user_import' );
-		Actions\expectDone( 'pmp_im_pre_member_import' );
-		Actions\expectDone( 'is_iu_pre_user_import' );
-
-		Actions\expectDone( 'e20r_after_user_import' );
-		Actions\expectDone( 'pmp_im_post_member_import' );
-		Actions\expectDone( 'is_iu_post_user_import' );
-
-		Functions\expect( 'username_exists' )
-			->andReturn( isset( $import_data['user_login'] ) );
-
-		Functions\expect( 'email_exists' )
-			->andReturn( isset( $import_data['user_email'] ) );
-
-		$mocked_time_validator = $this->makeEmpty( Time::class );
-		$mocked_date_validator = $this->makeEmpty( Date_Format::class );
-
-		$import_user = $this->constructEmptyExcept(
-			Import_User::class,
-			'maybe_add_or_update',
-			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator, $mocked_time_validator, $mocked_date_validator ),
-			array(
-				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
-					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
-				},
-				'find_user'                              => function( $user_data ) use ( $expected, $import_data ) {
-					$this->mocked_errorlog->debug( 'Running mocked find_user() method' );
-
-					$user_id = 2;
-					if ( ! empty( $import_data['ID'] ) ) {
-						$this->mocked_errorlog->debug( 'Setting user ID to the supplied value' );
-						$user_id = $import_data['ID'];
-					}
-
-					$m_user = $this->constructEmpty(
-						WP_User::class,
-						array( $user_id )
-					);
-					$m_user->__set( 'ID', $user_id );
-					$m_user->ID = $user_id;
-					$m_user->__set( 'user_email', $import_data['user_email'] );
-					$m_user->__set( 'user_login', $import_data['user_login'] );
-					$m_user->__set( 'user_pass', $import_data['user_pass'] );
-					$m_user->__set( 'first_name', $import_data['first_name'] );
-					$m_user->__set( 'last_name', $import_data['last_name'] );
-					$m_user->__set( 'display_name', $import_data['display_name'] );
-					if ( ! empty( $import_data['role'] ) ) {
-						$m_user->add_role( $import_data['role'] );
-					}
-
-					return $m_user;
-				},
-			)
-		);
-
-		try {
-			$result = $import_user->maybe_add_or_update( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
-		}
-
-		self::assertSame( $expected, $result );
+	public function it_should_create_new_user() {
+		$this->markTestSkipped( 'Creating new users should be tested in Import_User_IntegrationTest.php' );
 	}
 
 	/**
-	 * Fixture generator for the it_should_create_new_user() test method
+	 * Skipped test of the happy-path when attempting to update a user
 	 *
-	 * @return array
-	 */
-	public function fixture_create_user_import() {
-		return array(
-			// allow_update, user_line, meta_line, expected
-			array(
-				false,
-				0,
-				0,
-				1001,
-			),
-			array(
-				false,
-				2,
-				2,
-				1002,
-			),
-		);
-	}
-
-	/**
-	 * Test of the happy-path when importing a user who exist in the DB already _and_ we want to update them
-	 *
-	 * @param bool $allow_update We can/can not update existing user(s)
-	 * @param int  $user_line The user data to add during the import operation (line # in the inc/csv_files/user_data.csv file)
-	 * @param int  $meta_line The metadata for the user being imported (line # in the inc/csv_files/meta_data.csv file)
-	 * @param int  $expected Result we expect to see from the test execution
-	 *
-	 * @dataProvider fixture_update_user_import
 	 * @test
 	 */
-	public function it_should_update_user( $allow_update, $user_line, $meta_line, $expected ) {
-		$mocked_variables        = $this->makeEmpty(
-			Variables::class,
-			array(
-				'get' => function( $param ) use ( $allow_update ) {
-					if ( 'site_id' === $param ) {
-						return 0;
-					}
-
-					if ( 'update_users' === $param ) {
-						return $allow_update;
-					}
-
-					if ( 'update_id' === $param ) {
-						return $allow_update;
-					}
-
-					if ( 'password_hashing_disabled' === $param ) {
-						return false;
-					}
-
-					return false;
-				},
-			)
-		);
-		$mocked_passwd_validator = $this->makeEmpty(
-			Generate_Password::class,
-			array(
-				'validate' => true,
-			)
-		);
-
-		$mocked_time_validator = $this->makeEmpty( Time::class );
-		$mocked_date_validator = $this->makeEmpty( Date_Format::class );
-
-		Functions\expect( 'wp_update_user' )
-			->andReturnUsing(
-				function( $data ) use ( $expected ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-					return $expected;
-				}
-			);
-
-		$meta_headers = array();
-		$data_headers = array();
-		$import_data  = array();
-		$import_meta  = array();
-
-		// Read from one of the test file(s)
-		if ( null !== $user_line ) {
-			list( $data_headers, $import_data ) = fixture_read_from_user_csv( $user_line );
-		}
-
-		if ( null !== $meta_line ) {
-			list( $meta_headers, $import_meta ) = fixture_read_from_meta_csv( $meta_line );
-		}
-
-		$mocked_user_present_validator = $this->makeEmptyExcept(
-			User_Present::class,
-			'status_msg',
-			array(
-				'validate' => true,
-			)
-		);
-
-		Functions\when( 'get_user_by' )->alias(
-			function( $field, $data ) use ( $import_data ) {
-				$this->mocked_errorlog->debug( "Using: {$field}" );
-				$m_user = $this->constructEmpty(
-					WP_User::class,
-					array( $import_data['ID'] )
-				);
-				$m_user->__set( 'ID', $import_data['ID'] );
-				$m_user->ID = $import_data['ID'];
-				$m_user->__set( 'user_email', $import_data['user_email'] );
-				$m_user->__set( 'user_login', $import_data['user_login'] );
-				$m_user->__set( 'user_pass', $import_data['user_pass'] );
-				$m_user->__set( 'first_name', $import_data['first_name'] );
-				$m_user->__set( 'last_name', $import_data['last_name'] );
-				$m_user->__set( 'display_name', $import_data['display_name'] );
-				if ( ! empty( $import_data['role'] ) ) {
-					$m_user->add_role( $import_data['role'] );
-				}
-				return $m_user;
-			}
-		);
-
-		Functions\when( 'wp_insert_user' )
-			->justReturn(
-				function( $userdata ) {
-					$this->fail( 'Should never call wp_insert_user()' );
-				}
-			);
-
-		$this->load_stubs();
-		Actions\expectDone( 'e20r_before_user_import' )->once();
-		Actions\expectDone( 'pmp_im_pre_member_import' )->once();
-		Actions\expectDone( 'is_iu_pre_user_import' )->once();
-
-		Actions\expectDone( 'e20r_after_user_import' )->once();
-		Actions\expectDone( 'pmp_im_post_member_import' )->once();
-		Actions\expectDone( 'is_iu_post_user_import' )->once();
-
-		Functions\expect( 'username_exists' )
-			->andReturn( isset( $import_data['user_login'] ) );
-
-		Functions\expect( 'email_exists' )
-			->andReturn( isset( $import_data['user_email'] ) );
-
-		$import_user = $this->constructEmptyExcept(
-			Import_User::class,
-			'maybe_add_or_update',
-			array( $mocked_variables, $this->mocked_errorlog, $mocked_user_present_validator, $mocked_passwd_validator, $mocked_time_validator, $mocked_date_validator ),
-			array(
-				'insert_or_update_disabled_hashing_user' => function( $user_data ) {
-					$this->fail( 'Should not have called insert_or_update_disabled_hashing_user() method during this test!' );
-				},
-				'find_user'                              => function( $user_data ) use ( $expected, $import_data ) {
-					$this->mocked_errorlog->debug( 'Running mocked find_user() method' );
-
-					$user_id = 2;
-					if ( ! empty( $import_data['ID'] ) ) {
-						$this->mocked_errorlog->debug( 'Setting user ID to the supplied value' );
-						$user_id = $import_data['ID'];
-					}
-
-					$m_user = $this->constructEmpty(
-						WP_User::class,
-						array( $user_id )
-					);
-					$m_user->__set( 'ID', $user_id );
-					$m_user->ID = $user_id;
-					$m_user->__set( 'user_email', $import_data['user_email'] );
-					$m_user->__set( 'user_login', $import_data['user_login'] );
-					$m_user->__set( 'user_pass', $import_data['user_pass'] );
-					$m_user->__set( 'first_name', $import_data['first_name'] );
-					$m_user->__set( 'last_name', $import_data['last_name'] );
-					$m_user->__set( 'display_name', $import_data['display_name'] );
-					if ( ! empty( $import_data['role'] ) ) {
-						$m_user->add_role( $import_data['role'] );
-					}
-					return $m_user;
-				},
-			)
-		);
-
-		try {
-			$result = $import_user->maybe_add_or_update( $import_data, $import_meta, ( $data_headers + $meta_headers ), $this->mocked_wp_error );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
-		}
-
-		self::assertSame( $expected, $result );
+	public function it_should_update_user() {
+		$this->markTestSkipped( 'Updating user data should be tested in Import_User_IntegrationTest.php' );
 	}
 
 	/**
-	 * Fixture generator for the it_should_update_user() test method
-	 *
-	 * @return array
-	 */
-	public function fixture_update_user_import() {
-		return array(
-			array(
-				true,
-				1,
-				1,
-				1002,
-			),
-		);
-	}
-
-	/**
-	 * Create mocked WP_User objects
-	 *
-	 * @param int $count The number of mocked WP_User objects to create and return
-	 *
-	 * @return array
-	 * @throws \Exception Thrown if we're unable to construct the mock WP_User object
-	 */
-	private function create_mocked_wp_users( $count = 1 ) {
-		$user_list = array();
-		$base_id   = 1000;
-
-		for ( $i = 0; $i < $count; $i++ ) {
-			$id = ( $base_id + $i );
-
-			if ( class_exists( '\WP_User' ) ) {
-				$user = $this->construct(
-					WP_User::class,
-					array( $id )
-				);
-			} else {
-				$user     = new stdClass();
-				$user->ID = $id;
-			}
-
-			$user->user_firstname   = 'Test';
-			$user->first_name       = $user->user_firstname;
-			$user->user_lastname    = "User # {$id}";
-			$user->last_name        = $user->user_lastname;
-			$user->user_description = "{$user->user_firstname} {$user->user_lastname}";
-			$user->display_name     = "{$user->user_firstname} {$user->user_lastname}";
-			$user->user_email       = "test_{$id}@localhost.local";
-
-			if ( $count > 1 ) {
-				$user_list[] = $user;
-			} else {
-				$user_list = $user;
-			}
-		}
-
-		return $user_list;
-	}
-
-	/**
-	 * Unit test validates the insert_or_update_disabled_hashing_user() method (Skipped on purpose)
+	 * Skipped test validating the insert_or_update_disabled_hashing_user() method
 	 *
 	 * @return void
 	 * @test
 	 */
 	public function it_should_create_new_user_with_pre_hashed_password() {
-		$this->markTestSkipped( 'Must use the integration test suite for the Import_User::insert_or_update_disabled_hashing_user() method!' );
+		$this->markTestSkipped( 'Updating/Adding users using pre-hashed passwords should be tested in Import_User_IntegrationTest.php' );
 	}
 
 	/**
@@ -682,24 +231,41 @@ class Import_User_UnitTest extends Unit {
 	 * @dataProvider fixture_fail_update_user_id
 	 * @test
 	 */
-	public function it_should_throw_exception( $user, $data, $exception ) {
-		$this->expectException( $exception );
-		$this->mocked_errorlog->debug( 'Testing update_user_id() method' );
-
-		Functions\expect( 'get_user_by' )->once()->andReturn( $user );
+	public function it_should_throw_exception( $user, $user_return, $data, $exception ) {
+		Functions\expect( 'get_user_by' )->once()->andReturn( $user_return );
 
 		$m_variables = $this->makeEmpty(
 			Variables::class,
 			array(
-				'get' => true,
+				'get' => function( $param ) {
+					if ( 'update_id' === $param ) {
+						return true;
+					}
+					return null;
+				},
 			)
 		);
 
-		$mocked_time_validator         = $this->makeEmpty( Time::class );
-		$mocked_date_validator         = $this->makeEmpty( Date_Format::class );
-		$mocked_user_present_validator = $this->makeEmpty( User_Present::class );
-		$mocked_passwd_validator       = $this->makeEmpty( Generate_Password::class );
+		$mocked_time_validator   = $this->makeEmpty( Time::class );
+		$mocked_date_validator   = $this->makeEmpty( Date_Format::class );
+		$mocked_passwd_validator = $this->makeEmpty( Generate_Password::class );
+		$mocked_variables        = $this->makeEmpty( Variables::class );
 
+		$mocked_user_present_validator = $this->constructEmpty(
+			User_Present::class,
+			array( $mocked_variables, $this->mocked_errorlog, $this->mocked_wp_error ),
+			array(
+				'validate'   => isset( $import_data['ID'] ) && ! empty( $import_data['ID'] ),
+				'status_msg' => null,
+			)
+		);
+
+		$this->expectException( $exception );
+		Functions\stubs(
+			array(
+				'esc_attr__' => null,
+			)
+		);
 		$import = $this->constructEmptyExcept(
 			Import_User::class,
 			'update_user_id',
@@ -709,7 +275,7 @@ class Import_User_UnitTest extends Unit {
 	}
 
 	/**
-	 * Fixture for the it_should_throw_exception() test method
+	 * Fixture for the Import_User_UnitTest::it_should_throw_exception() tests
 	 *
 	 * @return array[]
 	 * @throws \Exception
@@ -722,12 +288,110 @@ class Import_User_UnitTest extends Unit {
 		return array(
 			array(
 				$user,
+				$user,
 				array(
 					'ID'         => 100,
 					'user_email' => 'tester@example.org',
 				),
 				UserIDAlreadyExists::class,
 			),
+			array(
+				$user,
+				false,
+				array(
+					'ID'         => 100,
+					'user_email' => 'tester@example.org',
+				),
+				CannotUpdateDB::class,
+			),
+		);
+	}
+
+	/**
+	 * Test that the deprecation messages are triggered (when deprecation is enabled)
+	 *
+	 * @param $pmpro_action
+	 * @param $import_users_action
+	 * @param $expected_message
+	 *
+	 * @return void
+	 * @throws \Exception
+	 *
+	 * @test
+	 * @dataProvider fixture_deprecated_actions
+	 */
+	public function it_should_print_messages( $pmpro_action, $iu_action, $expected_message ) {
+
+		global $e20r_test_result_msg;
+		Functions\stubs(
+			array(
+				'esc_attr__' => null,
+			)
+		);
+		$mock_errlog = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'add_error_msg' => function( $message, $severity ) {
+					global $e20r_test_result_msg;
+					$e20r_test_result_msg = $message;
+
+					self::assertSame( 'warning', $severity );
+				},
+				'debug'         => function( $message ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( 'Mocked: ' . $message );
+				},
+			)
+		);
+
+		Functions\when( 'doing_action' )
+			->alias(
+				function( $action_name ) use ( $pmpro_action, $iu_action ) {
+					switch ( $action_name ) {
+						case 'pmp_im_pre_member_import':
+							return $pmpro_action;
+
+						case 'is_iu_pre_user_import':
+							return $iu_action;
+
+						default:
+							return false;
+					}
+				}
+			);
+		$m_present = $this->makeEmpty( User_Present::class );
+		$m_passwd  = $this->makeEmpty( Generate_Password::class );
+		$m_vars    = $this->makeEmpty( Variables::class );
+		$m_time    = $this->makeEmpty( Time::class );
+		$m_date    = $this->makeEmpty( Date_Format::class );
+
+		$import_user = $this->constructEmptyExcept(
+			Import_User::class,
+			'deprecated_action',
+			array( $m_vars, $mock_errlog, $m_present, $m_passwd, $m_time, $m_date )
+		);
+		$import_user->deprecated_action( array(), array() );
+
+		if ( true === $pmpro_action ) {
+			self::assertStringContainsString( 'pmp_im_pre_member_import', $e20r_test_result_msg );
+		}
+		if ( true === $iu_action ) {
+			self::assertStringContainsString( 'is_iu_pre_user_import', $e20r_test_result_msg );
+		}
+
+		self::assertSame( $e20r_test_result_msg, $expected_message );
+	}
+
+	/**
+	 * Fixture for the Import_User_UnitTest::it_should_print_messages() tests
+	 *
+	 * @return array[]
+	 */
+	public function fixture_deprecated_actions() {
+		return array(
+			array( true, false, 'The "pmp_im_pre_member_import" action has been deprecated and will be removed. Please hook your action handler(s) to the "e20r_before_user_import" action instead.' ),
+			array( false, true, 'The "is_iu_pre_user_import" action has been deprecated and will be removed. Please hook your action handler(s) to the "e20r_before_user_import" action instead.' ),
+			array( false, false, null ),
 		);
 	}
 }
