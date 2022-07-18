@@ -21,33 +21,20 @@
 
 namespace E20R\Import_Members\Modules\Users;
 
+use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
+use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Utilities\Utilities;
 use WP_Error;
-use WP_User;
 
 if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 	/**
 	 * Class User_ID
 	 */
-	class User_Present {
-
-		/**
-		 * Instance of the Error_Log() class
-		 *
-		 * @var Error_Log|null
-		 */
-		protected $error_log = null;
-
-		/**
-		 * Instance of the Variables() class
-		 *
-		 * @var Variables|null
-		 */
-		private $variables = null;
+	class User_Present extends Base_Validation {
 
 		/**
 		 * WP Error object
@@ -61,23 +48,29 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 *
 		 * @param Variables|null $variables
 		 * @param Error_Log|null $error_log
+		 *
+		 * @throws InvalidInstantiation Thrown if the supplied class isn't what we expect
 		 */
 		public function __construct( $variables = null, $error_log = null, $wp_error = null ) {
+			parent::__construct( $variables, $error_log );
+
 			if ( null === $wp_error ) {
 				$wp_error = new WP_Error();
 			}
+
+			if ( ! is_a( $wp_error, WP_Error::class ) ) {
+				throw new InvalidInstantiation(
+					sprintf(
+						// translators: %1$s: Supplied class base name, %2$s expected class base name
+						esc_attr__( 'The provided class %1$s is not of type %2$s', 'pmpro-import-members-from-csv' ),
+						class_basename( $wp_error ),
+						class_basename( WP_Error::class )
+					)
+				);
+			}
 			$this->wp_error = $wp_error;
-
-			if ( null === $error_log ) {
-				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			}
-			$this->error_log = $error_log;
-
-			if ( null === $variables ) {
-				$variables = new Variables( $this->error_log );
-			}
-			$this->variables = $variables;
 		}
+
 		/**
 		 * Set the status/error message for the User_Presence validation logic
 		 *
@@ -341,6 +334,26 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			);
 			$count = (int) $wpdb->get_var( $sql ); // // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			return ( 1 <= $count );
+		}
+
+		/**
+		 * Load presence test actions we use to trigger this class (N/A in this case)
+		 *
+		 * @return void
+		 */
+		public function load_actions() {
+		}
+
+		/**
+		 * Returns the list of error categories this validation class will be willing to ignore
+		 *
+		 * @param array $ignored_error_list
+		 * @param string $module_name
+		 *
+		 * @return array
+		 */
+		public function load_ignored_module_errors( $ignored_error_list, $module_name = 'user_present' ) {
+			return $ignored_error_list;
 		}
 	}
 }
