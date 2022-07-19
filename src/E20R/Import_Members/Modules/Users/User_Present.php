@@ -109,7 +109,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					$msg = sprintf(
 						// translators: %1$d: The line number in the CSV import file
 						esc_attr__(
-							'Error: Neither the ID, user_login nor user_email field exists in import record from line %1$d!',
+							'Error: Neither the ID, user_login nor user_email field exists in the CSV record being processed! (line %1$d)',
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number
@@ -138,7 +138,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					$msg = sprintf(
 						// translators: %1$d: The line number from the CSV import file
 						esc_attr__(
-							'Supplied information in ID column on line %1$d is not a number',
+							'Supplied information in ID column is not a number! (line %1$d)',
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number
@@ -152,7 +152,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				case Status::E20R_ERROR_NO_EMAIL:
 					$msg = sprintf(
 						// translators: %1$d: The line number from the CSV import file
-						esc_attr__( 'Invalid email in row %1$d (Not imported).', 'pmpro-import-members-from-csv' ),
+						esc_attr__( 'Invalid email address in CSV record. (line %1$d)', 'pmpro-import-members-from-csv' ),
 						$active_line_number
 					);
 
@@ -165,7 +165,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					$msg = sprintf(
 						// translators: %1$s column name, %2$s: row number
 						esc_attr__(
-							'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected (line: %1$d).',
+							'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected. (line: %1$d)',
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number
