@@ -29,6 +29,12 @@ if ( ! defined( 'WP_DEBUG' ) ) {
 	define( 'WP_DEBUG', true );
 }
 
+if ( ! class_exists( 'wpdb' ) && file_exists( __DIR__ . '/inc/wp-db.php' ) ) {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( 'Loading mock/replacement wpdb() class' );
+	require_once __DIR__ . '/inc/wp-db.php';
+}
+
 if ( ! class_exists( 'MemberOrder' ) && file_exists( __DIR__ . '/inc/class.memberorder.php' ) ) {
 	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	error_log( 'Loading mock/replacement MemberOrder() class' );
