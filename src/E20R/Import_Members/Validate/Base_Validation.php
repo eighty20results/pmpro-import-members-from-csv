@@ -66,18 +66,37 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 
-			if ( ! is_a( $error_log, Error_Log::class ) ) {
-				throw new InvalidInstantiation( sprintf( '%1$s is an invalid class type for %2$s', Variables::class, self::class ) );
+			if ( ! is_a( $error_log, Error_Log::class ) || ! is_object( $error_log ) ) {
+				throw new InvalidInstantiation(
+					sprintf(
+					// translators: %1$s: Name of supplied class, %2$s: Name of expected class
+						esc_attr__(
+							'"%1$s" is an unexpected class. Expecting "%2$s"',
+							'pmpro-import-members-from-csv'
+						),
+						gettype( $error_log ),
+						class_basename( Error_Log::class )
+					)
+				);
 			}
-
 			$this->error_log = $error_log;
 
 			if ( null === $variables ) {
 				$variables = new Variables( $this->error_log );
 			}
 
-			if ( ! is_a( $variables, Variables::class ) ) {
-				throw new InvalidInstantiation( sprintf( '%1$s is an invalid class type for %2$s', Variables::class, self::class ) );
+			if ( ! is_a( $variables, Variables::class ) || ! is_object( $variables ) ) {
+				throw new InvalidInstantiation(
+					sprintf(
+					// translators: %1$s: Name of supplied class, %2$s: Name of expected class
+						esc_attr__(
+							'"%1$s" is an unexpected class. Expecting "%2$s"',
+							'pmpro-import-members-from-csv'
+						),
+						gettype( $variables ),
+						class_basename( Variables::class )
+					)
+				);
 			}
 			$this->variables = $variables;
 		}
