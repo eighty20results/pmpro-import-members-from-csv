@@ -74,6 +74,7 @@ class User_Present_UnitTest extends Unit {
 	 * @test
 	 *
 	 * @dataProvider fixture_status_msgs
+	 * @throws InvalidInstantiation Should not be thrown in this test, test failure should result if it is thrown
 	 */
 	public function it_should_validate_status_msgs( $status, $line_number, $error_msgs, $warn_msgs, $expected_msg, $expected_err_category, $expected_warn_category ) {
 		global $e20r_import_err;
@@ -87,9 +88,6 @@ class User_Present_UnitTest extends Unit {
 		Functions\stubs(
 			array(
 				'esc_attr__' => null,
-				'do_action'  => function( $action, $closure, $priority ) {
-					return;
-				},
 			)
 		);
 
