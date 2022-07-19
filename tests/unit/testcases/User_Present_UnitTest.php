@@ -14,6 +14,8 @@ use Brain\Monkey\Functions;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WP_Error;
 use WP_Mock;
+use wpdb;
+
 
 class User_Present_UnitTest extends Unit {
 	use MockeryPHPUnitIntegration;
@@ -116,6 +118,13 @@ class User_Present_UnitTest extends Unit {
 			self::assertIsObject( $e20r_import_warn[ $expected_warn_category ] );
 			self::assertInstanceOf( WP_Error::class, $e20r_import_warn[ $expected_warn_category ] );
 		}
+
+		if ( null === $expected_err_category && null === $expected_warn_category ) {
+			self::assertIsArray( $e20r_import_warn );
+			self::assertIsArray( $e20r_import_err );
+			self::assertEmpty( $e20r_import_err );
+			self::assertEmpty( $e20r_import_warn );
+		}
 	}
 
 	/**
@@ -146,6 +155,7 @@ class User_Present_UnitTest extends Unit {
 			array( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, 7, array(), array(), 'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected. (line: 7).', null, 'warn_invalid_email_login_7' ),
 			array( Status::E20R_ERROR_NO_EMAIL, 6, array(), $custom_warnings, 'Invalid email in row 6 (Not imported).', null, 'warn_invalid_email_6' ),
 			array( Status::E20R_ERROR_ID_NOT_NUMBER, 5, $custom_errors, array(), 'Supplied information in ID column on line 5 is not a number', 'error_invalid_user_id_5', null ),
+			array( 0, 5, null, null, 'Not a valid message', null, null ),
 		);
 	}
 
@@ -196,6 +206,178 @@ class User_Present_UnitTest extends Unit {
 			array( 'Variables', new Error_Log(), new WP_Error(), InvalidInstantiation::class, '/.*Expecting "Variables"$/' ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			array( new Variables(), new Error_Log(), false, InvalidInstantiation::class, '/.*Expecting "WP_Error"$/' ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			array( false, false, false, InvalidInstantiation::class, '/.*Expecting "Error_Log"$/' ),
+		);
+	}
+
+	/**
+	 * Test the User_Present::load_ignored_module_errors() method (shouldn't do anything to the supplied list)
+	 *
+	 * @param array $supplied_modules List of modules to ignore errors for
+	 *
+	 * @return void
+	 * @throws InvalidInstantiation
+	 *
+	 * @test
+	 * @dataProvider fixture_ignored_modules
+	 */
+	public function it_should_return_same_ignored_list( $supplied_modules ) {
+		$m_errs = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					error_log( "Mock: {$msg}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+			)
+		);
+		$m_vars = $this->constructEmpty( Variables::class, array( $m_errs ) );
+		$wperr  = new WP_Error();
+
+		$class  = new User_Present( $m_vars, $m_errs, $wperr );
+		$result = $class->load_ignored_module_errors( $supplied_modules );
+		if ( is_countable( $result ) ) {
+			self::assertCount( count( $supplied_modules ), $result );
+		}
+		self::assertSame( $supplied_modules, $result );
+	}
+
+	/**
+	 * Fixture for the User_Present_UnitTest::it_should_return_same_ignored_list() test
+	 *
+	 * @return array
+	 */
+	public function fixture_ignored_modules() {
+		return array(
+			array( null ),
+			array( array() ),
+			array( array( 'one', 'two', 'three', 'four' ) ),
+			array(
+				array(
+					'one' => array(),
+					'two' => array(),
+				),
+			),
+			array( 'string' ),
+		);
+	}
+
+	/**
+	 * Test the User_Presence::data_can_be_imported() method
+	 *
+	 * @param mixed $column_exists Does the specified column exist in the CSV file
+	 * @param mixed $user_exists Does the specified user exist in the CSV file
+	 * @param mixed $update_allowed Can we update data for the user in the WP database
+	 * @param bool|int $expected The expected result from the test execution
+	 *
+	 * @return void
+	 * @throws InvalidInstantiation
+	 *
+	 * @test
+	 * @dataProvider fixture_importability_statuses
+	 */
+	public function it_should_validate_supportability_of_data_import( $column_exists, $user_exists, $update_allowed, $expected ) {
+
+		$m_errs = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					error_log( "Mock: {$msg}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+			)
+		);
+		$m_vars = $this->constructEmpty( Variables::class, array( $m_errs ) );
+		$wperr  = new WP_Error();
+
+		$class  = new User_Present( $m_vars, $m_errs, $wperr );
+		$result = $class->data_can_be_imported( $column_exists, $user_exists, $update_allowed );
+
+		self::assertNotEmpty( $result );
+		self::assertEquals( $expected, $result );
+	}
+
+	/**
+	 * Fixture for the User_Present_UnitTest::it_should_validate_supportability_of_data_import() test
+	 *
+	 * @return array
+	 */
+	public function fixture_importability_statuses() {
+		return array(
+			// column_exists, user_exists, update_allowed, value returned
+			array( true, true, true, true ),
+			array( true, true, false, Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED ),
+			array( true, false, true, Status::E20R_ERROR_USER_NOT_FOUND ),
+			array( false, true, true, Status::E20R_USER_IDENTIFIER_MISSING ),
+			array( null, true, true, true ),
+			array( true, null, true, true ),
+			array( true, true, null, true ),
+			array( true, '', true, true ),
+			array( '', true, true, true ),
+			array( true, true, '', true ),
+		);
+	}
+
+	/**
+	 * Test of the User_Present::db_user_exists() method
+	 *
+	 * @param array|string $column_data The CSV column we're processing with data
+	 * @param array|string $value_to_find The value(s) we're searching for
+	 * @param string $table_name The tblae name to search
+	 * @param int $counted_users Number of users counted (returned from mocked wpdb::get_var())
+	 * @param string $expected_sql The SQL statement we expect db_user_exists() will generate
+	 * @param boolean $expected_result The expected value returned from db_user_exists()
+	 *
+	 * @return void
+	 * @throws InvalidInstantiation
+	 *
+	 * @test
+	 * @dataProvider fixture_test_sql_for_user
+	 */
+	public function it_should_generate_valid_user_table_SQL( $column_data, $value_to_find, $table_name, $counted_users, $expected_sql, $expected_result ) {
+		Functions\stubs(
+			array(
+				'esc_sql' => null,
+			)
+		);
+
+		$m_errs = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					error_log( "Mock: {$msg}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+			)
+		);
+		$m_vars = $this->constructEmpty( Variables::class, array( $m_errs ) );
+		$wperr  = $this->makeEmpty( WP_Error::class );
+		$m_wpdb = $this->makeEmpty(
+			wpdb::class,
+			array(
+				'get_var' => function( $sql ) use ( $expected_sql, $table_name, $counted_users ) {
+					self::assertSame( $expected_sql, $sql );
+					return $counted_users;
+				},
+			)
+		);
+
+		$m_wpdb->users = $table_name;
+
+		$class  = new User_Present( $m_vars, $m_errs, $wperr );
+		$result = $class->db_user_exists( $column_data, $value_to_find, $m_wpdb );
+		self::assertIsBool( $result );
+		self::assertSame( $expected_result, $result );
+	}
+
+	/**
+	 * Fixture for the User_Present_UnitTest::it_should_generate_valid_user_table_SQL() test
+	 *
+	 * @return array[]
+	 */
+	public function fixture_test_sql_for_user() {
+		return array(
+			// column_data, value to find, table name, counted users, expected sql, expected outcome
+			array( 'user_email', 'tester@example.org', 'wptest_users', 0, "SELECT COUNT(ID) FROM wptest_users WHERE user_email = 'tester@example.org'", false ),
+			array( 'user_email', 'tester@example.org', 'wptest_users', 1, "SELECT COUNT(ID) FROM wptest_users WHERE user_email = 'tester@example.org'", true ),
+			array( array( 'user_email', 'user_login' ), array( 'tester@example_org', 'tester' ), 'wp_users', 1, "SELECT COUNT(ID) FROM wp_users WHERE user_email = 'tester@example_org' AND user_login = 'tester'", true ),
+			array( array( 'user_email', 'user_login' ), array( 'tester@example_org', 'tester' ), 'wp_users', 0, "SELECT COUNT(ID) FROM wp_users WHERE user_email = 'tester@example_org' AND user_login = 'tester'", false ),
 		);
 	}
 }
