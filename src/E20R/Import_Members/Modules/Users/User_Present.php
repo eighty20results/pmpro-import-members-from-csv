@@ -165,10 +165,10 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					$msg = sprintf(
 						// translators: %1$s column name, %2$s: row number
 						esc_attr__(
-							'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected (row: %1$d). Will not import/update user.',
+							'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected (line: %1$d).',
 							'pmpro-import-members-from-csv'
 						),
-						$active_line_number++
+						$active_line_number
 					);
 
 					$new_error = $this->wp_error;
