@@ -58,12 +58,12 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				$wp_error = new WP_Error();
 			}
 
-			if ( ! is_a( $wp_error, WP_Error::class ) ) {
+			if ( ! is_a( $wp_error, WP_Error::class ) || ! is_object( $wp_error ) ) {
 				throw new InvalidInstantiation(
 					sprintf(
 						// translators: %1$s: Supplied class base name, %2$s expected class base name
-						esc_attr__( 'The provided class %1$s is not of type %2$s', 'pmpro-import-members-from-csv' ),
-						class_basename( $wp_error ),
+						esc_attr__( '"%1$s" is an unexpected class. Expecting "%2$s"', 'pmpro-import-members-from-csv' ),
+						gettype( $wp_error ),
 						class_basename( WP_Error::class )
 					)
 				);
