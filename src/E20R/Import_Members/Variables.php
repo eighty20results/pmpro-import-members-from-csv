@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2018-2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,26 +15,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Import_Members\Variables
  */
 
 namespace E20R\Import_Members;
 
+if ( ! defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
+	die( 'Naughty, naughty! Cannot access file directly' );
+}
+
+use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Import_Members\Process\CSV;
 
 if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 	/**
 	 * Class Variables
-	 * @package E20R\Import_Members
 	 */
 	class Variables {
-
-		/**
-		 * Instance of the Variables class (or null if not instantiated yet)
-		 *
-		 * @var null|Variables
-		 */
-		private static $instance = null;
 
 		/**
 		 * Path to log file for errors
@@ -226,17 +225,31 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		private $error_log = null;
 
 		/**
-		 * Import_Members constructor.
+		 * Variables constructor.
 		 *
-		 * @access private
+		 * @param Error_Log|null $error_log Instance of the Error_Log() class
+		 *
+		 * @throws InvalidInstantiation Thrown if the supplied class isn't of the expected type
 		 */
 		public function __construct( $error_log = null ) {
 
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}
+			if ( ! is_a( $error_log, Error_Log::class ) || ! is_object( $error_log ) ) {
+				throw new InvalidInstantiation(
+					sprintf(
+						// translators: %1$s: Name of supplied class, %2$s: Name of expected class
+						esc_attr__(
+							'"%1$s" is an unexpected class. Expecting "%2$s"',
+							'pmpro-import-members-from-csv'
+						),
+						gettype( $error_log ),
+						class_basename( Error_Log::class )
+					)
+				);
+			}
 			$this->error_log = $error_log;
-			$this->error_log->debug( 'Instantiating the Variables class' );
 			$this->configure();
 		}
 
@@ -251,10 +264,11 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 			}
 
 			// Set the error log info
-			$upload_dir = wp_upload_dir();
+			$upload_dir = function_exists( 'wp_upload_dir' ) ? wp_upload_dir() : null;
 
 			if ( empty( $upload_dir ) ) {
 				$this->error_log->debug( 'Error: Cannot find the WP_UPLOAD_DIR location!!' );
+				return;
 			}
 
 			// FIXME: Split error and warning logs to two separate files and update settings accordingly
