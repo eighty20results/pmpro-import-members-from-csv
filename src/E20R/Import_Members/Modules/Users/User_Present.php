@@ -29,6 +29,7 @@ use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
 use E20R\Utilities\Utilities;
 use WP_Error;
+use wpdb;
 
 if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 	/**
@@ -282,7 +283,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 *
 		 * @return true|int
 		 */
-		private function data_can_be_imported( $has_column, $user_exists, $allow_update ) {
+		public function data_can_be_imported( $has_column, $user_exists, $allow_update ) {
 
 			// The user identifying field is not present in import data
 			if ( false === $has_column ) {
@@ -307,12 +308,14 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 *
 		 * @param string|string[] $column The wp_users table column(s) to search
 		 * @param string|array[]  $value The value(s) we're looking for in that column
+		 * @param null|wpdb $wpdb Instance of the $wpdb class (or a mocked version)
 		 *
 		 * @return bool
-		 * @access private
 		 */
-		private function db_user_exists( $column, $value ) {
-			global $wpdb;
+		public function db_user_exists( $column, $value, $wpdb = null ) {
+			if ( null === $wpdb ) {
+				global $wpdb;
+			}
 
 			$where_clause = 'WHERE ';
 
@@ -328,7 +331,7 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			}
 
 			$sql   = sprintf(
-				'SELECT COUNT(*) FROM %1$s %2$s',
+				'SELECT COUNT(ID) FROM %1$s %2$s',
 				$wpdb->users,
 				$where_clause
 			);
