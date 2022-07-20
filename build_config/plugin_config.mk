@@ -42,4 +42,4 @@ PHP_CODE_PATHS := *.php src/E20R/**/*.php src/E20R/**/**/*.php src/E20R/**/**/**
 PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*
 E20R_MAIN_BRANCH_NAME := main
 E20R_HOST_IP_CMD := /sbin/ifconfig
-E20R_HOST_IFACE := en0
+E20R_HOST_IFACE := $(LOCAL_NETWORK_IF)
