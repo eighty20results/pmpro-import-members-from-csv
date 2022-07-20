@@ -200,8 +200,10 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						// translators: %1$s: Exception message
 							esc_attr__( 'Unexpected error: %1$s', 'pmpro-import-members-from-csv' ),
 							$e->getMessage()
-						)
+						),
+						'error'
 					);
+					return false;
 				}
 			}
 
