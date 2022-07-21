@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
 }
 
 use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Process\CSV;
 
 if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
@@ -460,11 +460,11 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		 * @param string $variable_name The name of the variable to save/update
 		 * @param mixed $value The value to set it to
 		 *
-		 * @throws InvalidSettingsKey Thrown if this Variables() class lacks the specified parameter
+		 * @throws InvalidProperty Thrown if this Variables() class lacks the specified parameter
 		 */
 		public function set( $variable_name, $value ) {
 			if ( ! property_exists( $this, $variable_name ) ) {
-				throw new InvalidSettingsKey();
+				throw new InvalidProperty();
 			}
 
 			$this->{$variable_name} = $value;
@@ -502,7 +502,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 		 *
 		 * @return mixed|null
 		 *
-		 * @throws InvalidSettingsKey Thrown if the specified variable is undefined/not present
+		 * @throws InvalidProperty Thrown if the specified variable is undefined/not present
 		 */
 		public function get( $variable_name = null ) {
 
@@ -513,7 +513,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 			}
 
 			if ( ! property_exists( $this, $variable_name ) ) {
-				throw new InvalidSettingsKey(
+				throw new InvalidProperty(
 					sprintf(
 					// translators: %1$s: Variables() parameter name
 						esc_attr__(

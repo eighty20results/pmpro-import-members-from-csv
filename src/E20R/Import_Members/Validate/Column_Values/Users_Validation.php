@@ -21,7 +21,7 @@
 
 namespace E20R\Import_Members\Validate\Column_Values;
 
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
@@ -48,7 +48,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 * @param Variables|null $variables Instance of the Variables() class
 		 * @param Error_Log|null $error_log Instance of the Error_Log() class
 		 *
-		 * @throws InvalidSettingsKey Thrown when the Import::get() operation uses the wrong property
+		 * @throws InvalidProperty Thrown when the Import::get() operation uses the wrong property
 		 */
 		public function __construct( $variables = null, $error_log = null ) {
 			parent::__construct( $variables, $error_log );
@@ -107,7 +107,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 *
 		 * @return bool|int
 		 *
-		 * @throws InvalidSettingsKey Raised if the 'update_users' key is not a valid setting/variable
+		 * @throws InvalidProperty Raised if the 'update_users' key is not a valid setting/variable
 		 */
 		public function validate_email( $success, $user_id, $record, $field_name = null, $wp_error = null ) {
 
@@ -143,14 +143,14 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 		 * @param null|string|string[] $field_name Name of the field to validate
 		 *
 		 * @return bool|int
-		 * @throws InvalidSettingsKey Thrown if Variables::get() references an invalid property
+		 * @throws InvalidProperty Thrown if Variables::get() references an invalid property
 		 */
 		public function validate_user_id( $success, $user_id, $record, $field_name = null, $wp_error = null ) {
 
 			$allow_update = (bool) $this->variables->get( 'update_users' );
 			// TODO: Remove duplication of the following code from lines 214-216 in User_Present.php file
 
-			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
+			$has_id    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && $this->is_valid_integer( $record['ID'] ) );
 			$has_email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
 			$has_login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 

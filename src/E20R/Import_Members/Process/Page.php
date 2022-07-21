@@ -20,7 +20,7 @@
 namespace E20R\Import_Members\Process;
 
 use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
@@ -56,7 +56,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		 * @param Import|null    $import Instance of the Import class
 		 *
 		 * @throws InvalidInstantiation Raised when the Import class isn't pre-defined and passed to us
-		 * @throws InvalidSettingsKey Raised when the specified Import::get() key isn't valid
+		 * @throws InvalidProperty Raised when the specified Import::get() key isn't valid
 		 */
 		public function __construct( $import = null ) {
 			if ( null === $import ) {
@@ -149,7 +149,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 		/**
 		 * Content of the settings page
 		 *
-		 * @throws InvalidSettingsKey Thrown if the specified parameter is invalid
+		 * @throws InvalidProperty Thrown if the specified parameter is invalid
 		 * @since 0.1
 		 **/
 		public function import_page() {
