@@ -16,7 +16,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Exceptions\InvalidSettingsKey
+ * @package E20R\Exceptions\InvalidProperty
  */
 
 namespace E20R\Exceptions;
@@ -32,7 +32,7 @@ if ( ! class_exists( 'E20R\Exception\InvalidSettingsKey' ) ) {
 	/**
 	 * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instantiated
 	 */
-	class InvalidSettingsKey extends Exception {
+	class InvalidProperty extends Exception {
 
 		/**
 		 * Custom exception constructor
