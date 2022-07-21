@@ -22,7 +22,7 @@
 namespace E20R\Import_Members\Email;
 
 use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Import;
 use E20R\Import_Members\Variables;
@@ -99,7 +99,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		 * @param array $fields The Metadata fields and their values we may need to update the email template
 		 * @param PMProEmail|null $email For unit-testing purposes (Passing the PMPro Email class to this function)
 		 *
-		 * @throws InvalidSettingsKey Thrown if the specified settings key is undefined
+		 * @throws InvalidProperty Thrown if the specified settings key is undefined
 		 */
 		public function maybe_send_email( $user, $fields, $email = null ) {
 			$send_email = (bool) $this->variables->get( 'send_welcome_email' );
@@ -332,7 +332,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		/**
 		 * Load Imported Member template to Email Templates Admin (add-on)
 		 *
-		 * @throws InvalidSettingsKey Thrown if the specified settings key is missing
+		 * @throws InvalidProperty Thrown if the specified settings key is missing
 		 *
 		 * @since v2.50 - ENHANCEMENT: Allow editing imported_member.html in the Email Templates Admin add-on
 		 */

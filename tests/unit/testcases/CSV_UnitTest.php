@@ -20,7 +20,7 @@ namespace E20R\Test\Unit;
 
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Process\CSV;
 use E20R\Import_Members\Error_Log;
@@ -85,7 +85,7 @@ class CSV_UnitTest extends Unit {
 	 *
 	 * @dataProvider fixture_import_file_names
 	 * @test
-	 * @throws InvalidSettingsKey
+	 * @throws InvalidProperty
 	 */
 	public function it_should_use_request_variable_for_import_file_path( $files_array, $variable_content, $transient_result, $file_exists, $expected_result ) {
 
@@ -255,7 +255,7 @@ class CSV_UnitTest extends Unit {
 	 * @return void
 	 *
 	 * @test
-	 * @throws InvalidSettingsKey
+	 * @throws InvalidProperty
 	 */
 	public function it_should_return_false() {
 		$presence_mock = $this->makeEmpty( User_Present::class );

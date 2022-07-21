@@ -20,7 +20,7 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Exceptions\CannotUpdateDB;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
@@ -139,7 +139,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @return int|null
 		 *
-		 * @throws InvalidSettingsKey Thrown when the specified Variable::get() parameter doesn't exist (should not happen)
+		 * @throws InvalidProperty Thrown when the specified Variable::get() parameter doesn't exist (should not happen)
+		 * @throws CannotUpdateDB Thrown if the underlying DB cannot be updated (if updating user's ID)
 		 */
 		public function maybe_add_or_update( $user_data, $user_meta, $headers, $wp_error = null ) {
 
@@ -164,7 +165,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$allow_update    = (bool) $this->variables->get( 'update_users' );
 				$allow_id_update = (bool) $this->variables->get( 'update_id' );
 				$site_id         = (int) $this->variables->get( 'site_id' );
-			} catch ( InvalidSettingsKey $e ) {
+			} catch ( InvalidProperty $e ) {
 				$wp_error->add( 'e20r_setting_key', $e->getMessage() );
 				$e20r_import_err[ "startup_error_{$active_line_number}" ] = $wp_error;
 				return null;
@@ -239,7 +240,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				try {
 					$new_error = $wp_error;
 					$user      = $this->update_user_id( $user, $user_data );
-				} catch ( InvalidSettingsKey $e ) {
+				} catch ( InvalidProperty $e ) {
 					$this->error_log->debug( $e->getMessage() );
 					$new_error->add( 'unexpected_key', $e->getMessage() );
 					$e20r_import_err[ "unexpected_key_{$active_line_number}" ] = $new_error;
@@ -479,7 +480,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @return WP_User|false
 		 *
 		 * @throws UserIDAlreadyExists Thrown if the "target" local User ID already has a user
-		 * @throws InvalidSettingsKey Thrown if the 'update_id' variable, for some inexplicable reason, no longer exists
+		 * @throws InvalidProperty Thrown if the 'update_id' variable, for some inexplicable reason, no longer exists
 		 * @throws CannotUpdateDB Thrown if $wpdb->update() returns false or $wpdb is empty
 		 */
 		public function update_user_id( $wp_user, $user_data ) {
@@ -831,7 +832,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			try {
 				$meta_keys = $this->variables->get( 'fields' );
-			} catch ( InvalidSettingsKey $e ) {
+			} catch ( InvalidProperty $e ) {
 				$this->error_log->debug( 'Unexpected: ' . $e->getMessage() );
 				return $user_meta;
 			}
@@ -876,7 +877,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 			$msg = sprintf( $text, $action, 'e20r_before_user_import' );
 			$this->error_log->add_error_msg( $msg, 'warning' );
-			do_action( $action, $user_data, $user_meta );
 		}
 	}
 }

@@ -19,7 +19,7 @@
 
 namespace E20R\Import_Members\Process;
 
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Exceptions\NoHeaderDataFound;
 use E20R\Exceptions\NoUserDataFound;
 use E20R\Exceptions\NoUserMetadataFound;
@@ -96,7 +96,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 *
 		 * @return bool|string
 		 *
-		 * @throws InvalidSettingsKey Thrown if 'filename' became an invalid setting
+		 * @throws InvalidProperty Thrown if 'filename' became an invalid setting
 		 */
 		public function verify_import_file_path( $file_name = null, $import_dir_path = null ) {
 
@@ -144,7 +144,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @param string $tmp_name
 		 *
 		 * @return false|string
-		 * @throws InvalidSettingsKey When 'background_import', 'filename', and 'per_partial' aren't valid Variables() class member properties
+		 * @throws InvalidProperty When 'background_import', 'filename', and 'per_partial' aren't valid Variables() class member properties
 		 */
 		public function pre_process_file( $tmp_name = null ) {
 
@@ -247,7 +247,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @param string $file_name
 		 *
 		 * @return bool
-		 * @throws InvalidSettingsKey Thrown if the filename variable is unset/not present
+		 * @throws InvalidProperty Thrown if the filename variable is unset/not present
 		 */
 		private function clean_files( $file_name ) {
 			$dir_name  = dirname( $file_name );
@@ -323,7 +323,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		 * @throws NoHeaderDataFound Thrown if the CSV file lacks the header row
 		 * @throws NoUserDataFound Thrown if one of the filter handlers returns an empty array of user data
 		 * @throws NoUserMetadataFound Thrown when one of the filter handlers returns and empty array of user metadata
-		 * @throws InvalidSettingsKey Thrown if the property specified in the Variable::get() doesn't exist
+		 * @throws InvalidProperty Thrown if the property specified in the Variable::get() doesn't exist
 		 *
 		 * @since 0.5
 		 */
@@ -455,7 +455,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 						)
 					);
 					break;
-				} catch ( InvalidSettingsKey $e ) {
+				} catch ( InvalidProperty $e ) {
 					$this->error_log->add_error_msg(
 						sprintf(
 							// translators: %1$d - Line number being imported, %2$s - CSV file name

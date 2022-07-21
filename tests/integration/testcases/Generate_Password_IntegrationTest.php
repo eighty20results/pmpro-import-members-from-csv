@@ -143,7 +143,7 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	 * @param null|WP_Error $wp_error Instance of the WP_Error() class (or null) value
 	 *
 	 * @return void
-	 * @throws \E20R\Exceptions\InvalidSettingsKey Thrown if the get() method attempts to retrieve a value for the wrong class parameter
+	 * @throws \E20R\Exceptions\InvalidProperty Thrown if the get() method attempts to retrieve a value for the wrong class parameter
 	 * @throws \E20R\Exceptions\InvalidInstantiation Thrown if the required Variables() and Error_Log() classes are missing
 	 */
 	public function it_should_instantiate( $error_log, $variables, $wp_error ) {

@@ -20,7 +20,7 @@ namespace E20R\Import_Members;
 
 use E20R\Exceptions\AutoloaderNotFound;
 use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Modules\PMPro\Import_Member;
 use E20R\Import_Members\Modules\PMPro\PMPro;
@@ -172,7 +172,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param null|Error_Log       $error_log
 		 *
 		 * @throws InvalidInstantiation Thrown if this class isn't instantiated properly
-		 * @throws InvalidSettingsKey Thrown if the specified class property is undefined/not present
+		 * @throws InvalidProperty Thrown if the specified class property is undefined/not present
 		 *
 		 * @filter e20r_import_column_validation_classes - Add to/remove Column Validation classes
 		 */
@@ -327,11 +327,11 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		 * @param string $param The class parameter we're trying to get the value of
 		 *
 		 * @return mixed
-		 * @throws InvalidSettingsKey Raised if the parameter doesn't exist in this class
+		 * @throws InvalidProperty Raised if the parameter doesn't exist in this class
 		 */
 		public function get( $param = 'plugin_path' ) {
 			if ( ! property_exists( $this, $param ) ) {
-				throw new InvalidSettingsKey(
+				throw new InvalidProperty(
 					sprintf(
 						esc_attr__( "Error: The requested parameter '%1\$s' does not exist in the %2\$s class!", 'pmpro-import-members-from-csv' ),
 						$param,

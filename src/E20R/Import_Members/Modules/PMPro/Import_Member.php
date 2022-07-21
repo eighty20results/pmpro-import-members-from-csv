@@ -19,7 +19,7 @@
 
 namespace E20R\Import_Members\Modules\PMPro;
 
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Data;
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
@@ -96,7 +96,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		 *
 		 * @param Import|null $import
 		 *
-		 * @throws InvalidSettingsKey Raised if the specified class property is missing
+		 * @throws InvalidProperty Raised if the specified class property is missing
 		 */
 		public function __construct( $import ) {
 			$this->import          = $import;

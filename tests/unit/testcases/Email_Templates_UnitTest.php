@@ -22,20 +22,11 @@
 namespace E20R\Tests\Unit;
 
 use Codeception\Test\Unit;
-use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
-use E20R\Import_Members\Data;
+
 use E20R\Import_Members\Email\Email_Templates;
 use E20R\Import_Members\Error_Log;
-use E20R\Import_Members\Import;
-use E20R\Import_Members\Modules\PMPro\Import_Member;
-use E20R\Import_Members\Modules\PMPro\PMPro;
-use E20R\Import_Members\Modules\Users\Import_User;
-use E20R\Import_Members\Process\Ajax;
-use E20R\Import_Members\Process\CSV;
-use E20R\Import_Members\Process\Page;
-use E20R\Import_Members\Validate_Data;
 use E20R\Import_Members\Variables;
+
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;

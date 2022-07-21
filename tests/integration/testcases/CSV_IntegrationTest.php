@@ -23,7 +23,7 @@ namespace E20R\Tests\Integration;
 
 use Brain\Monkey\Expectation\Exception\ExpectationArgsRequired;
 use Codeception\TestCase\WPTestCase;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Exceptions\NoHeaderDataFound;
 use E20R\Exceptions\NoUserDataFound;
 use E20R\Exceptions\NoUserMetadataFound;
@@ -185,7 +185,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_upload_settings
 	 *
 	 * @test
-	 * @throws InvalidSettingsKey
+	 * @throws InvalidProperty
 	 */
 	public function it_should_validate_filename_settings( $file_name, $file_exists, $from_settings, $from_transient, $request_value, $expected_filename ) {
 
@@ -220,7 +220,7 @@ class CSV_IntegrationTest extends WPTestCase {
 
 			// Using the vfsStream() class to mock the file system, so the directory path is a little different from that of a real server
 			$result = $this->csv->verify_import_file_path( $file_name, 'vfs://mocked/var/www/html/wp-content/uploads/e20r_imports' );
-		} catch ( InvalidSettingsKey $e ) {
+		} catch ( InvalidProperty $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
 		}
 
@@ -380,7 +380,7 @@ class CSV_IntegrationTest extends WPTestCase {
 		try {
 			$this->csv = new CSV( $this->variables, $this->errorlog );
 			$result    = $this->csv->process( $file_name, $options, $file_handle );
-		} catch ( InvalidSettingsKey $e ) {
+		} catch ( InvalidProperty $e ) {
 			$this->fail( 'Should not receive: ' . $e->getMessage() );
 		}
 
@@ -435,7 +435,7 @@ class CSV_IntegrationTest extends WPTestCase {
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidSettingsKey Thrown when attempting to update a setting that doesn't exist (N/A in this test)
+	 * @throws InvalidProperty Thrown when attempting to update a setting that doesn't exist (N/A in this test)
 	 *
 	 * @dataProvider fixture_exception_trigger_data
 	 * @test
