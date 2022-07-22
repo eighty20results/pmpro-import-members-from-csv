@@ -22,7 +22,7 @@
 namespace E20R\Import_Members\Validate;
 
 use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Variables;
 
@@ -138,14 +138,37 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		 * @param string $param Name of class parameter
 		 *
 		 * @return mixed
-		 * @throws InvalidSettingsKey Thrown if the current class lacks the specified parameter
+		 * @throws InvalidProperty Thrown if the current class lacks the specified parameter
 		 */
 		public function get( $param ) {
 			if ( ! property_exists( $this, $param ) ) {
-				throw new InvalidSettingsKey( sprintf( '%1$s is an invalid property in %2$s', $param, self::class ) );
+				throw new InvalidProperty( sprintf( '%1$s is an invalid property in %2$s', $param, self::class ) );
 			}
 
 			return $this->{$param};
+		}
+
+		/**
+		 * Test whether the supplied value is an integer or not
+		 *
+		 * @param mixed $val Value to test for integer-ness
+		 *
+		 * @return bool
+		 */
+		public function is_valid_integer( $val ) {
+			if ( in_array( $val, array( true, false, null ), true ) ) {
+				return false;
+			}
+
+			if ( is_float( (float) $val + 0 ) && ( (int) $val + 0 ) > PHP_INT_MAX ) {
+				return false;
+			}
+
+			if ( 0 === preg_match( '/^[\"\'+\-]?\d+[\"\']?$/', $val ) ) {
+				return false;
+			}
+
+			return true;
 		}
 	}
 }
