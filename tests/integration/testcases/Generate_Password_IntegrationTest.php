@@ -145,6 +145,9 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	 * @return void
 	 * @throws \E20R\Exceptions\InvalidProperty Thrown if the get() method attempts to retrieve a value for the wrong class parameter
 	 * @throws \E20R\Exceptions\InvalidInstantiation Thrown if the required Variables() and Error_Log() classes are missing
+	 *
+	 * @test
+	 * @dataProvider fixture_instantiation
 	 */
 	public function it_should_instantiate( $error_log, $variables, $wp_error ) {
 
@@ -160,9 +163,11 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	 * @return array
 	 */
 	public function fixture_instantiation() {
+		$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		return array(
-			array( new Error_Log(), new Variables(), new WP_Error() ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			array( $error_log, new Variables(), new WP_Error() ),
 			array( null, null, null ),
+			array( $error_log, new Variables( $error_log ), false ),
 		);
 	}
 
@@ -177,7 +182,6 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 	 * @return void
 	 *
 	 * @test
-	 *
 	 * @dataProvider fixture_status_msgs
 	 */
 	public function it_should_set_status_msg( $status, $allow_updates, $line_num, $expected ) {
@@ -299,11 +303,13 @@ class Generate_Password_IntegrationTest extends WPTestCase {
 		return array(
 			array( $this->fixture_record( false, null ), false, null, true ),
 			array( $this->fixture_record( true, null ), false, null, true ),
+			array( $this->fixture_record( true, '' ), false, false, true ),
 			array( $this->fixture_record( true, 'password' ), false, new WP_User(), false ),
 			array( $this->fixture_record( true, '' ), false, new WP_User(), false ),
 			array( $this->fixture_record( true, ' ' ), false, new WP_User(), false ),
 			array( $empty_record, true, null, true ),
 			array( null, true, null, true ),
+			array( false, true, null, true ),
 			array( $empty_record, true, new WP_User(), false ),
 			array( null, true, new WP_User(), false ),
 		);
