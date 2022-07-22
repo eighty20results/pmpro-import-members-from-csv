@@ -830,10 +830,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 */
 		public function import_usermeta( $user_meta, $user_data, $headers ) {
 
+			if ( ! is_array( $user_meta ) ) {
+				return array();
+			}
+
 			try {
 				$meta_keys = $this->variables->get( 'fields' );
 			} catch ( InvalidProperty $e ) {
-				$this->error_log->debug( 'Unexpected: ' . $e->getMessage() );
+				$this->error_log->debug( $e->getMessage() );
 				return $user_meta;
 			}
 
