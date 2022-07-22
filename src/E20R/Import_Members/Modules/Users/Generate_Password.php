@@ -38,15 +38,16 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 		 * Instance of the WP_Error() class
 		 *
 		 * @var WP_Error|null
+		 * @access protected
 		 */
-		private $wp_error = null;
+		protected $wp_error = null;
 
 		/**
 		 * Constructor for the User_Update() class
 		 *
 		 * @param Variables|null $variables The Variable() class instance we're using
 		 * @param Error_Log|null $error_log The Error_Log() class instance we're using
-		 * @param WP_Error|null $wp_error Mockable error object
+		 * @param WP_Error|null $wp_error WP_Error class (also supports being mocked)
 		 *
 		 * @throws \E20R\Exceptions\InvalidInstantiation Thrown if we mess up/ignore including the required Variables() and Error_Log() classes
 		 *
@@ -54,7 +55,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Generate_Password' ) ) {
 		public function __construct( $variables = null, $error_log = null, $wp_error = null ) {
 			parent::__construct( $variables, $error_log );
 
-			if ( null === $wp_error ) {
+			if ( in_array( $wp_error, array( null, false ), true ) ) {
 				$wp_error = new WP_Error();
 			}
 			$this->wp_error = $wp_error;

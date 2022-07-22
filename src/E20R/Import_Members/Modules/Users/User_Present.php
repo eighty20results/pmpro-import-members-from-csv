@@ -41,8 +41,9 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		 * WP Error object
 		 *
 		 * @var mixed|WP_Error|null
+		 * @access protected
 		 */
-		private $wp_error = null;
+		protected $wp_error = null;
 
 		/**
 		 * Constructor for the User_Present() class
