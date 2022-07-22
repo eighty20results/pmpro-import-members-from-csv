@@ -22,7 +22,7 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Exceptions\InvalidInstantiation;
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Validate\Base_Validation;
@@ -194,21 +194,14 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			if ( null === $allow_update ) {
 				try {
 					$allow_update = (bool) $this->variables->get( 'update_users' );
-				} catch ( InvalidSettingsKey $e ) {
-					$this->error_log->add_error_msg(
-						sprintf(
-						// translators: %1$s: Exception message
-							esc_attr__( 'Unexpected error: %1$s', 'pmpro-import-members-from-csv' ),
-							$e->getMessage()
-						),
-						'error'
-					);
+				} catch ( InvalidProperty $e ) {
+					$this->error_log->add_error_msg( $e->getMessage(), 'error' );
 					return false;
 				}
 			}
 
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
-			$ID    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) && Utilities::is_integer( $record['ID'] ) );
+			$ID    = ( isset( $record['ID'] ) && ! empty( $record['ID'] ) );
 			$email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
 			$login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 
@@ -232,8 +225,9 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
-			if ( true === $ID && false === Utilities::is_integer( $record['ID'] ) ) {
+			if ( true === $ID && false === $this->is_valid_integer( $record['ID'] ) ) {
 				$this->status_msg( Status::E20R_ERROR_ID_NOT_NUMBER, $allow_update );
+				$status = false;
 			}
 
 			// Is the user_email supplied and is it a valid email address
@@ -242,12 +236,8 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				$status = false;
 			}
 
-			$id_fields = array(
-				'ID'         => 'ID',
-				'user_login' => 'login',
-				'user_email' => 'email',
-			);
-
+			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+			// TODO: Is there a problem when we're not validating both user_email and user_login to identify existing user?
 			if ( true === $email && true === $login ) {
 				$exists = $this->db_user_exists( array( 'user_email', 'user_login' ), array( $record['user_email'], $record['user_login'] ) );
 				$status = $this->data_can_be_imported( true, $exists, $allow_update );
@@ -258,12 +248,26 @@ if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					return $status;
 				}
 			}
+			*/
+
+			$id_fields = apply_filters(
+				'e20r_import_expected_identification_columns',
+				array(
+					'ID'         => 'ID',
+					'user_login' => 'login',
+					'user_email' => 'email',
+				)
+			);
+
+			if ( false === $status ) {
+				return false;
+			}
 
 			foreach ( $id_fields as $field => $type ) {
 				// Using the name of the field in a dynamic variable,
 				// which was set to true/false on lines 215-217 of this file - ${$type} <=> {$ID}|{$email}|{$login}
 				$has_column = ${$type};
-				$exists     = $this->db_user_exists( $field, $record[ $field ] );
+				$exists     = isset( $record[ $field ] ) && $this->db_user_exists( $field, $record[ $field ] );
 				$status     = $this->data_can_be_imported( $has_column, $exists, $allow_update );
 				$this->status_msg( $status, $allow_update );
 
