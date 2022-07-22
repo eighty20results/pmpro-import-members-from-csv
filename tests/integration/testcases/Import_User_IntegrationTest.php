@@ -21,23 +21,26 @@
 
 namespace E20R\Tests\Integration;
 
-use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
+use E20R\Import_Members\Modules\Users\Generate_Password;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Modules\Users\User_Present;
+use E20R\Import_Members\Validate\Date_Format;
+use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Variables;
 
 use E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence;
 use E20R\Tests\Fixtures\Factory\E20R_TestCase;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
 
+use WP_Mock;
 use org\bovigo\vfs\vfsStream;
-use WP_Error;
-use MemberOrder;
-use WP_User;
 
-use function fixture_read_from_user_csv;
-use function fixture_read_from_meta_csv;
+use MemberOrder;
+
+use WP_Error;
+use WP_User;
 
 class Import_User_IntegrationTest extends E20R_TestCase {
 
@@ -125,10 +128,8 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		WP_Mock::setUp();
 
-		$this->test_data = new Manage_Test_Data();
-
-		parent::setUp();
 		$this->load_mocks();
 
 		// Insert membership level data
@@ -148,6 +149,16 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 			),
 		);
 		$this->file_system = vfsStream::setup( 'mocked', null, $this->structure );
+	}
+
+	/**
+	 * Codeception tear down method
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		WP_Mock::tearDown();
+		parent::tearDown();
 	}
 
 	/**
@@ -524,14 +535,14 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 			$this->variables->set( 'update_id', $allow_update );
 			$this->variables->set( 'update_users', $allow_update );
 			$this->variables->set( 'password_hashing_disabled', $disable_hashing );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		} catch ( InvalidProperty $e ) {
+			$this->fail( 'Should not trigger the InvalidProperty exception' );
 		}
 
 		try {
 			$result = $this->import->maybe_add_or_update( $this->csv_data, $this->csv_data, array_keys( $this->csv_data ) );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		} catch ( InvalidProperty $e ) {
+			$this->fail( 'Should not trigger the InvalidProperty exception' );
 		}
 
 		$real_user = new WP_User( (int) $result );
@@ -616,14 +627,14 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 			$this->variables->set( 'update_id', $allow_update );
 			$this->variables->set( 'update_users', $allow_update );
 			$this->variables->set( 'password_hashing_disabled', $disable_hashing );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		} catch ( InvalidProperty $e ) {
+			$this->fail( 'Should not trigger the InvalidProperty exception' );
 		}
 
 		try {
 			$result = $this->import->maybe_add_or_update( $user_data, $meta, $import_headers );
-		} catch ( InvalidSettingsKey $e ) {
-			$this->fail( 'Should not trigger the InvalidSettingsKey exception' );
+		} catch ( InvalidProperty $e ) {
+			$this->fail( 'Should not trigger the InvalidProperty exception' );
 		}
 
 		self::assertNull( $result );
@@ -643,7 +654,67 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		);
 	}
 
-	private function fixture_create_meta() {
+	/**
+	 * Test that the deprecation messages are triggered (when deprecation is enabled)
+	 *
+	 * @param string $action_name The name of the deprecated action we're testing
+	 * @param string|null $expected_message The expected error/deprecation message
+	 *
+	 * @return void
+	 * @throws \Exception
+	 *
+	 * @test
+	 * @dataProvider fixture_deprecated_actions
+	 */
+	public function it_should_print_messages( $action_name, $expected_message ) {
 
+		global $e20r_test_result_msg;
+		$e20r_test_result_msg = null;
+
+		$mock_errlog = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'add_error_msg' => function( $message, $severity ) {
+					global $e20r_test_result_msg;
+					$e20r_test_result_msg = $message;
+
+					self::assertSame( 'warning', $severity );
+				},
+				'debug'         => function( $message ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( 'Mocked: ' . $message );
+				},
+			)
+		);
+
+		$m_present = $this->makeEmpty( User_Present::class );
+		$m_passwd  = $this->makeEmpty( Generate_Password::class );
+		$m_vars    = $this->makeEmpty( Variables::class );
+		$m_time    = $this->makeEmpty( Time::class );
+		$m_date    = $this->makeEmpty( Date_Format::class );
+
+		$import_user = new Import_User( $m_vars, $mock_errlog, $m_present, $m_passwd, $m_time, $m_date );
+		// Configure so we can test and then trigger the actions
+		add_action( $action_name, array( $import_user, 'deprecated_action' ), -1, 2 );
+		do_action( $action_name, array(), array() );
+
+		if ( in_array( $action_name, array( 'pmp_im_pre_member_import', 'is_iu_pre_user_import' ), true ) ) {
+			self::assertStringContainsString( $action_name, $e20r_test_result_msg );
+		}
+		self::assertSame( $e20r_test_result_msg, $expected_message );
 	}
+
+	/**
+	 * Fixture for the Import_User_UnitTest::it_should_print_messages() tests
+	 *
+	 * @return array[]
+	 */
+	public function fixture_deprecated_actions() {
+		return array(
+			array( 'pmp_im_pre_member_import', esc_attr__( 'The "pmp_im_pre_member_import" action has been deprecated and will be removed. Please hook your action handler(s) to the "e20r_before_user_import" action instead.' ) ),
+			array( 'is_iu_pre_user_import', esc_attr__( 'The "is_iu_pre_user_import" action has been deprecated and will be removed. Please hook your action handler(s) to the "e20r_before_user_import" action instead.' ) ),
+			array( 'any_other_action_name', null ),
+		);
+	}
+
 }
