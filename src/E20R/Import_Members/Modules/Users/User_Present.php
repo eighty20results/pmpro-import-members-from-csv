@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Import_Members\Modules\User_Present
+ * @package E20R\Import_Members\Modules\Users\User_Present
  */
 
 namespace E20R\Import_Members\Modules\Users;
@@ -27,11 +27,11 @@ use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Validate\Base_Validation;
 use E20R\Import_Members\Variables;
-use E20R\Utilities\Utilities;
+
 use WP_Error;
 use wpdb;
 
-if ( ! class_exists( '\E20R\Import_Members\Modules\Users\User_Present' ) ) {
+if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 	/**
 	 * Class User_ID
 	 */
