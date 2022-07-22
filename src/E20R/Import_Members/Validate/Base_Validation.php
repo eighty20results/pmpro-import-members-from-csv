@@ -156,6 +156,10 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 		 * @return bool
 		 */
 		public function is_valid_integer( $val ) {
+			if ( is_float( $val ) ) {
+				return false;
+			}
+
 			if ( in_array( $val, array( true, false, null ), true ) ) {
 				return false;
 			}
