@@ -1,23 +1,22 @@
 <?php
 
-namespace E20R\Tests\Unit;
+namespace E20R\Tests\Integration;
 
-use Codeception\Test\Unit;
 use E20R\Exceptions\InvalidInstantiation;
+use E20R\Exceptions\InvalidProperty;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\User_Present;
 use E20R\Import_Members\Status;
 use E20R\Import_Members\Variables;
 
-use Brain\Monkey;
-use Brain\Monkey\Functions;
+use E20R\Tests\Fixtures\Factory\E20R_TestCase;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WP_Error;
 use WP_Mock;
 use wpdb;
 
 
-class User_Present_UnitTest extends Unit {
+class User_Present_IntegrationTest extends E20R_TestCase {
 	use MockeryPHPUnitIntegration;
 
 	/**
@@ -27,7 +26,7 @@ class User_Present_UnitTest extends Unit {
 	 */
 	public function setUp() : void {
 		parent::setUp();
-		Monkey\setUp();
+		WP_Mock::setUp();
 	}
 
 	/**
@@ -36,7 +35,7 @@ class User_Present_UnitTest extends Unit {
 	 * @return void
 	 */
 	public function tearDown() : void {
-		Monkey\tearDown();
+		WP_Mock::tearDown();
 		parent::tearDown();
 	}
 
@@ -46,20 +45,6 @@ class User_Present_UnitTest extends Unit {
 	 * @return void
 	 */
 	public function load_stubs() : void {
-		Functions\stubs(
-			array(
-				'get_option'           => 'https://www.paypal.com/cgi-bin/webscr',
-				'update_option'        => true,
-				'plugin_dir_path'      => '/var/www/html/wp-content/plugins/pmpro-import-members-from-csv',
-				'is_email'             => true,
-				'wp_generate_password' => 'dummy_password_string',
-				'sanitize_user'        => null,
-				'sanitize_title'       => null,
-				'is_multisite'         => false,
-				'maybe_unserialize'    => null,
-				'update_user_meta'     => true,
-			)
-		);
 	}
 
 	/**
@@ -86,12 +71,6 @@ class User_Present_UnitTest extends Unit {
 		$e20r_import_err    = $error_msgs;
 		$e20r_import_warn   = $warn_msgs;
 		$active_line_number = $line_number;
-
-		Functions\stubs(
-			array(
-				'esc_attr__' => null,
-			)
-		);
 
 		$m_errs = $this->makeEmpty(
 			Error_Log::class,
@@ -177,18 +156,6 @@ class User_Present_UnitTest extends Unit {
 		$this->expectException( $expected_exception );
 		$this->expectExceptionMessageMatches( $expected_message );
 
-		Functions\stubs(
-			array(
-				'wp_upload_dir'   => array(
-					'baseurl' => 'https://localhost:7537/wp-content/uploads/',
-					'basedir' => '/var/www/html/wp-content/uploads',
-				),
-				'esc_attr__'      => null,
-				'esc_url_raw'     => null,
-				'trailingslashit' => null,
-			)
-		);
-
 		new User_Present( $var_class, $log_class, $wp_err_class );
 	}
 
@@ -202,10 +169,12 @@ class User_Present_UnitTest extends Unit {
 		return array(
 			// variables, error_log, wp_error, exception, message regex
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			array( new Variables(), false, new WP_Error(), InvalidInstantiation::class, '/.*Expecting "Error_Log"$/' ),
-			array( 'Variables', new Error_Log(), new WP_Error(), InvalidInstantiation::class, '/.*Expecting "Variables"$/' ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			array( new Variables(), new Error_Log(), false, InvalidInstantiation::class, '/.*Expecting "WP_Error"$/' ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			array( false, false, false, InvalidInstantiation::class, '/.*Expecting "Error_Log"$/' ),
+			array( new Variables(), false, new WP_Error(), InvalidInstantiation::class, '/.*Expecting &quot;Error_Log&quot;$/' ),
+			array( 'Variables', new Error_Log(), new WP_Error(), InvalidInstantiation::class, '/.*Expecting &quot;Variables&quot;$/' ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			array( new Variables(), new Error_Log(), false, InvalidInstantiation::class, '/.*Expecting &quot;WP_Error&quot;$/' ), // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			array( false, false, false, InvalidInstantiation::class, '/.*Expecting &quot;Error_Log&quot;$/' ),
+			array( false, false, false, InvalidInstantiation::class, '/.*Expecting &quot;Error_Log&quot;$/' ),
+			array( new Variables(), false, null, InvalidInstantiation::class, '/.*Expecting &quot;Error_Log&quot;$/' ),
 		);
 	}
 
@@ -332,11 +301,6 @@ class User_Present_UnitTest extends Unit {
 	 * @dataProvider fixture_test_sql_for_user
 	 */
 	public function it_should_generate_valid_user_table_SQL( $column_data, $value_to_find, $table_name, $counted_users, $expected_sql, $expected_result ) {
-		Functions\stubs(
-			array(
-				'esc_sql' => null,
-			)
-		);
 
 		$m_errs = $this->makeEmpty(
 			Error_Log::class,
@@ -378,6 +342,227 @@ class User_Present_UnitTest extends Unit {
 			array( 'user_email', 'tester@example.org', 'wptest_users', 1, "SELECT COUNT(ID) FROM wptest_users WHERE user_email = 'tester@example.org'", true ),
 			array( array( 'user_email', 'user_login' ), array( 'tester@example_org', 'tester' ), 'wp_users', 1, "SELECT COUNT(ID) FROM wp_users WHERE user_email = 'tester@example_org' AND user_login = 'tester'", true ),
 			array( array( 'user_email', 'user_login' ), array( 'tester@example_org', 'tester' ), 'wp_users', 0, "SELECT COUNT(ID) FROM wp_users WHERE user_email = 'tester@example_org' AND user_login = 'tester'", false ),
+		);
+	}
+
+	/**
+	 * Test failure when attempting to return allow_update setting in User_Present::validate()
+	 *
+	 * @param string $exception The expected exception thrown and handled
+	 *
+	 * @return void
+	 * @throws InvalidInstantiation
+	 *
+	 * @test
+	 */
+	public function it_should_not_find_update_users_setting() {
+		$m_errs     = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug'         => function( $msg ) {
+					error_log( "Mock: {$msg}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+				'add_error_msg' => function( $msg, $type ) {
+					self::assertStringEndsWith( 'Error: The requested parameter \'update_users\' does not exist!', $msg );
+				},
+			)
+		);
+		$m_variable = $this->getMockBuilder( Variables::class )->getMock();
+		$m_variable->method( 'get' )
+				->willThrowException(
+					new InvalidProperty(
+						'Error: The requested parameter \'update_users\' does not exist!'
+					)
+				);
+		$wperr  = $this->makeEmpty( WP_Error::class );
+		$class  = new User_Present( $m_variable, $m_errs, $wperr );
+		$result = $class->validate( array() );
+
+		self::assertIsBool( $result );
+		self::assertFalse( $result );
+	}
+
+	/**
+	 * Test of User_Present::validate()
+	 *
+	 * @param bool $has_id  Whether to include the 'ID' key/value in CSV record being used
+	 * @param bool $has_email  Whether to include the 'user_email' key/value in CSV record being used
+	 * @param bool $has_login Whether to include the 'user_login' key/value in CSV record being used
+	 * @param bool $is_integer Whether the ID is an integer value
+	 * @param bool $user_exists User_Present::db_user_exists() return value
+	 * @param bool $data_importable User_Present::data_can_be_imported() return value
+	 * @param null|string $invalid_email Whether to use an invalid email address (or the invalid email address itself)
+	 * @param bool|int $expected The expected return value for User_Present::validate()
+	 *
+	 * @return void
+	 * @throws InvalidInstantiation
+	 * @throws \E20R\Exceptions\UnexpectedRecordKey
+	 *
+	 * @test
+	 * @dataProvider fixture_data_to_return_from_validation
+	 */
+	public function it_should_return_status_from_record_validation( $has_id, $has_email, $has_login, $is_integer, $user_exists, $data_importable, $invalid_email, $expected ) {
+		$record = $this->fixture_default_csv_import_record();
+
+		WP_Mock::alias(
+			'wp_insert_user',
+			function( $data ) use ( $record ) {
+				return $record['ID'];
+			}
+		);
+
+		if ( false === $has_id ) {
+			unset( $record['ID'] );
+		}
+		if ( false === $has_email ) {
+			unset( $record['user_email'] );
+		}
+		if ( false === $has_login ) {
+			unset( $record['user_login'] );
+		}
+		if ( true === $has_email && null !== $invalid_email ) {
+			$record['user_email'] = $invalid_email;
+		}
+
+		$m_errs     = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					error_log( "Mock: {$msg}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+			)
+		);
+		$m_variable = $this->makeEmpty(
+			Variables::class,
+			array(
+				'get' => function( $name ) {
+					if ( 'update_users' === $name ) {
+						return false;
+					}
+					return null;
+				},
+			)
+		);
+		$wperr      = $this->makeEmpty( WP_Error::class );
+		$class      = $this->constructEmptyExcept(
+			User_Present::class,
+			'validate',
+			array( $m_variable, $m_errs, $wperr ),
+			array(
+				'is_valid_integer'     => $is_integer,
+				'data_can_be_imported' => $data_importable,
+				'db_user_exists'       => $user_exists,
+			)
+		);
+		$result     = $class->validate( $record );
+
+		self::assertSame(
+			$expected,
+			$result,
+			"User_Present::validate() should have returned false. It didn't! (returned value: '{$result}')"
+		);
+	}
+
+	/**
+	 * Generates a valid, fake, array of data from a mocked CSV record
+	 *
+	 * @return array
+	 */
+	public function fixture_default_csv_import_record() {
+		return array(
+			'ID'         => 1000,
+			'user_email' => 'tester@example.org',
+			'user_login' => 'tester@example.org',
+		);
+	}
+
+	/**
+	 * Fixture for User_Present_IntegrationTests::it_should_return_status_from_record_validation()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_data_to_return_from_validation() {
+		return array(
+			// has_id, has_email, has_login, is_integer, user_exists, data_importable, invalid email address, return value from validate()
+			array( true, true, true, false, false, true, null, false ),
+			array( true, true, true, true, false, true, null, true ),
+			array( true, false, false, false, false, false, null, false ),
+			array( true, false, false, false, false, false, null, false ),
+			array( true, false, false, true, false, false, null, false ),
+			array( false, false, false, true, false, false, null, false ),
+			array( false, true, false, false, false, false, null, false ),
+			array( false, true, false, false, false, false, 'tester.example.com', false ),
+			array( false, true, true, false, false, false, null, false ),
+			array( false, true, true, false, false, Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED, null, Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED ),
+		);
+	}
+
+	/**
+	 * Test for is_integer() method in Base_Validation and User_Present
+	 *
+	 * @param mixed $value The supplied value to test
+	 * @param bool $expected The expected result
+	 *
+	 * @return void
+	 * @throws InvalidInstantiation
+	 *
+	 * @test
+	 * @dataProvider fixture_integers
+	 */
+	public function it_should_validate_integers( $value, $expected ) {
+		$m_errs     = $this->makeEmpty(
+			Error_Log::class,
+			array(
+				'debug' => function( $msg ) {
+					error_log( "Mock: {$msg}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+			)
+		);
+		$m_variable = $this->makeEmpty(
+			Variables::class,
+			array(
+				'get' => function( $name ) {
+					if ( 'update_users' === $name ) {
+						return false;
+					}
+					return null;
+				},
+			)
+		);
+		$wperr      = $this->makeEmpty( WP_Error::class );
+		$class      = new User_Present( $m_variable, $m_errs, $wperr );
+		$result     = $class->is_valid_integer( $value );
+		self::assertSame( $expected, $result );
+	}
+
+	/**
+	 * Fixture for User_Present_IntegrationTest::it_should_validate_integers()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_integers() {
+		return array(
+			array( '1', true ),
+			array( "1", true ), // phpcs:ignore Squiz.Strings.DoubleQuoteUsage.NotRequired
+			array( -65535, true ),
+			array( 65536, true ),
+			array( PHP_INT_MAX, true ),
+			array( ( PHP_INT_MAX * -1 ), true ),
+			array( 'one', false ),
+			array( '1a', false ),
+			array( '0x100', false ),
+			array( false, false ),
+			array( true, false ),
+			array( null, false ),
+			array( 1000.00, false ),
+			array( 1000.10, false ),
+			array( 1.99999, false ),
+			array( '1000,00', false ),
+			array( '1000.00', false ),
+			array( "1000,00", false ), // phpcs:ignore Squiz.Strings.DoubleQuoteUsage.NotRequired
+			array( "1000.00", false ), // phpcs:ignore Squiz.Strings.DoubleQuoteUsage.NotRequired
+			array( PHP_INT_MAX + 1, false ),
+			array( ( ( PHP_INT_MAX + 1 ) * -1 ), false ),
 		);
 	}
 }
