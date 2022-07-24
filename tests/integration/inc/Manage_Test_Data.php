@@ -115,11 +115,14 @@ class Manage_Test_Data {
 				$this->errorlog->debug( 'Error: the supplied TestCase object is of the wrong type!' );
 				throw new Exception( 'Error: Supplied TestCase object is of wrong type' );
 			}
-
 			$this->running_test = $running_test;
 		}
-		$this->user_line                    = $line;
-		list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
+
+		$this->user_line = $line;
+
+		if ( null !== $line ) {
+			list( $this->headers, $this->data ) = $this->read_line_from_csv( $line );
+		}
 	}
 
 	/**
@@ -471,7 +474,7 @@ class Manage_Test_Data {
 	 *
 	 * @return mixed
 	 */
-	public function read_line_from_csv( $line_id, $file_name = __DIR__ . '/test_data_to_load.csv' ) {
+	public function read_line_from_csv( $line_id, $file_name = __DIR__ . '/../data/test_data_to_load.csv' ) {
 
 		$file_object = new SplFileObject( $file_name, 'r' );
 		$data_array  = array();
@@ -496,6 +499,10 @@ class Manage_Test_Data {
 		$file_object->seek( (int) $line_id );
 		$line = $file_object->fgetcsv();
 
+		if ( ! is_array( $line ) ) {
+			return array( $this->headers, $this->data );
+		}
+
 		foreach ( $line as $key => $value ) {
 			$column_name = $this->headers[ $key ];
 			$column      = trim( $value );
@@ -503,7 +510,7 @@ class Manage_Test_Data {
 				$this->data[ $column_name ] = $column;
 			}
 		}
-
+		unset( $file_object );
 		return array( $this->headers, $this->data );
 	}
 
