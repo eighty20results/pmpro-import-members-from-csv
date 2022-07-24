@@ -27,7 +27,6 @@ use Codeception\Configuration;
 Autoload::addNamespace( 'E20R\\Tests\\Integration\\Fixtures', __DIR__ . '/inc/' );
 Autoload::addNamespace( 'E20R\\Tests\\Fixtures\\Factory', __DIR__ . '/../_fixtures/factory/' );
 
-
 if ( file_exists( __DIR__ . '/../unit/inc/csv-fixtures.php' ) ) {
 	require_once __DIR__ . '/../unit/inc/csv-fixtures.php';
 }
