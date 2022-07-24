@@ -146,6 +146,7 @@
       <path value="$PROJECT_DIR$/inc/sebastian/code-unit" />
       <path value="$PROJECT_DIR$/inc/sebastian/lines-of-code" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utliities" />
+      <path value="$PROJECT_DIR$/inc/codeception/mockery-module" />
     </include_path>
   </component>
   <component name="PhpProjectServersManager">
