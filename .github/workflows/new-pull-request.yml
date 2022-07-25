@@ -76,7 +76,7 @@ jobs:
         with:
           token: ${{ secrets.CODE_COV_TOKEN }}
           directory: ./tests/_output
-          files: *-coverage-*.xml
+          files: '*-coverage-*.xml'
           verbose: true
 
   build_i18n:
