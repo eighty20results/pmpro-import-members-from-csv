@@ -26,6 +26,7 @@ settings:
 coverage:
   enabled: true
   colors: true
+  remote: false
   include:
     - inc/wp_plugins/paid-memberships-pro/*
     - inc/wp_plugins/00-e20r-utilities/*
