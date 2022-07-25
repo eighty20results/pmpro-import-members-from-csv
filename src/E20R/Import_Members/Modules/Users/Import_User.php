@@ -209,7 +209,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			if ( true === $user_exists ) {
-				$this->error_log->debug( 'Loading user data for existing user' );
 				$user = $this->find_user( $user_data );
 
 				if ( ! empty( $user->ID ) ) {
@@ -241,14 +240,12 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$new_error = $wp_error;
 					$user      = $this->update_user_id( $user, $user_data );
 				} catch ( InvalidProperty $e ) {
-					$this->error_log->debug( $e->getMessage() );
 					$new_error->add( 'unexpected_key', $e->getMessage() );
 					$e20r_import_err[ "unexpected_key_{$active_line_number}" ] = $new_error;
 					return null;
 				} catch ( UserIDAlreadyExists $e ) {
 					$new_error->add( 'preexisting_user_id', $e->getMessage() );
 					$e20r_import_err[ "preexisting_user_id_{$active_line_number}" ] = $new_error;
-					$this->error_log->debug( $e->getMessage() );
 					return null;
 				}
 
@@ -274,7 +271,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			if ( false === $user && false === $password_hashing_disabled ) {
-				$this->error_log->debug( 'Adding new user record' );
 				$user_id = wp_insert_user( $user_data );
 				// pre-hashed password and we'll allow both updating and adding user if other settings let us
 			} elseif (
@@ -297,7 +293,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$e20r_import_err[ "data_not_updated_{$active_line_number}" ] = $user_id;
 					return null;
 				}
-				$this->error_log->debug( "Existing user with ID {$user_id} has been updated" );
 
 			} else {
 				$new_error = $wp_error;
@@ -339,7 +334,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				if ( ! empty( $all_roles ) ) {
 					foreach ( $all_roles as $role_name ) {
-						$this->error_log->debug( "Adding role '{$role_name}'" );
 						$user->add_role( $role_name );
 					}
 				}
@@ -348,10 +342,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 
 				if ( is_wp_error( $updated ) ) {
 					$e20r_import_err[ "save_error_{$active_line_number}" ] = $updated;
-					$this->error_log->debug( $updated->get_error_message() );
 					return null;
-				} else {
-					$this->error_log->debug( "User {$user_id} is saved..." );
 				}
 
 				// Adds the user to the specified blog ID if we're in a multi-site configuration
@@ -443,15 +434,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @return false|WP_User
 		 */
 		public function find_user( $user_data ) {
-			$user = false;
-
-			$this->error_log->debug(
-				'User exists. Could have searched by user_email - ' .
-				( isset( $user_data['user_email'] ) ? 'Yes' : 'No' ) .
-				'. Or maybe use user_login? ' .
-				( isset( $user_data['user_login'] ) ? 'Yes' : 'No' )
-			);
-
+			$user      = false;
 			$id_fields = array(
 				'ID'         => 'ID',
 				'user_login' => 'login',
@@ -462,7 +445,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				if ( isset( $user_data[ $field_name ] ) && ! empty( $user_data[ $field_name ] ) ) {
 					$user = get_user_by( $user_by_field, $user_data[ $field_name ] );
 					if ( isset( $user->ID ) && ! empty( $user->ID ) ) {
-						$this->error_log->debug( 'Found user: ' . $user->ID );
 						break;
 					}
 				}

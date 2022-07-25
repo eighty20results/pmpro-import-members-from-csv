@@ -206,11 +206,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			$email = ( isset( $record['user_email'] ) && ! empty( $record['user_email'] ) );
 			$login = ( isset( $record['user_login'] ) && ! empty( $record['user_login'] ) );
 
-			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
-			$this->error_log->debug( "The user's ID value is present? " . ( $ID ? 'Yes' : 'No' ) );
-			$this->error_log->debug( "The user's email value is present? " . ( $email ? 'Yes' : 'No' ) );
-			$this->error_log->debug( "The user's login value is present? " . ( $login ? 'Yes' : 'No' ) );
-
 			// None of the user identifiers (username or user ID) are set in import data so can't determine that user is persent
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
 			if ( false === $ID && false === $login && false === $email ) {
