@@ -494,8 +494,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				return $wp_user;
 			}
 
-			$existing_user = get_user_by( 'ID', $import_user_id );
-			if ( false !== $existing_user && true === $is_updatable ) {
+			$has_existing_record = get_userdata( $import_user_id );
+			if ( true === $is_updatable && is_a( $has_existing_record, WP_User::class ) ) {
 				throw new UserIDAlreadyExists(
 					sprintf(
 						// translators: %1$d: line number in CSV import file %2$d: email address of existing user with same user ID
@@ -504,7 +504,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number,
-						$existing_user->user_email
+						$has_existing_record->user_email
 					)
 				);
 			}
