@@ -34,6 +34,7 @@ use E20R\Tests\Fixtures\Factory\E20R_IntegrationTest_Generator_Sequence;
 use E20R\Tests\Fixtures\Factory\E20R_TestCase;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
 
+use Mockery;
 use WP_Mock;
 use org\bovigo\vfs\vfsStream;
 
@@ -41,8 +42,17 @@ use MemberOrder;
 
 use WP_Error;
 use WP_User;
+use wpdb;
+
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\stubs;
 
 class Import_User_IntegrationTest extends E20R_TestCase {
+
+	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+
 
 	/**
 	 * Default Error_Log() class
@@ -128,6 +138,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		Monkey\setUp();
 		WP_Mock::setUp();
 
 		$this->load_mocks();
@@ -157,6 +168,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		Monkey\tearDown();
 		WP_Mock::tearDown();
 		parent::tearDown();
 	}
@@ -666,7 +678,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 * @test
 	 * @dataProvider fixture_deprecated_actions
 	 */
-	public function it_should_print_messages( $action_name, $expected_message ) {
+	public function it_should_print_deprecated_messages( $action_name, $expected_message ) {
 
 		global $e20r_test_result_msg;
 		$e20r_test_result_msg = null;
@@ -717,137 +729,5 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		);
 	}
 
-	/**
-	 * Tests the Import_User::import_usermeta() method
-	 *
-	 * @param array $user_meta The supplied user metadata fields with values
-	 * @param array $expected The expected key/value pairs being returned from import_usermeta()
-	 *
-	 * @return void
-	 * @throws \Exception
-	 *
-	 * @test
-	 * @dataProvider fixture_user_meta_and_fields
-	 */
-	public function it_should_append_imported_to_processed_array_keys( $user_meta, $expected ) {
 
-		$mock_errlog = $this->makeEmpty(
-			Error_Log::class,
-			array(
-				'debug' => function( $message ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( 'Mocked: ' . $message );
-				},
-			)
-		);
-
-		$m_present = $this->makeEmpty( User_Present::class );
-		$m_passwd  = $this->makeEmpty( Generate_Password::class );
-		$m_vars    = $this->makeEmpty(
-			Variables::class,
-			array(
-				'get' => $expected,
-			)
-		);
-		$m_time    = $this->makeEmpty( Time::class );
-		$m_date    = $this->makeEmpty( Date_Format::class );
-
-		$import_user   = new Import_User( $m_vars, $mock_errlog, $m_present, $m_passwd, $m_time, $m_date );
-		$returned_meta = $import_user->import_usermeta( $user_meta, array(), array() );
-
-		self::assertIsArray( $returned_meta );
-
-		if ( is_array( $user_meta ) ) {
-			foreach ( $user_meta as $meta_key => $value ) {
-				$has_both_keys =
-					in_array( "imported_{$meta_key}", array_keys( $returned_meta ), true ) &&
-					in_array( $meta_key, array_keys( $returned_meta ), true );
-				self::assertTrue( $has_both_keys );
-			}
-		}
-	}
-
-	/**
-	 * User meta field array fixture
-	 *
-	 * @return array
-	 */
-	public function fixture_user_meta_and_fields() {
-		$pmpro_fields = array(
-			'membership_id'                          => null,
-			'membership_code_id'                     => null,
-			'membership_discount_code'               => null,
-			'membership_initial_payment'             => null,
-			'membership_billing_amount'              => null,
-			'membership_cycle_number'                => null,
-			'membership_cycle_period'                => null,
-			'membership_billing_limit'               => null,
-			'membership_trial_amount'                => null,
-			'membership_trial_limit'                 => null,
-			'membership_status'                      => null,
-			'membership_startdate'                   => null,
-			'membership_enddate'                     => null,
-			'membership_subscription_transaction_id' => null,
-			'membership_payment_transaction_id'      => null,
-			'membership_gateway'                     => null,
-			'membership_affiliate_id'                => null,
-			'membership_timestamp'                   => null,
-		);
-		$buddypress   = array(
-			'bp_profile' => null,
-			'bp_group'   => null,
-		);
-
-		return array(
-			array( $pmpro_fields + $buddypress, $pmpro_fields + $buddypress ),
-			array( $buddypress, $buddypress ),
-			array( $pmpro_fields, $pmpro_fields ),
-			array( null, array() ),
-			array( false, array() ),
-			array( 'something weird', array() ),
-			array( array(), array() ),
-			array( [], array() ), // phpcs:ignore Generic.Arrays.DisallowShortArraySyntax.Found
-		);
-	}
-
-	/**
-	 * InvalidProperty exception thrown and caught if (for some weird reason) the 'fields' property is missing
-	 * from the Variables() class. The supplied user_meta array should not be processed and there should
-	 * NOT be any keys with an 'imported_' prefix in the returned array
-	 *
-	 * @return void
-	 * @throws \Exception
-	 *
-	 * @test
-	 * @dataProvider fixture_user_meta_and_fields
-	 */
-	public function it_should_throw_invalid_property_exception( $user_meta ) {
-		$mock_errlog = $this->makeEmpty(
-			Error_Log::class,
-			array(
-				'debug' => function( $message ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( 'Mocked: ' . $message );
-				},
-			)
-		);
-
-		$m_present = $this->makeEmpty( User_Present::class );
-		$m_passwd  = $this->makeEmpty( Generate_Password::class );
-		$m_vars    = $this->getMockBuilder( Variables::class )->getMock();
-		$m_vars->method( 'get' )
-				->willThrowException(
-					new InvalidProperty(
-						'Error: The requested parameter \'fields\' does not exist!'
-					)
-				);
-		$m_time        = $this->makeEmpty( Time::class );
-		$m_date        = $this->makeEmpty( Date_Format::class );
-		$import_user   = new Import_User( $m_vars, $mock_errlog, $m_present, $m_passwd, $m_time, $m_date );
-		$returned_meta = $import_user->import_usermeta( $user_meta, array(), array() );
-		self::assertIsArray( $returned_meta );
-		foreach ( $returned_meta as $key => $value ) {
-			self::assertArrayNotHasKey( "imported_{$key}", $returned_meta );
-		}
-	}
 }
