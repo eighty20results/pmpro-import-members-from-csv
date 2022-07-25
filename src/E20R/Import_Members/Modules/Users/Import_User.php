@@ -293,7 +293,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					$e20r_import_err[ "data_not_updated_{$active_line_number}" ] = $user_id;
 					return null;
 				}
-
 			} else {
 				$new_error = $wp_error;
 				$new_error->add(
