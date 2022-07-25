@@ -70,6 +70,15 @@ jobs:
       - name: Run all Standard Tests
         run: make tests
 
+      - name: Upload coverage statistics to codecov.io
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODE_COV_TOKEN }}
+          directory: ./tests/_output
+          files: *-coverage-*.xml
+          verbose: true
+
   build_i18n:
     name: Build the I18N translation files
     needs: [pr_tests]
