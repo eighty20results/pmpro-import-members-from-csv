@@ -66,7 +66,7 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 
-			if ( ! is_a( $error_log, Error_Log::class ) || ! is_object( $error_log ) ) {
+			if ( ! is_object( $error_log ) ) {
 				throw new InvalidInstantiation(
 					sprintf(
 					// translators: %1$s: Name of supplied class, %2$s: Name of expected class
@@ -85,7 +85,7 @@ if ( ! class_exists( '\E20R\Import_Members\Validate\Base_Validation' ) ) {
 				$variables = new Variables( $this->error_log );
 			}
 
-			if ( ! is_a( $variables, Variables::class ) || ! is_object( $variables ) ) {
+			if ( ! is_object( $variables ) ) {
 				throw new InvalidInstantiation(
 					sprintf(
 					// translators: %1$s: Name of supplied class, %2$s: Name of expected class
