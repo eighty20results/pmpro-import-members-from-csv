@@ -39,6 +39,7 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
+use stdClass;
 use WP_Error;
 use WP_Mock;
 
@@ -243,6 +244,11 @@ class Import_User_UnitTest extends Unit {
 	 * @test
 	 */
 	public function it_should_throw_exception( $user, $user_return, $data, $exception ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$wpdb        = $this->makeEmpty( wpdb::class, array( 'update' => false ) );
+		$wpdb->users = 'wp_users';
+
 		$m_variables = $this->makeEmpty(
 			Variables::class,
 			array(
@@ -266,7 +272,7 @@ class Import_User_UnitTest extends Unit {
 			User_Present::class,
 			array( $mocked_variables, $this->mocked_errorlog, $this->mocked_wp_error ),
 			array(
-				'validate'   => isset( $import_data['ID'] ) && ! empty( $import_data['ID'] ),
+				'validate'   => isset( $data['ID'] ) && ! empty( $data['ID'] ),
 				'status_msg' => null,
 			)
 		);
@@ -490,10 +496,12 @@ class Import_User_UnitTest extends Unit {
 			->once()
 			->with( $csv_user_data['ID'] )
 			->andReturn( $user );
-		expect( 'get_user_by' )
-			->once()
-			->with( 'ID', $csv_user_data['ID'] )
-			->andReturn( $user );
+
+		Functions\stubs(
+			array(
+				'wp_cache_delete' => null,
+			)
+		);
 
 		$import_user = new Import_User( $m_vars, $this->mocked_errorlog, $m_present, $m_passwd, $m_time, $m_date );
 
@@ -503,8 +511,8 @@ class Import_User_UnitTest extends Unit {
 		$result    = $import_user->update_user_id( $user, $csv_user_data );
 		$wpdb      = $orig_wpdb; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 
-		self::assertSame( $user->ID, $result->ID );
-		self::assertInstanceOf( WP_User::class, $result );
+		self::assertSame( (int) $user->ID, $result );
+		self::assertIsInt( $result );
 	}
 
 	/**
@@ -514,7 +522,7 @@ class Import_User_UnitTest extends Unit {
 	 */
 	public function fixture_update_user_id_tests() {
 		return array(
-			// line no, allow update of User's IDin DB, wpdb->update returns, user table name, import data array, $thrown exception
+			// line no, allow update of User's IDin DB, wpdb->update returns, user table name, import data array, thrown exception
 			array( 0, false, true, 'wp_users', array( 'ID' => 1023 ), null ),
 			array( 1, false, true, 'wp_users', array( 'ID' => 65536 ), null ),
 			array( 2, true, true, 'wptest_users', array( 'ID' => 1111 ), null ),
