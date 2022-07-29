@@ -21,11 +21,14 @@
 
 namespace E20R\Tests\Integration;
 
+use E20R\Exceptions\CannotUpdateDB;
 use E20R\Exceptions\InvalidProperty;
+use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Modules\Users\Generate_Password;
 use E20R\Import_Members\Modules\Users\Import_User;
 use E20R\Import_Members\Modules\Users\User_Present;
+use E20R\Import_Members\Status;
 use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Validate\Time;
 use E20R\Import_Members\Variables;
@@ -35,6 +38,7 @@ use E20R\Tests\Fixtures\Factory\E20R_TestCase;
 use E20R\Tests\Integration\Fixtures\Manage_Test_Data;
 
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WP_Mock;
 use org\bovigo\vfs\vfsStream;
 
@@ -45,14 +49,10 @@ use WP_User;
 use wpdb;
 
 use Brain\Monkey;
-use Brain\Monkey\Functions;
-use function Brain\Monkey\Functions\expect;
-use function Brain\Monkey\Functions\stubs;
 
 class Import_User_IntegrationTest extends E20R_TestCase {
 
-	use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-
+	use MockeryPHPUnitIntegration;
 
 	/**
 	 * Default Error_Log() class
@@ -89,6 +89,35 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 *
 	 */
 	private $wp_error = null;
+
+	/**
+	 * Instance of the User_Present class
+	 *
+	 * @var null|User_Present
+	 */
+	private $presence = null;
+
+	/**
+	 * Instance of the Generate_Password() validation class
+	 *
+	 * @var null|Generate_Password $generate_passwd
+	 *
+	 */
+	private $generate_passwd = null;
+
+	/**
+	 * Instance of the time format validation class Time()
+	 *
+	 * @var null|Time $time
+	 */
+	private $time = null;
+
+	/**
+	 * Instance of the date format validation class Date_Format()
+	 *
+	 * @var null|Date_Format $date
+	 */
+	private $date = null;
 
 	/**
 	 * Mocked file system to use for testing purposes
@@ -132,6 +161,13 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	private $new_users = array();
 
 	/**
+	 * The path to the file containing the user data
+	 *
+	 * @var null|string $fixture_user_csv
+	 */
+	private $fixture_user_csv = null;
+
+	/**
 	 * Codeception setUp method
 	 *
 	 * @return void
@@ -142,6 +178,7 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		WP_Mock::setUp();
 
 		$this->load_mocks();
+		$this->fixture_user_csv = __DIR__ . '/../../_data/csv_files/fixture_user_data.csv';
 
 		// Insert membership level data
 		$this->factory()->pmprolevels->create_many( 2 );
@@ -178,9 +215,14 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 */
 	public function load_mocks(): void {
 
-		$this->errorlog  = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		$this->variables = new Variables( $this->errorlog );
-		$this->import    = new Import_User( $this->variables, $this->errorlog );
+		$this->errorlog        = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		$this->wp_error        = new WP_Error();
+		$this->variables       = new Variables( $this->errorlog );
+		$this->presence        = new User_Present( $this->variables, $this->errorlog, $this->wp_error, $this->password );
+		$this->generate_passwd = new Generate_Password( $this->variables, $this->generate_passwd );
+		$this->date            = new Date_Format( $this->variables, $this->errorlog );
+		$this->time            = new Time( $this->variables, $this->errorlog );
+		$this->import          = new Import_User( $this->variables, $this->errorlog, $this->presence, $this->generate_passwd, $this->time, $this->date );
 	}
 
 	/**
@@ -333,7 +375,6 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 			array( true, false, 1, null, 'subscriber;administrator', null, 1002, 'user_1', 'user_1@example.org' ),
 			array( true, true, 1, null, 'subscriber', '$P$B.hqQoTosqb3O.AUwRiIu5qU6y/xnJ1', 1003, 'user_1', 'user_1@example.org' ),
 			array( true, true, 1, null, 'subscriber', '$P$B.hqQoTosqb3O.AUwRiIu5qU6y/xnJ1', 1004, 'user_1', 'user_1@example.org' ),
-
 		);
 	}
 
@@ -609,47 +650,122 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 * @param string[] $user_data The user data being imported
 	 * @param string[] $meta The user metadata being imported
 	 * @param string[] $import_headers The column header names being imported
+	 * @param bool|string $update_id Whether to return true or false from Variables::get( 'update_id' )
+	 * @param bool $allow_update Whether we allow updates of the user(s)
+	 * @param bool $user_exists User exists (or not)
+	 * @param bool $disable_hashing Set the password in the user-data to be pre-hashed or not
+	 * @param bool $break_globals Do we reset the $e20r_import_* global variables (not arrays)
+	 * @param int|null $user_line_no Line to read when mocking a WP_User instance to return by Import_User::find_user() method
+	 * @param \Exception|null $update_id_exception The exception to return when calling Import_User::update_user_id()
+	 * @param string $error_key The key we're looking for in the $e20r_import_err array
 	 *
 	 * @return void
+	 * @throws \E20R\Exceptions\CannotUpdateDB Thrown if the underlying DB cannot be updated (if updating user's ID)
 	 *
 	 * @test
 	 * @dataProvider fixture_returns_null_when_imported
 	 */
-	public function it_should_not_import_and_return_null( $user_data, $meta, $import_headers, $allow_update, $disable_hashing, $break_globals, $user_presence ) {
+	public function it_should_not_import_and_return_null( $user_data, $meta, $import_headers, $update_id, $allow_update, $user_exists, $disable_hashing, $break_globals, $user_line_no, $update_id_exception, $error_key ) {
 
 		global $e20r_import_err;
 		global $e20r_import_warn;
 		global $active_line_number;
+
+		$active_line_number = 1000;
+		$m_wp_user          = false;
 
 		if ( $break_globals ) {
 			$e20r_import_warn = null;
 			$e20r_import_err  = null;
 		}
 
-		if ( empty( $user_presence ) ) {
-			$user_presence = $this->makeEmpty(
-				User_Present::class,
-				array(
-					'validate' => false,
-				)
-			);
+		if ( null !== $user_line_no ) {
+			$m_wp_user = $this->fixture_create_wp_user( $user_line_no );
 		}
 
+		$m_variables = $this->makeEmpty(
+			Variables::class,
+			array(
+				'get' => function( $name ) use ( $allow_update, $update_id, $disable_hashing ) {
+					if ( 'update_users' === $name ) {
+						return $allow_update;
+					}
+					if ( 'display_errors' === $name ) {
+						return array();
+					}
+
+					if ( 'update_id' === $name ) {
+						if ( 'throw' === $update_id ) {
+							throw new InvalidProperty();
+						}
+						return $update_id;
+
+					}
+
+					if ( 'site_id' === $name ) {
+						return 0;
+					}
+
+					if ( 'password_hashing_disabled' === $name ) {
+						return $disable_hashing;
+					}
+					return null;
+				},
+			)
+		);
+
+		$m_user_present = $this->constructEmptyExcept(
+			User_Present::class,
+			'status_msg',
+			array( $m_variables, $this->errorlog, $this->wp_error ),
+			array(
+				'validate' => function( $data, $can_update ) use ( $user_exists ) {
+					$this->errorlog->debug( 'Value for user_exists is: ' . ( $user_exists ? 'True' : 'False' ) );
+					return $user_exists;
+				},
+			)
+		);
+
+		$m_generate_passwd = $this->constructEmptyExcept(
+			Generate_Password::class,
+			'status_msg',
+			array( $m_variables, $this->errorlog, $this->wp_error ),
+			array(
+				'validate' => false,
+			)
+		);
+
+		$import = $this->constructEmptyExcept(
+			Import_User::class,
+			'maybe_add_or_update',
+			array( $m_variables, $this->errorlog, $m_user_present, $m_generate_passwd, $this->time, $this->date ),
+			array(
+				'find_user'                              => function( $data ) use ( $user_exists, $m_wp_user ) {
+					if ( false === $user_exists ) {
+						return false;
+					}
+					return $m_wp_user;
+				},
+				'update_user_id'                         => function( $wp_user, $u_data ) use ( $update_id_exception ) {
+					if ( null !== $update_id_exception ) {
+						throw $update_id_exception;
+					}
+				},
+				'insert_or_update_disabled_hashing_user' => function() {
+					$error = $this->wp_error;
+					$error->add( 1000, 'Error while updating or inserting new user' );
+					return $error;
+				},
+			)
+		);
+
 		try {
-			$this->variables->set( 'update_id', $allow_update );
-			$this->variables->set( 'update_users', $allow_update );
-			$this->variables->set( 'password_hashing_disabled', $disable_hashing );
+			$result = $import->maybe_add_or_update( $user_data, $meta, $import_headers );
 		} catch ( InvalidProperty $e ) {
 			$this->fail( 'Should not trigger the InvalidProperty exception' );
 		}
-
-		try {
-			$result = $this->import->maybe_add_or_update( $user_data, $meta, $import_headers );
-		} catch ( InvalidProperty $e ) {
-			$this->fail( 'Should not trigger the InvalidProperty exception' );
-		}
-
 		self::assertNull( $result );
+		self::assertArrayHasKey( $error_key, ( $e20r_import_warn + $e20r_import_err ) );
 	}
 
 	/**
@@ -659,11 +775,139 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 	 */
 	public function fixture_returns_null_when_imported() {
 		return array(
-			// user_data, meta, import_headers, allow_update, disable_hashing, break_globals, user_presence class,
-			array( array(), array(), array(), false, false, false, new User_Present( $this->variables, $this->errorlog ) ), // Exit on first bail-out (empty user_data)
-			array( array(), array(), array(), false, false, false, null ), // Exit because user exists but cannot be updated
-			array( array(), array(), array(), false, false, false, null ), // Exit because user was found but with different ID
+			//     user_data, meta, headers, update_id, user_update, user_exists, disable_hashing, break_globals, user_line_no, update_id_exception, error_key
+			array( array(), array(), array(), 'throw', false, false, false, true, null, null, 'startup_error_1000' ), // Exit on first bail-out (wrong variables() property) (L: 178)
+			array( array(), array(), array(), false, false, false, false, true, null, null, 'warn_userdata_1000' ), // Exit on second bail-out (empty user_data) (L: 188)
+			array(
+				// Return null because we have a user but can't update it (L: 209)
+				array(
+					'ID'         => 1,
+					'user_email' => 'user_exists@example.org',
+					'user_login' => 'user_exists',
+				),
+				array(),
+				array(),
+				false,
+				false,
+				Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED,
+				false,
+				true,
+				null,
+				null,
+				'warn_cannot_update_1000',
+			),
+			array(
+				// Exit because user was found, can update ID ( 'update_id' == true) and found user's ID doesn't match import data's ID ( 5 vs 65536) throwing UserIDAlreadyExist exception (L: 243)
+				array(
+					'ID'         => 5,
+					'user_email' => 'user_exists@example.org',
+					'user_login' => 'user_exists',
+				),
+				array(),
+				array(),
+				true,
+				false,
+				true, // user_exists
+				false,
+				true,
+				2,
+				new UserIDAlreadyExists(),
+				'existing_user_1000',
+			),
+			array(
+				// Exit because user was found, can update ID ( 'update_id' == true) and found user's ID doesn't match import data's ID ( 5 vs 1023) throwing CannotUpdateDB exception (L: 243)
+				array(
+					'ID'         => 6,
+					'user_email' => 'user_exists@example.org',
+					'user_login' => 'user_exists',
+				),
+				array(),
+				array(),
+				true,
+				false,
+				true,
+				false,
+				true,
+				1,
+				new CannotUpdateDB(),
+				'user_db_upd_1000',
+			),
+			array(
+				// Exit because user was found, can update ID ( 'update_id' == false) and found user's ID doesn't match import data's ID ( 6 vs 1023) throwing CannotUpdateDB exception (L: 262)
+				array(
+					'ID'         => 6,
+					'user_email' => 'user_exists@example.org',
+					'user_login' => 'user_exists',
+				),
+				array(),
+				array(),
+				false,
+				false,
+				true,
+				false,
+				true,
+				2,
+				null,
+				'warn_id_mismatch_1000',
+			),
+			array(
+				/// Exit because we found the user from the ID in the CSV file, we can't , -- TODO -- (L: 316)
+				array(
+					'ID'         => 65536,
+					'user_email' => 'fake_user@example.com',
+					'user_login' => 'fake_user',
+				),
+				array(),
+				array(),
+				false,
+				false,
+				true,
+				false,
+				true,
+				1,
+				null,
+				'warn_not_imported_1000',
+			),
+			//     user_data, meta, headers, update_id, user_update, user_exists, disable_hashing, break_globals, user_line_no, update_id_exception, error_key
+			array(
+				// Exit because wp_insert_user, wp_update_user or Import_User::insert_or_update_disabled_hashing_user returns a WP_Error object (L: 323)
+				array(
+					'ID'         => 4,
+					'user_email' => 'user_exists@example.org',
+					'user_login' => 'user_exists',
+				),
+				array(),
+				array(),
+				true,
+				false,
+				true,
+				true,
+				true,
+				1,
+				null,
+				'error_importing_1000',
+			),
 		);
+	}
+
+	/**
+	 * Generate a mocked WP_User object with data from the integrations/data/fixture_user_data.csv file
+	 *
+	 * @param int $line_no The line to read from the CSV file
+	 *
+	 * @return \PHPUnit\Framework\MockObject\MockObject|WP_User
+	 * @throws \Exception
+	 */
+	private function fixture_create_wp_user( $line_no ) {
+		$data                        = new Manage_Test_Data();
+		list( $headers, $user_data ) = $data->read_line_from_csv( $line_no, $this->fixture_user_csv );
+		$m_user                      = new WP_User();
+
+		foreach ( $user_data as $property => $value ) {
+			$m_user->{$property} = $value;
+		}
+
+		return $m_user;
 	}
 
 	/**
@@ -729,5 +973,56 @@ class Import_User_IntegrationTest extends E20R_TestCase {
 		);
 	}
 
+	/**
+	 * @param string $setting_name Name of the setting that will trigger the exception
+	 * @param int $line_no Faked line number to use
+	 *
+	 * @return void
+	 * @throws InvalidProperty
+	 * @throws \E20R\Exceptions\CannotUpdateDB
+	 *
+	 * @test
+	 * @dataProvider fixture_trigger_invalid_property
+	 */
+	public function it_triggers_invalid_property_exception_and_returns_null( $setting_name, $line_no ) {
 
+		global $e20r_import_err;
+		global $active_line_number;
+
+		$active_line_number = $line_no;
+
+		$m_variables = Mockery::mock( Variables::class )->makePartial();
+		$m_variables->expects()
+			->get( $setting_name )
+			->once()
+			->andThrow( InvalidProperty::class, "Error: The requested parameter '{$setting_name}' does not exist!" );
+
+		$import = $this->constructEmptyExcept(
+			Import_User::class,
+			'maybe_add_or_update',
+			array( $m_variables, $this->errorlog, $this->presence, $this->generate_passwd, $this->time, $this->date )
+		);
+		$result = $import->maybe_add_or_update( array(), array(), array() );
+
+		self::assertNull( $result );
+		self::assertArrayHasKey( "startup_error_{$line_no}", $e20r_import_err );
+		self::assertSame(
+			"Error: The requested parameter '{$setting_name}' does not exist!",
+			$e20r_import_err[ "startup_error_{$line_no}" ]->get_error_message()
+		);
+	}
+
+	/**
+	 * Fixture for it_triggers_invalid_property_exception_and_returns_null()
+	 *
+	 * @return \string[][]
+	 */
+	public function fixture_trigger_invalid_property() {
+		return array(
+			array( 'display_errors', 1 ),
+			array( 'update_users', 1023 ),
+			array( 'update_id', 65535 ),
+			array( 'site_id', 1000 ),
+		);
+	}
 }
