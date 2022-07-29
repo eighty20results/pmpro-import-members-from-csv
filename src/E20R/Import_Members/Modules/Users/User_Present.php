@@ -76,10 +76,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 		/**
 		 * Set the status/error message for the User_Presence validation logic
 		 *
-		 * @param int $status The status code to generate a messaage for
+		 * @param int|bool $status The status code to generate a message for
 		 * @param bool $allow_updates Whether we allow user updates or not
 		 */
 		public function status_msg( $status, $allow_updates ) {
+
+			if ( true === $status ) {
+				return;
+			}
 
 			global $e20r_import_err;
 			global $e20r_import_warn;
@@ -93,19 +97,23 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				$e20r_import_warn = array();
 			}
 
+			$msg          = null;
+			$wp_err_code  = null;
+			$wp_warn_code = null;
+			$e20r_key     = null;
+
 			switch ( $status ) {
 				case Status::E20R_ERROR_USER_NOT_FOUND:
 					$msg = sprintf(
 					// translators: %1$d: The line number in the CSV import file
 						esc_attr__(
-							"Error: Expected to find user from information in record, but didn't succeed! (line: %1\$d)",
+							'Error: User not found from information in CSV file! (line: %1$d)',
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number
 					);
-					$new_error = $this->wp_error;
-					$new_error->add( 'e20r_im_ident', $msg );
-					$e20r_import_err[ "user_not_found_{$active_line_number}" ] = $new_error;
+					$wp_err_code = 'e20r_im_ident';
+					$e20r_key    = "user_not_found_{$active_line_number}";
 					break;
 				case Status::E20R_USER_IDENTIFIER_MISSING:
 					$msg = sprintf(
@@ -116,9 +124,9 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						),
 						$active_line_number
 					);
-					$new_error = $this->wp_error;
-					$new_error->add( 'e20r_im_ident', $msg );
-					$e20r_import_err[ "no_identifying_info_{$active_line_number}" ] = $new_error;
+
+					$wp_err_code = 'e20r_im_ident';
+					$e20r_key    = "no_identifying_info_{$active_line_number}";
 					break;
 
 				case Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED:
@@ -131,24 +139,22 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						$active_line_number
 					);
 
-					$new_error = $this->wp_error;
-					$new_error->add( 'e20r_im_noupd', $msg );
-					$e20r_import_warn[ "cannot_update_{$active_line_number}" ] = $new_error;
+					$wp_warn_code = 'e20r_im_noupd';
+					$e20r_key     = "warn_cannot_update_{$active_line_number}";
 					break;
 
 				case Status::E20R_ERROR_ID_NOT_NUMBER:
 					$msg = sprintf(
 						// translators: %1$d: The line number from the CSV import file
 						esc_attr__(
-							'Supplied information in ID column is not a number! (line %1$d)',
+							'Supplied information in ID column is not a number! (line %2$d)',
 							'pmpro-import-members-from-csv'
 						),
 						$active_line_number
 					);
 
-					$new_error = $this->wp_error;
-					$new_error->add( 'e20r_im_id', $msg );
-					$e20r_import_err[ "error_invalid_user_id_{$active_line_number}" ] = $new_error;
+					$wp_err_code = 'e20r_im_id';
+					$e20r_key    = "error_invalid_user_id_{$active_line_number}";
 					break;
 
 				case Status::E20R_ERROR_NO_EMAIL:
@@ -158,9 +164,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						$active_line_number
 					);
 
-					$new_error = $this->wp_error;
-					$new_error->add( 'e20r_im_email', $msg, $user_data['user_email'] ?? null );
-					$e20r_import_warn[ "warn_invalid_email_{$active_line_number}" ] = $new_error;
+					$wp_err_code = 'e20r_im_email';
+					$e20r_key    = "warn_invalid_email_{$active_line_number}";
 					break;
 
 				case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
@@ -173,10 +178,21 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 						$active_line_number
 					);
 
-					$new_error = $this->wp_error;
-					$new_error->add( 'e20r_im_email_login', $msg );
-					$e20r_import_warn[ "warn_invalid_email_login_{$active_line_number}" ] = $new_error;
+					$wp_warn_code = 'e20r_im_email_login';
+					$e20r_key     = "warn_invalid_email_login_{$active_line_number}";
 					break;
+			}
+
+			$this->error_log->debug( $msg );
+			$new_error = $this->wp_error;
+
+			if ( null !== $wp_err_code ) {
+				$new_error->add( $wp_err_code, $msg );
+				$e20r_import_err[ $e20r_key ] = $new_error;
+			}
+			if ( null !== $wp_warn_code ) {
+				$new_error->add( $wp_warn_code, $msg );
+				$e20r_import_warn[ $e20r_key ] = $new_error;
 			}
 		}
 
@@ -209,27 +225,27 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			// None of the user identifiers (username or user ID) are set in import data so can't determine that user is persent
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
 			if ( false === $ID && false === $login && false === $email ) {
-				$this->status_msg( Status::E20R_USER_IDENTIFIER_MISSING, $allow_update );
-				$status = false;
+				$status = Status::E20R_ERROR_NO_EMAIL_OR_LOGIN;
+				$this->status_msg( $status, $allow_update );
 			}
 
 			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
 			if ( ! $login && ! $email ) {
-				$this->status_msg( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, $allow_update );
-				$status = false;
+				$status = Status::E20R_ERROR_NO_EMAIL_OR_LOGIN;
+				$this->status_msg( $status, $allow_update );
 			}
 
 			// Value in the ID column of the import file, but it's not a number (that's so many levels of wrong!)
 			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
 			if ( true === $ID && false === $this->is_valid_integer( $record['ID'] ) ) {
-				$this->status_msg( Status::E20R_ERROR_ID_NOT_NUMBER, $allow_update );
-				$status = false;
+				$status = Status::E20R_ERROR_ID_NOT_NUMBER;
+				$this->status_msg( $status, $allow_update );
 			}
 
 			// Is the user_email supplied and is it a valid email address
 			if ( true === $email && false === is_email( $record['user_email'] ) ) {
-				$this->status_msg( Status::E20R_ERROR_NO_EMAIL, $allow_update );
-				$status = false;
+				$status = Status::E20R_ERROR_NO_EMAIL;
+				$this->status_msg( $status, $allow_update );
 			}
 
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
@@ -254,10 +270,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					'user_email' => 'email',
 				)
 			);
-
-			if ( false === $status ) {
-				return false;
-			}
 
 			foreach ( $id_fields as $field => $type ) {
 				// Using the name of the field in a dynamic variable,
