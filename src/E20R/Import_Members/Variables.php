@@ -236,7 +236,7 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore
 			}
-			if ( ! is_a( $error_log, Error_Log::class ) || ! is_object( $error_log ) ) {
+			if ( ! is_object( $error_log ) ) {
 				throw new InvalidInstantiation(
 					sprintf(
 						// translators: %1$s: Name of supplied class, %2$s: Name of expected class
@@ -508,7 +508,6 @@ if ( ! class_exists( '\E20R\Import_Members\Variables' ) ) {
 
 			if ( empty( $variable_name ) ) {
 				$this->error_log->debug( 'Returning all variables' );
-
 				return $this->get_current_vars();
 			}
 
