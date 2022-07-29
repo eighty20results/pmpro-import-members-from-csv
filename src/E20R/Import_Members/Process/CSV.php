@@ -499,7 +499,7 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 					$user_id = apply_filters( 'e20r_import_wp_user_data', $user_data, $user_meta, $headers, $settings );
 
 					/** BUG FIX: Didn't save the created user's ID and added empty user IDs*/
-					if ( null !== $user_id ) {
+					if ( ! empty( $user_id ) ) {
 						$user_ids[] = $user_id;
 					}
 				}
