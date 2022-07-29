@@ -52,7 +52,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @var null|User_Present
 		 */
-		private $user_presence = null;
+		private $user_present = null;
 
 		/**
 		 * Class to check if we should auto-generate a new password for the user
@@ -80,14 +80,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 *
 		 * @param null|Variables $variables Instance of the Variables() class
 		 * @param null|Error_Log $error_log Instance of the Error_Log() class
-		 * @param null|User_Present $user_presence Instance of the tests for user existence on the system
+		 * @param null|User_Present $user_present Instance of the tests for user existence on the system
 		 * @param null|Generate_Password $generate_passwd Instance of the tests for the user password
 		 * @param null|Time $time_format Instance of the Time() validator class
 		 * @param null|Date_Format $date_format Instance of the Date_Format() validator class
 		 *
 		 * @access private
 		 */
-		public function __construct( $variables = null, $error_log = null, $user_presence = null, $generate_passwd = null, $time_format = null, $date_format = null ) {
+		public function __construct( $variables = null, $error_log = null, $user_present = null, $generate_passwd = null, $time_format = null, $date_format = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
@@ -98,10 +98,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 			$this->variables = $variables;
 
-			if ( null === $user_presence ) {
-				$user_presence = new User_Present( $this->variables, $this->error_log );
+			if ( null === $user_present ) {
+				$user_present = new User_Present( $this->variables, $this->error_log );
 			}
-			$this->user_presence = $user_presence;
+			$this->user_present = $user_present;
 
 			if ( null === $generate_passwd ) {
 				$generate_passwd = new Generate_Password( $this->variables, $this->error_log );
@@ -178,13 +178,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			// If no user data, bailout!
 			if ( empty( $user_data ) ) {
 				$msg = sprintf(
-				// translators: %1$d: Line in the CSV file being imported
-					esc_attr__( 'No user data found at line #%1$d', 'pmpro-import-members-from-csv' ),
-					( $active_line_number + 1 )
+					// translators: %1$d: Line in the CSV file being imported
+					esc_attr__( 'No user data found (line: %1$d)', 'pmpro-import-members-from-csv' ),
+					$active_line_number
 				);
 
-				$e20r_import_warn[ "warning_userdata_{$active_line_number}" ] = new WP_Error( 'e20r_im_nodata', $msg );
-
+				$new_error = $wp_error;
+				$new_error->add( 'e20r_im_nodata', $msg );
+				$e20r_import_warn[ "warn_userdata_{$active_line_number}" ] = $new_error;
 				$this->error_log->debug( $msg );
 				return null;
 			}
@@ -200,10 +201,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			$user    = false;
 
 			/**
-			 * Can the user from the import data be found on the system
+			 * Can the user from the import data be found on the system?
 			 */
-			$user_exists = $this->user_presence->validate( $user_data, $allow_update );
-			$this->user_presence->status_msg( $user_exists, $allow_update );
+			$user_exists = $this->user_present->validate( $user_data, $allow_update );
+			$this->user_present->status_msg( $user_exists, $allow_update );
 			if ( Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $user_exists ) {
 				return null;
 			}
@@ -216,41 +217,45 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				}
 			}
 
-			if ( false === $allow_id_update && ( ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) ) {
-				$msg = sprintf(
-					// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
-					esc_attr__(
-						'The CSV file data and the WP User ID are different. Not allowed to update user ID from %1$d to %2$d (line: %3$d)',
-						'pmpro-import-members-from-csv'
-					),
-					$user_id,
-					$user_data['ID'],
-					$active_line_number
-				);
+			if ( 0 !== $user_id && ! empty( $user_data['ID'] ) && (int) $user_id !== (int) $user_data['ID'] ) {
+				$new_error = null;
 
-				$new_error = $wp_error;
-				$new_error->add( 'id_mismatch', $msg );
-				$e20r_import_warn[ "id_mismatch_{$active_line_number}" ] = $new_error;
-				$this->error_log->debug( $msg );
-				return null;
-
-			} elseif ( true === $allow_id_update && ! empty( $user_id ) && ! empty( $user_data['ID'] ) && $user_id !== (int) $user_data['ID'] ) {
-				$this->error_log->debug( 'Warning: Updating the user ID in the WordPress Users DB table!' );
-				try {
-					$new_error = $wp_error;
-					$user      = $this->update_user_id( $user, $user_data );
-				} catch ( InvalidProperty $e ) {
-					$new_error->add( 'unexpected_key', $e->getMessage() );
-					$e20r_import_err[ "unexpected_key_{$active_line_number}" ] = $new_error;
-					return null;
-				} catch ( UserIDAlreadyExists $e ) {
-					$new_error->add( 'preexisting_user_id', $e->getMessage() );
-					$e20r_import_err[ "preexisting_user_id_{$active_line_number}" ] = $new_error;
-					return null;
+				if ( true === $allow_id_update ) {
+					try {
+						$user_id = $this->update_user_id( $user, $user_data );
+					} catch ( UserIDAlreadyExists $e ) {
+						$new_error = $wp_error;
+						$new_error->add( 'preexisting_user_id', $e->getMessage() );
+						$error_key = "existing_user_{$active_line_number}";
+					} catch ( CannotUpdateDB $e ) {
+						$new_error = $wp_error;
+						$new_error->add( 'db_update_error', $e->getMessage() );
+						$error_key = "user_db_upd_{$active_line_number}";
+					}
+					if ( ! empty( $error_key ) && is_a( $new_error, WP_Error::class ) ) {
+						$e20r_import_err[ $error_key ] = $new_error;
+						return null;
+					}
+					$user = get_user_by( 'ID', $user_id );
 				}
 
-				if ( ! empty( $user->ID ) ) {
-					$user_id = $user->ID;
+				if ( false === $allow_id_update ) {
+					$msg = sprintf(
+					// translators: %1$d: Current user ID, %2$d: User ID from import file, %3$d: Current line in import file
+						esc_attr__(
+							'The CSV file data and the WP User ID are different. Not allowed to update user ID from %1$d to %2$d (line: %3$d)',
+							'pmpro-import-members-from-csv'
+						),
+						$user_id,
+						$user_data['ID'],
+						$active_line_number
+					);
+
+					$new_error = $wp_error;
+					$new_error->add( 'id_mismatch', $msg );
+					$e20r_import_warn[ "warn_id_mismatch_{$active_line_number}" ] = $new_error;
+					$this->error_log->debug( $msg );
+					return null;
 				}
 			}
 
@@ -271,155 +276,139 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			}
 
 			if ( false === $user && false === $password_hashing_disabled ) {
+				// No user found, and we assume we're supposed to encrypt any supplied password
 				$user_id = wp_insert_user( $user_data );
-				// pre-hashed password and we'll allow both updating and adding user if other settings let us
 			} elseif (
 				( false === $user && true === $password_hashing_disabled ) ||
 				( false !== $user && true === $password_hashing_disabled && true === $allow_update )
 			) {
+				// Received an encrypted password, and we'll allow both updating or adding user with our custom method, if other settings let us
 				if ( is_a( $user, 'WP_User' ) && empty( $user_data['ID'] ) ) {
 					$user_data['ID'] = $user->ID;
 				}
 				$user_id = $this->insert_or_update_disabled_hashing_user( $user_data );
 			} elseif ( ! empty( $user_id ) && true === $allow_update ) {
-				// Update and support hashing the of any $user_data['user_pass'] string
+				// Update the user and encrypt the $user_data['user_pass'] string if present
 				if ( empty( $user_data['ID'] ) ) {
 					$user_data['ID'] = $user_id;
 				}
-
 				$user_id = wp_update_user( $user_data );
-				if ( is_wp_error( $user_id ) ) {
-					$this->error_log->debug( "Error updating user ID {$user_data['ID']}" );
-					$e20r_import_err[ "data_not_updated_{$active_line_number}" ] = $user_id;
-					return null;
-				}
 			} else {
-				$new_error = $wp_error;
-				$new_error->add(
-					'e20r_im_account',
-					sprintf(
-							// translators: %1$s: Email address, %2$d: Row number from CSV file
-						esc_attr__( 'No update/insert action taken for %1$s, on row %2$d', 'pmpro-import-members-from-csv' ),
-						$user_data['user_email'],
-						$active_line_number
-					)
+				// Cannot update an existing user so we should exit...
+				$msg = sprintf(
+				// translators: %1$s: Email address, %2$d: Row number from CSV file
+					esc_attr__( 'No user update/add action allowed or taken for %1$s (line: %2$d)', 'pmpro-import-members-from-csv' ),
+					$user_data['user_email'],
+					$active_line_number
 				);
-				$e20r_import_warn[ "user_not_imported_{$active_line_number}" ] = $new_error;
+				$new_error = $wp_error;
+				$new_error->add( 'e20r_im_account', $msg );
+				$e20r_import_warn[ "warn_not_imported_{$active_line_number}" ] = $new_error;
+				$this->error_log->debug( $msg );
 				return null;
 			}
 
 			// Is there an error?
 			if ( is_wp_error( $user_id ) ) {
-				$e20r_import_err[ $active_line_number ] = $user_id;
-				$user_id                                = null;
-			} else {
-
-				if ( ! empty( $user_id ) && is_int( $user_id ) ) {
-					$user = $this->find_user( array( 'ID' => $user_id ) );
-				}
-
-				/**
-				 * Identify any new roles to add for the user (and add them)
-				 */
-				$default_role = 'subscriber';
-				$default_role = apply_filters( 'pmp_im_import_default_user_role', $default_role, $user_id, $site_id );
-				$default_role = apply_filters( 'e20r_import_default_user_role', $default_role, $user_id, $site_id );
-				$all_roles    = array( $default_role );
-
-				if ( ! empty( $user_data['role'] ) ) {
-					$roles      = array_map( 'trim', explode( ';', $user_data['role'] ) );
-					$all_roles += $roles;
-				}
-
-				if ( ! empty( $all_roles ) ) {
-					foreach ( $all_roles as $role_name ) {
-						$user->add_role( $role_name );
-					}
-				}
-
-				$updated = wp_update_user( $user );
-
-				if ( is_wp_error( $updated ) ) {
-					$e20r_import_err[ "save_error_{$active_line_number}" ] = $updated;
-					return null;
-				}
-
-				// Adds the user to the specified blog ID if we're in a multi-site configuration
-				$site_id = (int) $this->variables->get( 'site_id' );
-
-				if ( is_multisite() && ! empty( $site_id ) ) {
-					add_user_to_blog( $site_id, $user_id, $default_role );
-				}
-
-				// If no error, let's update the user meta too!
-				if ( ! empty( $user_meta ) ) {
-					foreach ( $user_meta as $meta_key => $meta_value ) {
-						$meta_value = maybe_unserialize( $meta_value );
-						update_user_meta( $user_id, $meta_key, $meta_value );
-					}
-				}
-
-				// Set the password nag as needed
-				if ( true === (bool) $this->variables->get( 'password_nag' ) ) {
-					update_user_option( $user_id, 'default_password_nag', true, true );
-				}
-
-				// If we created a new user, send new user notification?
-				$new_user_notification       = (bool) $this->variables->get( 'new_user_notification' );
-				$admin_new_user_notification = (bool) $this->variables->get( 'admin_new_user_notification' );
-
-				// Only to the user?
-				if ( true === $new_user_notification && false === $admin_new_user_notification ) {
-					$msg_target = 'user';
-				} elseif ( false === $new_user_notification && true === $admin_new_user_notification ) {
-					// Only to the admin?
-					$msg_target = 'admin';
-				} elseif ( true === $new_user_notification && true === $admin_new_user_notification ) {
-					// To the user _and_ the admin?
-					$msg_target = 'both';
-				}
-
-				if ( ( false !== $user && true === $allow_update ) && ( true === $new_user_notification || true === $admin_new_user_notification ) ) {
-					wp_new_user_notification( $user_id, null, $msg_target );
-				}
-
-				if ( ! empty( $user_data['user_registered'] ) && true === $this->time_format->validate( $user_data['user_registered'] ) ) {
-
-					// Update/set the user_registered value if the user is registered already.
-					$update_registered = array(
-						'ID'              => $user_id,
-						'user_registered' => $user_data['user_registered'],
-					);
-
-					$status = wp_update_user( $update_registered );
-
-					if ( is_wp_error( $status ) ) {
-						$e20r_import_err[] = $status;
-
-						$should_be = $this->time_format->convert( $user_data['user_registered'] );
-						$should_be = ( false === $should_be ? time() : $should_be );
-
-						$display_errors['user_registered'] = sprintf(
-						// translators: %1$s column format, %2$s html, %3$s closing html, %4$s expected format
-							esc_attr__(
-								'The %2$suser_registered column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected: \'%4$s\')',
-								'pmpro-import-members-from-csv'
-							),
-							$user_data['user_registered'],
-							'<strong>',
-							'</strong>',
-							date_i18n( 'Y-m-d h:i:s', $should_be )
-						);
-					}
-				}
-
-				$settings = $this->variables->get();
-
-				// Some plugins may need to do things after one user has been imported. Who knows?
-				do_action( 'is_iu_post_user_import', $user_id, $settings );
-				do_action( 'pmp_im_post_member_import', $user_id, $settings );
-				do_action( 'e20r_after_user_import', $user_id, $user_data, $user_meta );
+				$e20r_import_err[ "error_importing_{$active_line_number}" ] = $user_id;
+				$this->error_log->debug( $user_id->get_error_message() . " (line: {$active_line_number})" );
+				return null;
 			}
+
+			if ( ! empty( $user_id ) && is_int( $user_id ) ) {
+				$user = $this->find_user( array( 'ID' => $user_id ) );
+			}
+
+			/**
+			 * Identify any new roles to add for the user (and add them)
+			 */
+			$default_role = 'subscriber';
+			$default_role = apply_filters( 'pmp_im_import_default_user_role', $default_role, $user_id, $site_id );
+			$default_role = apply_filters( 'e20r_import_default_user_role', $default_role, $user_id, $site_id );
+			$all_roles    = array( $default_role );
+
+			if ( ! empty( $user_data['role'] ) ) {
+				$roles      = array_map( 'trim', explode( ';', $user_data['role'] ) );
+				$all_roles += $roles;
+			}
+
+			if ( ! empty( $all_roles ) ) {
+				foreach ( $all_roles as $role_name ) {
+					$user->add_role( $role_name );
+				}
+			}
+
+			// Adds the user to the specified blog ID if we're in a multi-site configuration
+			$site_id = (int) $this->variables->get( 'site_id' );
+
+			if ( is_multisite() && ! empty( $site_id ) ) {
+				add_user_to_blog( $site_id, $user_id, $default_role );
+			}
+
+			// If no error, let's update the user meta too!
+			if ( ! empty( $user_meta ) ) {
+				foreach ( $user_meta as $meta_key => $meta_value ) {
+					$meta_value = maybe_unserialize( $meta_value );
+					update_user_meta( $user_id, $meta_key, $meta_value );
+				}
+			}
+
+			// Set the password nag as needed
+			if ( true === (bool) $this->variables->get( 'password_nag' ) ) {
+				update_user_option( $user_id, 'default_password_nag', true, true );
+			}
+
+			// If we created a new user, send new user notification?
+			$new_user_notification       = (bool) $this->variables->get( 'new_user_notification' );
+			$admin_new_user_notification = (bool) $this->variables->get( 'admin_new_user_notification' );
+
+			// Only to the user?
+			if ( true === $new_user_notification && false === $admin_new_user_notification ) {
+				$msg_target = 'user';
+			} elseif ( false === $new_user_notification && true === $admin_new_user_notification ) {
+				// Only to the admin?
+				$msg_target = 'admin';
+			} elseif ( true === $new_user_notification && true === $admin_new_user_notification ) {
+				// To the user _and_ the admin?
+				$msg_target = 'both';
+			}
+
+			if ( ( false !== $user && true === $allow_update ) && ( true === $new_user_notification || true === $admin_new_user_notification ) ) {
+				wp_new_user_notification( $user_id, null, $msg_target );
+			}
+
+			if ( ! empty( $user_data['user_registered'] ) && true === $this->time_format->validate( $user_data['user_registered'] ) ) {
+
+				// Update/set the user_registered value if the user is registered already.
+				$user->user_registered = $user_data['user_registered'];
+				$status                = wp_update_user( $user );
+
+				if ( is_wp_error( $status ) ) {
+					$e20r_import_err[ "registration_date_{$active_line_number}" ] = $status;
+
+					$should_be = $this->time_format->convert( $user_data['user_registered'] );
+					$should_be = ( false === $should_be ? time() : $should_be );
+
+					$display_errors['user_registered'] = sprintf(
+					// translators: %1$s column format, %2$s html, %3$s closing html, %4$s expected format
+						esc_attr__(
+							'The %2$suser_registered column%3$s contains an unrecognized date/time format. (Your format: \'%1$s\'. Expected: \'%4$s\')',
+							'pmpro-import-members-from-csv'
+						),
+						$user_data['user_registered'],
+						'<strong>',
+						'</strong>',
+						date_i18n( 'Y-m-d h:i:s', $should_be )
+					);
+				}
+			}
+
+			$settings = $this->variables->get();
+
+			// Some plugins may need to do things after one user has been imported. Who knows?
+			do_action( 'is_iu_post_user_import', $user_id, $settings );
+			do_action( 'pmp_im_post_member_import', $user_id, $settings );
+			do_action( 'e20r_after_user_import', $user_id, $user_data, $user_meta );
 
 			$this->variables->set( 'display_errors', $display_errors );
 			return $user_id;
@@ -458,7 +447,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @param WP_User $wp_user User record currently on the system
 		 * @param array $user_data The data we're going to be importing
 		 *
-		 * @return WP_User|false
+		 * @return int|false
 		 *
 		 * @throws UserIDAlreadyExists Thrown if the "target" local User ID already has a user
 		 * @throws InvalidProperty Thrown if the 'update_id' variable, for some inexplicable reason, no longer exists
@@ -472,7 +461,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 			$is_updatable   = (bool) $this->variables->get( 'update_id' );
 
 			if ( $wp_user_id === $import_user_id ) {
-				return $wp_user;
+				return $wp_user_id;
 			}
 
 			$has_existing_record = get_userdata( $import_user_id );
@@ -496,13 +485,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 					sprintf(
 						// translators: %1$s: Table name, %2$s WPDB error message
 						esc_attr__( 'Cannot update %1$s: %2$s', 'pmpro-import-members-from-csv' ),
-						$wpdb->users ?? 'wptest_users',
+						$wpdb->users,
 						$wpdb->last_error ?? esc_attr__( '\$wpdb was not instantiated', 'pmpro-import-members-from-csv' )
 					)
 				);
 			}
-
-			return get_user_by( 'ID', $import_user_id );
+			wp_cache_delete( $import_user_id, 'users' );
+			wp_cache_delete( $import_user_id, 'userlogins' );
+			return $import_user_id;
 		}
 
 		/**

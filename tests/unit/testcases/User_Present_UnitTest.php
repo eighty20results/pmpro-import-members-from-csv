@@ -219,7 +219,7 @@ class User_Present_UnitTest extends Unit {
 	public function fixture_data_to_return_from_validation() {
 		return array(
 			// has_id, has_email, has_login, is_integer, user_exists, data_importable, invalid email address, return value from validate()
-			array( true, true, true, false, false, true, null, false ),
+			array( true, true, true, false, false, true, null, true ),
 			array( true, true, true, true, false, true, null, true ),
 			array( true, false, false, false, false, false, null, false ),
 			array( true, false, false, false, false, false, null, false ),
