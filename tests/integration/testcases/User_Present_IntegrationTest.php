@@ -108,12 +108,14 @@ class User_Present_IntegrationTest extends E20R_TestCase {
 			self::assertArrayHasKey( $expected_err_category, $e20r_import_err );
 			self::assertIsObject( $e20r_import_err[ $expected_err_category ] );
 			self::assertInstanceOf( WP_Error::class, $e20r_import_err[ $expected_err_category ] );
+			self::assertSame( $expected_msg, $e20r_import_err[ $expected_err_category ]->get_error_message() );
 		}
 
 		if ( null !== $expected_warn_category ) {
 			self::assertArrayHasKey( $expected_warn_category, $e20r_import_warn );
 			self::assertIsObject( $e20r_import_warn[ $expected_warn_category ] );
 			self::assertInstanceOf( WP_Error::class, $e20r_import_warn[ $expected_warn_category ] );
+			self::assertSame( $expected_msg, $e20r_import_warn[ $expected_warn_category ]->get_error_message() );
 		}
 
 		if ( null === $expected_err_category && null === $expected_warn_category ) {
@@ -143,15 +145,15 @@ class User_Present_IntegrationTest extends E20R_TestCase {
 
 		return array(
 			// status, line_number, error_msgs, warn_msgs, expected_msg, expected_err_category, expected_warn_category ) {
-			array( Status::E20R_ERROR_USER_NOT_FOUND, 1, array(), array(), "Error: Expected to find user from information in record, but didn't succeed! (line: 1)", 'user_not_found_1', null ),
-			array( Status::E20R_ERROR_USER_NOT_FOUND, 2, null, null, "Error: Expected to find user from information in record, but didn't succeed! (line: 2)", 'user_not_found_2', null ),
-			array( Status::E20R_USER_IDENTIFIER_MISSING, 3, array(), array(), 'Error: Neither the ID, user_login nor user_email field exists in the CSV record being processed! (line 3)', 'no_identifying_info_3', null ),
-			array( Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED, 4, array(), array(), 'The import data specifies an existing user but the plugin settings disallow updating their record (line: 4)', null, 'cannot_update_4' ),
-			array( Status::E20R_ERROR_ID_NOT_NUMBER, 5, array(), array(), 'Supplied information in ID column is not a number! (line 5)', 'error_invalid_user_id_5', null ),
-			array( Status::E20R_ERROR_NO_EMAIL, 6, array(), array(), 'Invalid email address in CSV record. (line 6)', null, 'warn_invalid_email_6' ),
-			array( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, 7, array(), array(), 'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected. (line: 7).', null, 'warn_invalid_email_login_7' ),
-			array( Status::E20R_ERROR_NO_EMAIL, 6, array(), $custom_warnings, 'Invalid email in row 6 (Not imported).', null, 'warn_invalid_email_6' ),
-			array( Status::E20R_ERROR_ID_NOT_NUMBER, 5, $custom_errors, array(), 'Supplied information in ID column on line 5 is not a number', 'error_invalid_user_id_5', null ),
+			array( Status::E20R_ERROR_USER_NOT_FOUND, 1, array(), array(), 'Error: User not found from information in CSV file! (line: 1)', 'user_not_found_1', null ),
+			array( Status::E20R_ERROR_USER_NOT_FOUND, 2, null, null, 'Error: User not found from information in CSV file! (line: 2)', 'user_not_found_2', null ),
+			array( Status::E20R_USER_IDENTIFIER_MISSING, 3, array(), array(), 'Error: Neither the ID, user_login nor user_email field exists in the CSV record being processed! (line: 3)', 'no_identifying_info_3', null ),
+			array( Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED, 4, array(), array(), 'The import data specifies an existing user but the plugin settings disallow updating their record (line: 4)', null, 'warn_cannot_update_4' ),
+			array( Status::E20R_ERROR_ID_NOT_NUMBER, 5, array(), array(), 'Supplied information in ID column is not a number! (line: 5)', 'error_invalid_user_id_5', null ),
+			array( Status::E20R_ERROR_NO_EMAIL, 6, array(), array(), 'Invalid email address in CSV record. (line: 6)', 'err_invalid_email_6', null ),
+			array( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, 7, array(), array(), 'Neither &quot;user_email&quot; nor &quot;user_login&quot; column found, or the &quot;user_email&quot; and &quot;user_login&quot; column(s) was/were included, the user exists, and the &quot;Update user record&quot; option was NOT selected. (line: 7)', null, 'warn_invalid_email_login_7' ),
+			array( Status::E20R_ERROR_NO_EMAIL, 6, array(), $custom_warnings, 'Invalid email address in CSV record. (line: 6)', 'err_invalid_email_6', null ),
+			array( Status::E20R_ERROR_ID_NOT_NUMBER, 5, $custom_errors, array(), 'Supplied information in ID column is not a number! (line: 5)', 'error_invalid_user_id_5', null ),
 			array( 0, 5, null, null, 'Not a valid message', null, null ),
 		);
 	}
