@@ -89,6 +89,8 @@
       <excludeFolder url="file://$MODULE_DIR$/inc/zordius" />
       <excludeFolder url="file://$MODULE_DIR$/inc/dealerdirect/phpcodesniffer-composer-installer" />
       <excludeFolder url="file://$MODULE_DIR$/inc/sirbrillig/phpcs-variable-analysis" />
+      <excludeFolder url="file://$MODULE_DIR$/inc/dealerdirect" />
+      <excludeFolder url="file://$MODULE_DIR$/inc/sirbrillig" />
     </content>
     <content url="file://$MODULE_DIR$/inc/bin" />
     <content url="file://$MODULE_DIR$/inc/codeception" />
