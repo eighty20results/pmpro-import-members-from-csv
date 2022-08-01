@@ -61,9 +61,8 @@ class Import_CSV_Cest {
 		$i->seePluginInstalled( 'pmpro-import-members-from-csv' );
 		$i->seePluginActivated( 'pmpro-import-members-from-csv' );
 		$i->deactivatePlugin( 'pmpro-import-members-from-csv' );
-
-
 	}
+
 	/**
 	 * Log in as admin and access the Import Members page
 	 *
