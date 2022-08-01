@@ -10,17 +10,17 @@ bootstrap: _bootstrap.php
 actor: AcceptanceTester
 extensions:
   enabled:
-    - CodeceptionExtensionRunProcess:
+    - Codeception\Extension\RunProcess:
       0: chromedriver --url-base=/wd/hub
-    - CodeceptionExtensionRunFailed
+    - Codeception\Extension\RunFailed
   commands:
-    - CodeceptionCommandGenerateWPUnit
-    - CodeceptionCommandGenerateWPRestApi
-    - CodeceptionCommandGenerateWPRestController
-    - CodeceptionCommandGenerateWPRestPostTypeController
-    - CodeceptionCommandGenerateWPAjax
-    - CodeceptionCommandGenerateWPCanonical
-    - CodeceptionCommandGenerateWPXMLRPC
+    - Codeception\Command\Generate\WPUnit
+    - Codeception\Command\Generate\WPRestApi
+    - Codeception\Extension\Generate\WPRestController
+    - Codeception\Extension\Generate\WPRestPostTypeController
+    - Codeception\Extension\Generate\WPAjax
+    - Codeception\Extension\Generate\WPCanonical
+    - Codeception\Extension\Generate\WPXMLRPC
 modules:
   enabled:
     - \Helper\Acceptance
@@ -31,9 +31,10 @@ modules:
   config:
     WPDb:
       dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%;port=%TEST_SITE_DB_PORT%'
+      tablePrefix: %TEST_SITE_TABLE_PREFIX%
       user: %TEST_SITE_DB_USER%
       password: %TEST_SITE_DB_PASSWORD%
-      dump: %TEST_SITE_DB_DUMP%
+      dump: %SQL_BACKUP_FILE%
       populate: true
       cleanup: true
       waitlock: 15
