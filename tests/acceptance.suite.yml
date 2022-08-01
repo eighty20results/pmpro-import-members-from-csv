@@ -23,28 +23,44 @@ extensions:
     - CodeceptionCommandGenerateWPXMLRPC
 modules:
   enabled:
+    - \Helper\Acceptance
     - WPWebDriver
     - WPDb
-    WPWebDriver:
-      url: '%TEST_SITE_WP_URL%'
-      port: '%WP_PORT%'
-      window_size: maximize
-      host: localhost
-      adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
-      adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
-      adminPath: '%TEST_SITE_WP_ADMIN_PATH%'
-      browser: chrome
-        capabilities:
-          chromeOptions:
-            args: ["--user-agent=wp-browser", "--ignore-certificate-errors"]
+    - WPFilesystem
+    - Asserts
+  config:
     WPDb:
       dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%;port=%TEST_SITE_DB_PORT%'
-      user: '%TEST_SITE_DB_USER%'
-      password: '%TEST_SITE_DB_PASSWORD%'
-      dump: '%TEST_SITE_DB_DUMP%'
+      user: %TEST_SITE_DB_USER%
+      password: %TEST_SITE_DB_PASSWORD%
+      dump: %TEST_SITE_DB_DUMP%
       populate: true
       cleanup: true
-      waitlock: 10
-      url: '%TEST_SITE_WP_URL%'
+      waitlock: 15
+      url: %TEST_SITE_WP_URL%
       urlReplacement: true
     WPWebDriver:
+      # We have to use a URL Chromedriver will be able to resolve.
+      # See the `tests/_envs/.env.testing` file for more information.
+      url: %TEST_SITE_WP_URL%
+      # See the `tests/_envs/.env.testing` file for more information.
+      adminUsername: %TEST_SITE_ADMIN_USERNAME%
+      adminPassword: %TEST_SITE_ADMIN_PASSWORD%
+      adminPath: %TEST_SITE_WP_ADMIN_PATH%
+      browser: chrome
+      host: %CHROMEDRIVER_HOST%
+      port: %CHROMEDRIVER_PORT%
+      window_size: 1366x1400
+      capabilities:
+        chromeOptions:
+          args:
+            - '--headless'
+            - '--disable-gpu'
+            - '--user-agent=wp-browser'
+            - '--ignore-certificate-errors'
+    WPFilesystem:
+      wpRootFolder: %WP_ROOT_FOLDER%
+      themes: '/wp-content/themes'
+      plugins: '/wp-content/plugins'
+      mu-plugins: '/wp-content/mu-plugins'
+      uploads: '/wp-content/uploads'
