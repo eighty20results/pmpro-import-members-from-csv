@@ -29,8 +29,8 @@ DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 FOUND_UNIT_TESTS ?= $(wildcard tests/unit/testcases/*.php)
 FOUND_INTEGRATION_TESTS ?= $(wildcard tests/integration/testcases/*.php)
 FOUND_FUNCTIONAL_TESTS ?= $(wildcard tests/functional/testcases/*.php)
-FOUND_API_TESTS ?= $(wildcard /tests/api/testcases/*.php)
-FOUND_ACCEPTANCE_TESTS ?= $(wildcard /tests/acceptance/testcases/*.php)
+FOUND_API_TESTS ?= $(wildcard tests/api/testcases/*.php)
+FOUND_ACCEPTANCE_TESTS ?= $(wildcard tests/acceptance/testcases/*.php)
 
 UNIT_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/unit/_bootstrap.php
 INTEGRATION_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/integration/_bootstrap.php
@@ -557,7 +557,7 @@ functional-tests: docker-deps start-stack db-import
 #
 acceptance-tests: docker-deps start-stack db-import
 	@echo "Testing if we need to run acceptance tests"
-	@if [[ -n "$(FOUND_WP_ACCEPTANCE_TESTS)" ]]; then \
+	@if [[ -n "$(FOUND_ACCEPTANCE_TESTS)" ]]; then \
   		echo "Running all acceptance tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \

@@ -8,30 +8,43 @@
 
 bootstrap: _bootstrap.php
 actor: AcceptanceTester
+extensions:
+  enabled:
+    - CodeceptionExtensionRunProcess:
+      0: chromedriver --url-base=/wd/hub
+    - CodeceptionExtensionRunFailed
+  commands:
+    - CodeceptionCommandGenerateWPUnit
+    - CodeceptionCommandGenerateWPRestApi
+    - CodeceptionCommandGenerateWPRestController
+    - CodeceptionCommandGenerateWPRestPostTypeController
+    - CodeceptionCommandGenerateWPAjax
+    - CodeceptionCommandGenerateWPCanonical
+    - CodeceptionCommandGenerateWPXMLRPC
 modules:
-    enabled:
-        - WPDb
-        - WPBrowser
-        - \Helper\Acceptance
-    config:
-        WPDb:
-            dsn: '%TEST_SITE_DB_DSN%'
-            user: '%TEST_SITE_DB_USER%'
-            password: '%TEST_SITE_DB_PASSWORD%'
-            dump: '%TEST_SITE_DB_DUMP%'
-            #import the dump before the tests; this means the test site database will be repopulated before the tests.
-            populate: true
-            # re-import the dump between tests; this means the test site database will be repopulated between the tests.
-            cleanup: true
-            waitlock: 10
-            url: '%TEST_SITE_WP_URL%'
-            urlReplacement: true #replace the hardcoded dump URL with the one above
-            tablePrefix: '%TEST_SITE_TABLE_PREFIX%'
-        WPBrowser:
-            url: '%TEST_SITE_WP_URL%'
-            adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
-            adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
-            adminPath: '%TEST_SITE_WP_ADMIN_PATH%'
-            headers:
-                X_TEST_REQUEST: 1
-                X_WPBROWSER_REQUEST: 1
+  enabled:
+    - WPWebDriver
+    - WPDb
+    WPWebDriver:
+      url: '%TEST_SITE_WP_URL%'
+      port: '%WP_PORT%'
+      window_size: maximize
+      host: localhost
+      adminUsername: '%TEST_SITE_ADMIN_USERNAME%'
+      adminPassword: '%TEST_SITE_ADMIN_PASSWORD%'
+      adminPath: '%TEST_SITE_WP_ADMIN_PATH%'
+      browser: chrome
+        capabilities:
+          chromeOptions:
+            args: ["--user-agent=wp-browser", "--ignore-certificate-errors"]
+    WPDb:
+      dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%;port=%TEST_SITE_DB_PORT%'
+      user: '%TEST_SITE_DB_USER%'
+      password: '%TEST_SITE_DB_PASSWORD%'
+      dump: '%TEST_SITE_DB_DUMP%'
+      populate: true
+      cleanup: true
+      waitlock: 10
+      url: '%TEST_SITE_WP_URL%'
+      urlReplacement: true
+    WPWebDriver:
