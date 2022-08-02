@@ -3,7 +3,7 @@ version: "3.7"
 services:
   chrome:
     container_name: codecep-chrome-${E20R_PLUGIN_NAME}
-    image: selenium/standalone-chrome-debug:3.141.59-neon
+    image: selenium/standalone-chrome-debug:latest
     environment:
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
     volumes:
