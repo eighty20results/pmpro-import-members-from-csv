@@ -61,6 +61,10 @@ class Import_CSV_Cest {
 		$i->seePluginInstalled( 'pmpro-import-members-from-csv' );
 		$i->seePluginActivated( 'pmpro-import-members-from-csv' );
 		$i->deactivatePlugin( 'pmpro-import-members-from-csv' );
+		$i->seePluginInstalled( '00-e20r-utilities' );
+		$i->seePluginActivated( '00-e20r-utilities' );
+		$i->deactivatePlugin( '00-e20r-utilities' );
+
 	}
 
 	/**
