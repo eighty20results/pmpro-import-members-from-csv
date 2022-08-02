@@ -25,7 +25,7 @@ WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
-
+CHROME_CONTAINER_NAME ?= chrome-wp-$(E20R_PLUGIN_NAME)
 
 FOUND_UNIT_TESTS ?= $(wildcard tests/unit/testcases/*.php)
 FOUND_INTEGRATION_TESTS ?= $(wildcard tests/integration/testcases/*.php)
@@ -582,6 +582,41 @@ build-test: docker-deps start-stack db-import
 # Using codeception to execute all defined tests for the plugin
 #
 tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests start-stack db-import integration-tests functional-tests api-tests acceptance-tests stop-stack
+
+#
+# (re)Build the Docker images for this acceptance testing environment
+#
+build-acceptance-stack: docker-deps
+	$(info Building the docker container stack for $(PROJECT)?)
+	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
+		echo "Yes, building containers for codeception based testing!" ; \
+		CONFIG_DIR=tests/_docker APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file tests/_docker/docker-compose-acceptance.yml build --pull --progress tty ; \
+	fi
+
+start-acceptance-stack: prerequisite docker-deps image-pull build-acceptance-stack
+	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
+	@if [[ "3" -ne $(STACK_RUNNING) ]]; then \
+		echo "Building and starting the WordPress/chrome stack for testing purposes" ; \
+		CONFIG_DIR=tests/_docker APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file tests/_docker/docker-compose-acceptance.yml up --detach --remove-orphans ; \
+	fi
+	@echo "Started the $(PROJECT) docker environment..."
+#
+# Using codeception to execute the Plugin Acceptance tests
+#
+acceptance-tests: docker-deps build-acceptance-stack start-acceptance-stack
+	@echo "Testing if we need to run acceptance tests"
+	if [[ -n "$(FOUND_ACCEPTANCE_TESTS)" ]]; then \
+		echo "Starting environment for project acceptance tests"; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+			exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ wordpress \
+			$(COMPOSER_DIR)/bin/codecept $(ACCEPTANCE_BOOTSTRAP_SETTINGS) run acceptance --debug --verbose --steps --coverage-xml acceptance-coverage-$(shell php -r 'printf( "%s", phpversion() );').xml --coverage-html acceptance-coverage-$(shell php -r 'printf( "%s", phpversion() );').html $(ACCEPTANCE_TEST_CASE_PATH); \
+	fi
 
 #
 # Generate a GIT commit log in build_readmes/current.txt
