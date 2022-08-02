@@ -26,6 +26,7 @@ E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 
+
 FOUND_UNIT_TESTS ?= $(wildcard tests/unit/testcases/*.php)
 FOUND_INTEGRATION_TESTS ?= $(wildcard tests/integration/testcases/*.php)
 FOUND_FUNCTIONAL_TESTS ?= $(wildcard tests/functional/testcases/*.php)
@@ -39,7 +40,6 @@ API_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/api/_bootstrap.php
 ACCEPTANCE_BOOTSTRAP_SETTINGS ?= --bootstrap=tests/acceptance/_bootstrap.php
 # Set the HOST IP address for use with xdebug support in integration/acceptance docker instances
 E20R_HOST_IP ?= $(${E20R_HOST_IP_CMD} ${E20R_HOST_IFACE} | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}')
-
 
 UNIT_TEST_CASE_PATH := tests/unit/testcases/
 INTEGRATION_TEST_CASE_PATH := tests/integration/testcases/
@@ -84,16 +84,6 @@ $(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
 PROJECT ?= $(E20R_PLUGIN_NAME)
 VOLUME_CONTAINER ?= $(PROJECT)_volume
 
-# Settings for docker-compose
-DC_CONFIG_FILE ?= $(PWD)/docker-compose.yml
-DC_ENV_FILE ?= $(PWD)/tests/_envs/.env.testing
-
-STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
-    		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-    		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) ps -q 2> /dev/null | wc -l | xargs)
-
-$(info Number of running docker images:$(STACK_RUNNING))
-
 .PHONY: \
 	docs \
 	readme \
@@ -118,7 +108,10 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	code-standard-tests \
 	static-analysis \
 	unit-tests \
+	unit \
 	integration-tests \
+	integration \
+	integration-start \
 	acceptance-tests \
 	functional-tests \
 	api-tests \
@@ -138,6 +131,16 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	hub-login \
 	hub-nologin \
 	prerequisite
+
+# Settings for docker-compose
+DC_CONFIG_FILE ?= $(PWD)/tests/_docker/docker-compose-unit.yml
+DC_ENV_FILE ?= $(PWD)/tests/_envs/.env.testing
+
+STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+    		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+    		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) ps -q 2> /dev/null | wc -l | xargs)
+
+$(info Number of running docker images:$(STACK_RUNNING))
 
 #
 # Make sure the plugin name is set to something
@@ -214,7 +217,7 @@ endif
 image-build: docker-deps
 	$(info Building the docker container stack for $(PROJECT)?)
 	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
-  		echo "Yes, building containers for Unit, Integration and Functional testing!" ; \
+  		echo "Yes, building containers for codeception based testing!" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty ; \
@@ -389,7 +392,7 @@ start-stack: prerequisite docker-deps image-pull image-build
 # Start the docker-compose stack for this plugin _and_ import the .sql file (data) stored as
 # ./tests/_data/{PLUGIN_NAME}.sql
 #
-db-import: start-stack
+db-import:
 	@echo "Maybe load WordPress data...?"
 	@bin/wait-for-db.sh "$(MYSQL_USER)" "$(MYSQL_PASSWORD)" "$(WORDPRESS_DB_HOST)" "$(E20R_PLUGIN_NAME)"
 	@if [[ -f $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql ]]; then \
@@ -418,7 +421,7 @@ stop-stack: prerequisite
 #
 # Restart the docker-compose stack and re-import the database
 #
-restart: prerequisite stop-stack db-import
+restart: prerequisite stop-stack start-stack db-import
 
 #
 # Open a shell against the Docker container for the WordPress instance
@@ -526,7 +529,7 @@ integration-tests: integration-start
 		echo "Completed running all integration tests" ; \
 	fi
 
-integration-start: docker-deps start-stack db-import
+integration-start: docker-deps stop-stack start-stack db-import
 
 integration:
 	@if [[ -n "$(FOUND_INTEGRATION_TESTS)" ]]; then \
@@ -555,20 +558,6 @@ functional-tests: docker-deps start-stack db-import
 #
 # Using codeception to execute the Plugin Acceptance tests
 #
-acceptance-tests: docker-deps start-stack db-import
-	@echo "Testing if we need to run acceptance tests"
-	@if [[ -n "$(FOUND_ACCEPTANCE_TESTS)" ]]; then \
-  		echo "Running all acceptance tests for $(PROJECT)"; \
-		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
-		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ wordpress \
-	 		$(COMPOSER_DIR)/bin/codecept $(ACCEPTANCE_BOOTSTRAP_SETTINGS) run acceptance --debug --verbose --steps --coverage-xml acceptance-coverage-$(shell php -r 'printf( "%s", phpversion() );').xml --coverage-html acceptance-coverage-$(shell php -r 'printf( "%s", phpversion() );').html $(ACCEPTANCE_TEST_CASE_PATH); \
-	fi
-
-#
-# Using codeception to execute the Plugin Acceptance tests
-#
 api-tests: docker-deps start-stack db-import
 	@echo "Testing if we need to run API tests"
 	@if [[ -n "$(FOUND_WP_ACCEPTANCE_TESTS)" ]]; then \
@@ -592,7 +581,7 @@ build-test: docker-deps start-stack db-import
 #
 # Using codeception to execute all defined tests for the plugin
 #
-tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests db-import integration-tests functional-tests api-tests acceptance-tests stop-stack
+tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests start-stack db-import integration-tests functional-tests api-tests acceptance-tests stop-stack
 
 #
 # Generate a GIT commit log in build_readmes/current.txt

@@ -1,12 +1,10 @@
 version: "3.7"
 
 services:
-  # TODO: Add Selenium container for use with acceptance tests
-  # TODO: https://stackoverflow.com/questions/22731967/codeception-does-not-see-dump-sql
   wordpress:
     container_name: codecep-wp-${E20R_PLUGIN_NAME}
     build:
-      context: .
+      context: ../..
       dockerfile: tests/_docker/Dockerfile.unittest
       args:
         WP_RELEASE: ${WP_RELEASE}
@@ -23,6 +21,7 @@ services:
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     environment:
+      CONFIG_DIR: tests/_docker
       WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}

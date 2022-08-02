@@ -31,7 +31,8 @@ action.yml
 codeception.dist.yml
 composer.lock
 docker.hub.key
-docker-compose.yml
+tests/_docker/docker-compose-unit.yml
+tests/_docker/docker-compose-acceptance.yml
 Dockerfile
 Makefile
 patchwork.json
