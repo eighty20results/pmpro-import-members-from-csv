@@ -1,6 +1,8 @@
 version: "3.7"
 
 services:
+  # TODO: Add Selenium container for use with acceptance tests
+  # TODO: https://stackoverflow.com/questions/22731967/codeception-does-not-see-dump-sql
   wordpress:
     container_name: codecep-wp-${E20R_PLUGIN_NAME}
     build:
