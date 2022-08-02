@@ -8,6 +8,8 @@
 
 bootstrap: _bootstrap.php
 actor: AcceptanceTester
+params:
+  - tests/_envs/.env.testing
 extensions:
   enabled:
     - Codeception\Extension\RunProcess:
@@ -34,7 +36,7 @@ modules:
       tablePrefix: %TEST_SITE_TABLE_PREFIX%
       user: %TEST_SITE_DB_USER%
       password: %TEST_SITE_DB_PASSWORD%
-      dump: %SQL_BACKUP_FILE%
+      dump: %ACCEPTANCE_DB_DUMP%
       populate: true
       cleanup: true
       waitlock: 15
@@ -43,7 +45,7 @@ modules:
     WPWebDriver:
       # We have to use a URL Chromedriver will be able to resolve.
       # See the `tests/_envs/.env.testing` file for more information.
-      url: %TEST_SITE_WP_URL%
+      url: %ACCEPTANCE_WP_URL%
       # See the `tests/_envs/.env.testing` file for more information.
       adminUsername: %TEST_SITE_ADMIN_USERNAME%
       adminPassword: %TEST_SITE_ADMIN_PASSWORD%
