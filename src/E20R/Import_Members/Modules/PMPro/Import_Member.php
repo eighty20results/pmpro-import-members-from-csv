@@ -668,6 +668,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 					array(
 						'code_id'   => $record['membership_code_id'],
 						'user_id'   => $user_id,
+						/** @phpstan-ignore-next-line */
 						'order_id'  => $order->id,
 						'timestamp' => 'CURRENT_TIMESTAMP',
 					),
@@ -683,6 +684,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 							),
 							$record['membership_code_id'],
 							$user_id,
+							/** @phpstan-ignore-next-line */
 							$order->id
 						)
 					);
@@ -752,17 +754,18 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 						$order->billing = new \stdClass();  // @phpstan-ignore-line
 					}
 
-					if ( ! isset( $order->billing->{$matches[1]} ) ) {
+					if ( ! isset( $order->billing->{$matches[1]} ) ) { /** @phpstan-ignore-line */
 
 						$meta_key = $this->data->map_billing_field_to_meta( $field_name );
 
 						if ( ! empty( $meta_key ) ) {
+							/** @phpstan-ignore-next-line */
 							$order->billing->{$matches[1]} = get_user_meta( $user_id, $meta_key, true );
 							$process_billing_info          = true;
 						}
 					}
 				}
-
+				/** @phpstan-ignore-newt-line */
 				if ( false === $process_billing_info && ( ! isset( $order->{$field_name} ) || ( isset( $order->{$field_name} ) && empty( $order->{$field_name} ) ) ) ) {
 
 					// Process payment (amount)
@@ -772,7 +775,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 							empty( $record['membership_initial_payment'] ) &&
 							! empty( $record['membership_billing_amount'] )
 						) ) {
-
+						/** @phpstan-ignore-next-line */
 						$order->total = $record['membership_billing_amount']; // @phpstan-ignore-line
 
 					} elseif ( 'total' !== $field_name ) {
@@ -783,7 +786,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 							$order->{$field_name} = ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null;
 						}
 					} else {
-
 						$this->error_log->debug( "Warning: {$field_name} will not be processed!!" );
 					}
 				}
@@ -812,6 +814,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				$order->gateway_environment = $gw_environment; // @phpstan-ignore-line
 			}
 			if ( true === $membership_in_the_past ) {
+				/** @phpstan-ignore-next-line */
 				$order->status = 'cancelled'; // @phpstan-ignore-line
 			}
 
@@ -819,6 +822,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			 * Add MemberOrder billing info if possible
 			 */
 			if ( ! empty( $order->billing ) ) {
+				/** @phpstan-ignore-next-line */
 				$order->billing->name = "{$user->first_name} {$user->last_name}";
 			}
 

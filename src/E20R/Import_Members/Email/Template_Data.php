@@ -104,8 +104,9 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 				$user = wp_get_current_user();
 
 			}
+
 			if ( null === $user && ! empty( $this->order->user_id ) ) {
-				$user = new WP_User( $this->order->user_id );
+				$user = new WP_User( $this->order->user_id ); /** @phpstan-ignore-line */
 			}
 			$this->user = $user;
 
