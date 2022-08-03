@@ -4,13 +4,16 @@ services:
   chrome:
     container_name: codecep-chrome-${E20R_PLUGIN_NAME}
     image: selenium/standalone-chrome-debug:latest
+    restart: always
     environment:
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
     volumes:
       - /dev/shm:/dev/shm
     ports:
-      - '5900:5900'
+      - 5900:5900
+      - 4444:4444
     depends_on:
+      - database
       - wordpress
 
 # TODO: https://stackoverflow.com/questions/22731967/codeception-does-not-see-dump-sql
@@ -35,7 +38,7 @@ services:
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     environment:
-      CONFIG_DIR: tests/_docker
+      CONFIG_DIR: ${CONFIG_DIR}
       WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
