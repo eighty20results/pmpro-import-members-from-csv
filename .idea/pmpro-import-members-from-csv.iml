@@ -44,7 +44,6 @@
       <excludeFolder url="file://$MODULE_DIR$/inc/brain" />
       <excludeFolder url="file://$MODULE_DIR$/inc/dg" />
       <excludeFolder url="file://$MODULE_DIR$/inc/doctrine" />
-      <excludeFolder url="file://$MODULE_DIR$/inc/fzaninotto" />
       <excludeFolder url="file://$MODULE_DIR$/inc/goaop" />
       <excludeFolder url="file://$MODULE_DIR$/inc/guzzlehttp" />
       <excludeFolder url="file://$MODULE_DIR$/inc/hamcrest" />
@@ -91,6 +90,7 @@
       <excludeFolder url="file://$MODULE_DIR$/inc/sirbrillig/phpcs-variable-analysis" />
       <excludeFolder url="file://$MODULE_DIR$/inc/dealerdirect" />
       <excludeFolder url="file://$MODULE_DIR$/inc/sirbrillig" />
+      <excludeFolder url="file://$MODULE_DIR$/inc/fakerphp/faker" />
     </content>
     <content url="file://$MODULE_DIR$/inc/bin" />
     <content url="file://$MODULE_DIR$/inc/codeception" />

@@ -108,7 +108,6 @@
       <path value="$PROJECT_DIR$/inc/symfony/translation" />
       <path value="$PROJECT_DIR$/inc/symfony/serializer" />
       <path value="$PROJECT_DIR$/inc/symfony/polyfill-php73" />
-      <path value="$PROJECT_DIR$/inc/symfony/process" />
       <path value="$PROJECT_DIR$/inc/symfony/polyfill-mbstring" />
       <path value="$PROJECT_DIR$/inc/theseer/tokenizer" />
       <path value="$PROJECT_DIR$/inc/zordius/lightncandy" />
@@ -134,8 +133,6 @@
       <path value="$PROJECT_DIR$/inc/sebastian/resource-operations" />
       <path value="$PROJECT_DIR$/inc/sebastian/environment" />
       <path value="$USER_HOME$/code/WP/WordPress" />
-      <path value="$PROJECT_DIR$/inc/fzaninotto/faker" />
-      <path value="$PROJECT_DIR$/inc/brain/faker" />
       <path value="$PROJECT_DIR$/../WordPress/" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/woocommerce" />
       <path value="$PROJECT_DIR$/inc/wp_plugins/00-e20r-utilities" />
@@ -149,6 +146,8 @@
       <path value="$PROJECT_DIR$/inc/dealerdirect/phpcodesniffer-composer-installer" />
       <path value="$PROJECT_DIR$/inc/sirbrillig/phpcs-variable-analysis" />
       <path value="$PROJECT_DIR$/inc/automattic/vipwpcs" />
+      <path value="$PROJECT_DIR$/inc/fakerphp/faker" />
+      <path value="$PROJECT_DIR$/inc/symfony/process" />
     </include_path>
   </component>
   <component name="PhpProjectServersManager">

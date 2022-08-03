@@ -256,8 +256,6 @@ class Template_Data_UnitTest extends Unit {
 	 *      string full path, (string) $expected_file_name
 	 *
 	 * @return array[]
-	 *
-	 * @see https://github.com/Brain-WP/BrainFaker
 	 */
 	public function fixture_default_site_field_values() {
 
