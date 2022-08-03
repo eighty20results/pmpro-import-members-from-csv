@@ -3,15 +3,14 @@ version: "3.7"
 services:
   chrome:
     container_name: codecep-chrome-${E20R_PLUGIN_NAME}
-    image: selenium/standalone-chrome-debug:latest
+    image: selenium/standalone-chrome-debug
     restart: always
     environment:
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
     volumes:
       - /dev/shm:/dev/shm
     ports:
-      - 5900:5900
-      - 4444:4444
+      - 5900
     depends_on:
       - database
       - wordpress

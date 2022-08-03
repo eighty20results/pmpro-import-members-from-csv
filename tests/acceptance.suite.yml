@@ -39,6 +39,7 @@ modules:
       dump: %ACCEPTANCE_DB_DUMP%
       populate: true
       cleanup: true
+      reconnect: true
       waitlock: 15
       url: %TEST_SITE_WP_URL%
       urlReplacement: true
