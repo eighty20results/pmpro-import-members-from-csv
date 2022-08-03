@@ -5,13 +5,18 @@ services:
     container_name: codecep-chrome-${E20R_PLUGIN_NAME}
     image: selenium/standalone-chrome-debug
     restart: always
+    shm_size: 2gb
     # network_mode: "host"
     environment:
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
-    volumes:
-      - /dev/shm:/dev/shm
+      - VNC_NO_PASSWORD=1
+      - SCREEN_WIDTH=1366
+      - SCREEN_HEIGHT=1400
+    links:
+      - wordpress:wordpress
     ports:
-      - 5900
+      - 4444:4444
+      - 7900:7900
     depends_on:
       - database
       - wordpress

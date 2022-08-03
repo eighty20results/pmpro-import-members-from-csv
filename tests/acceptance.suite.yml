@@ -41,7 +41,7 @@ modules:
       cleanup: true
       reconnect: true
       waitlock: 15
-      url: %TEST_SITE_WP_URL%
+      url: %ACCEPTANCE_WP_URL%
       urlReplacement: true
     WPWebDriver:
       # We have to use a URL Chromedriver will be able to resolve.
