@@ -5,6 +5,7 @@ services:
     container_name: codecep-chrome-${E20R_PLUGIN_NAME}
     image: selenium/standalone-chrome-debug
     restart: always
+    # network_mode: "host"
     environment:
       - DBUS_SESSION_BUS_ADDRESS=/dev/null
     volumes:
@@ -27,6 +28,7 @@ services:
         APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}
         APACHE_RUN_USER: ${APACHE_RUN_USER}
     restart: always
+    # network_mode: "host"
     ports:
       - ${WP_PORT}:80
     volumes:
@@ -60,6 +62,7 @@ services:
     tty: true        # docker run -t
     container_name: mariadb-wp-${E20R_PLUGIN_NAME}
     restart: always
+    # network_mode: "host"
     ports:
       - ${DB_PORT}:3306
     environment:

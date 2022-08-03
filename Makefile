@@ -581,7 +581,7 @@ build-test: docker-deps start-stack db-import
 #
 # Using codeception to execute all defined tests for the plugin
 #
-tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests start-stack db-import integration-tests functional-tests api-tests acceptance-tests stop-stack
+tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests start-stack db-import integration-tests functional-tests api-tests stop-stack acceptance-tests stop-stack
 
 #
 # (re)Build the Docker images for this acceptance testing environment
