@@ -586,7 +586,7 @@ tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests
 #
 # (re)Build the Docker images for this acceptance testing environment
 #
-build-acceptance-stack: stop-stack docker-deps
+build-acceptance-stack: docker-deps
 	$(info Building the docker container stack for $(PROJECT)?)
 	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
 		echo "Yes, building containers for codeception based testing!" ; \
