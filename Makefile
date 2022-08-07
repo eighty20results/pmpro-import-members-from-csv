@@ -130,22 +130,22 @@ VOLUME_CONTAINER ?= $(PROJECT)_volume
 	docker-hub-login \
 	hub-login \
 	hub-nologin \
-	prerequisite
+	prerequisite \
+	docker_container_count
 
 # Settings for docker-compose
 DC_CONFIG_FILE ?= $(PWD)/tests/_docker/docker-compose-unit.yml
 DC_ENV_FILE ?= $(PWD)/tests/_envs/.env.testing
 
+docker_container_count:
 STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
     		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
     		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) ps -q 2> /dev/null | wc -l | xargs)
 
-$(info Number of running docker images:$(STACK_RUNNING))
-
 #
 # Make sure the plugin name is set to something
 #
-prerequisite:
+prerequisite: docker_container_count
 	@echo "Testing prerequisite variable settings"
 	@mkdir -p tests/_output/
 	@chmod 777 tests/_output
@@ -188,7 +188,7 @@ hub-login:
 	$(info Local network status is: '$(LOCAL_NETWORK_STATUS)' so we should continue?)
 	@if [[ "Xactive" == "X$(LOCAL_NETWORK_STATUS)" ]]; then \
 		echo "Yes, logging in to Docker Hub using the '$(DOCKER_USER)' account" ; \
-		docker login --username $(DOCKER_USER) --password $(CONTAINER_ACCESS_TOKEN) ; \
+		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN) ; \
 	else \
 		echo "Skipping docker-cli based hub login!" ; \
 	fi
@@ -345,7 +345,7 @@ e20r-deps: prerequisite
 #
 # Check if Docker is running. If not, exit the make operation
 #
-is-docker-running: prerequisite
+is-docker-running: docker_container_count prerequisite
 	@if [[ "0" -eq $(DOCKER_IS_RUNNING) ]]; then \
 		echo "Error: Docker is not running on this system!" && \
 		exit 1; \
@@ -378,15 +378,15 @@ wp-deps: prerequisite clean composer-dev e20r-deps
 # Install all required docker dependencies (docker-compose)
 # NOTE: This target assumes the main docker binaries are installed on the system where this Makefile runs!)
 #
-start-stack: prerequisite docker-deps image-pull image-build
+start-stack: prerequisite docker-deps image-pull image-build docker_container_count
 	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
-	@if [[ "2" -ne $(STACK_RUNNING) ]]; then \
-  		echo "Building and starting the WordPress stack for testing purposes" ; \
+	@if [[ "2" -gt $(STACK_RUNNING) ]]; then \
+  		echo "Starting the WordPress stack for integration, functional, and api testing purposes" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach --remove-orphans ; \
 	fi
-	@echo "Started the $(PROJECT) docker environment..."
+	@echo "$(PROJECT) docker environment running..."
 
 #
 # Start the docker-compose stack for this plugin _and_ import the .sql file (data) stored as
@@ -408,7 +408,7 @@ db-import:
 #
 # Stop the docker compose stack for this plugin
 #
-stop-stack: prerequisite
+stop-stack: prerequisite docker_container_count
 	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
 	@if [[ 0 -lt "$(STACK_RUNNING)" ]]; then \
   		echo "Stopping the $(PROJECT) WordPress stack" ; \
@@ -529,9 +529,13 @@ integration-tests: integration-start
 		echo "Completed running all integration tests" ; \
 	fi
 
-integration-start: docker-deps stop-stack start-stack db-import
+integration-start: docker-deps docker_container_count start-stack db-import
 
-integration:
+integration: docker_container_count
+	@if [[ "2" -gt $(STACK_RUNNING) ]]; then \
+		echo "Need to run `make integration-start` first!" ; \
+		exit 1 ; \
+  	fi
 	@if [[ -n "$(FOUND_INTEGRATION_TESTS)" ]]; then \
   		echo "Running specific Integration test(s) for $(PROJECT)/$(TEST_TO_RUN)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
@@ -586,7 +590,7 @@ tests: prerequisite clean wp-deps code-standard-tests static-analysis unit-tests
 #
 # (re)Build the Docker images for this acceptance testing environment
 #
-build-acceptance-stack: docker-deps
+build-acceptance-stack: docker_container_count prerequisite docker-deps
 	$(info Building the docker container stack for $(PROJECT)?)
 	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
 		echo "Yes, building containers for codeception based testing!" ; \
@@ -595,15 +599,15 @@ build-acceptance-stack: docker-deps
 		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file tests/_docker/docker-compose-acceptance.yml build --pull --progress tty ; \
 	fi
 
-start-acceptance-stack: prerequisite docker-deps image-pull build-acceptance-stack
+start-acceptance-stack: docker-deps image-pull build-acceptance-stack docker_container_count
 	@echo "Number of running containers for $(PROJECT): $(STACK_RUNNING)"
 	@if [[ "3" -ne $(STACK_RUNNING) ]]; then \
-		echo "Building and starting the WordPress/chrome stack for testing purposes" ; \
+		echo "Starting the WordPress stack for acceptance testing" ; \
 		CONFIG_DIR=tests/_docker APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file tests/_docker/docker-compose-acceptance.yml up --detach --remove-orphans ; \
 	fi
-	@echo "Started the $(PROJECT) docker environment..."
+	@echo "$(PROJECT) acceptance testing docker environment running..."
 #
 # Using codeception to execute the Plugin Acceptance tests
 #

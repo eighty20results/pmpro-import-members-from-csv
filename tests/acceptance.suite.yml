@@ -26,13 +26,15 @@ extensions:
 modules:
   enabled:
     - \Helper\Acceptance
-    - WPWebDriver
     - WPDb
+#     - WPLoader
+    - WPWebDriver
     - WPFilesystem
     - Asserts
   config:
     WPDb:
-      dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%;port=%TEST_SITE_DB_PORT%'
+      # dsn: 'mysql:host=%TEST_SITE_DB_HOST%;dbname=%TEST_SITE_DB_NAME%;port=%TEST_SITE_DB_PORT%'
+      dsn: %TEST_SITE_DB_DSN%
       tablePrefix: %TEST_SITE_TABLE_PREFIX%
       user: %TEST_SITE_DB_USER%
       password: %TEST_SITE_DB_PASSWORD%
@@ -43,6 +45,14 @@ modules:
       waitlock: 15
       url: %ACCEPTANCE_WP_URL%
       urlReplacement: true
+#     WPLoader:
+#       loadOnly: true
+#       wpRootFolder: "/Users/User/www/wordpress"
+#       dbName: "wpress-tests"
+#       dbHost: "localhost"
+#       dbUser: "root"
+#       dbPassword: "root"
+#       domain: "wordpress.localhost"
     WPWebDriver:
       # We have to use a URL Chromedriver will be able to resolve.
       # See the `tests/_envs/.env.testing` file for more information.
@@ -54,7 +64,8 @@ modules:
       browser: chrome
       host: %CHROMEDRIVER_HOST%
       port: %CHROMEDRIVER_PORT%
-      window_size: 1366x1400
+      # window_size: 1366x1400
+      window_size: false
       capabilities:
         chromeOptions:
           args:
@@ -62,6 +73,8 @@ modules:
             - '--disable-gpu'
             - '--user-agent=wp-browser'
             - '--ignore-certificate-errors'
+            - "--proxy-server='direct://'"
+            - "--proxy-bypass-list=*"
     WPFilesystem:
       wpRootFolder: %WP_ROOT_FOLDER%
       themes: '/wp-content/themes'
