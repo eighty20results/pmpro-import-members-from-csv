@@ -49,7 +49,7 @@
 	"codeception/codeception": "^4.1.0",
 	"codeception/module-asserts": "^1.3",
 	"codeception/module-phpbrowser": "^1.0",
-	"codeception/module-webdriver": "^1.2.0",
+	"codeception/module-webdriver": "=1.2.1",
 	"codeception/module-db": "^1.1",
 	"codeception/module-filesystem": "^1.0",
 	"codeception/module-cli": "^1.1.0",
@@ -68,6 +68,7 @@
 	"ext-mysqli": "*"
   },
   "scripts": {
+	"selenium-start": "selenium-server -port 4444",
 	"post-install-cmd": "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/automattic/phpcs-neutron-standard/NeutronStandard,inc/wp-coding-standards/wpcs,inc/automattic/vipwpcs ; fi",
 	"post-update-cmd" : "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/automattic/phpcs-neutron-standard/NeutronStandard,inc/wp-coding-standards/wpcs,inc/automattic/vipwpcs ; fi"
   },
