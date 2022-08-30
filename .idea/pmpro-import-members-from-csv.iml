@@ -32,7 +32,6 @@
       <excludeFolder url="file://$MODULE_DIR$/build_readmes" />
       <excludeFolder url="file://$MODULE_DIR$/docker-env" />
       <excludeFolder url="file://$MODULE_DIR$/build_config" />
-      <excludeFolder url="file://$MODULE_DIR$/inc/webmozart/assert" />
       <excludeFolder url="file://$MODULE_DIR$/inc/theseer/tokenizer" />
       <excludeFolder url="file://$MODULE_DIR$/inc/behat/gherkin" />
       <excludeFolder url="file://$MODULE_DIR$/inc/dg/mysql-dump" />
@@ -123,7 +122,6 @@
       <excludeFolder url="file://$MODULE_DIR$/inc/psr/simple-cache" />
       <excludeFolder url="file://$MODULE_DIR$/inc/psr/http-factory" />
       <excludeFolder url="file://$MODULE_DIR$/inc/fakerphp/faker" />
-      <excludeFolder url="file://$MODULE_DIR$/inc/phpspec/prophecy" />
       <excludeFolder url="file://$MODULE_DIR$/inc/doctrine/cache" />
       <excludeFolder url="file://$MODULE_DIR$/inc/doctrine/lexer" />
       <excludeFolder url="file://$MODULE_DIR$/inc/doctrine/inflector" />
@@ -134,12 +132,9 @@
       <excludeFolder url="file://$MODULE_DIR$/inc/sirbrillig/phpcs-variable-analysis" />
       <excludeFolder url="file://$MODULE_DIR$/inc/jakubledl/dissect" />
       <excludeFolder url="file://$MODULE_DIR$/inc/nesbot/carbon" />
-      <excludeFolder url="file://$MODULE_DIR$/inc/phpdocumentor/reflection-common" />
       <excludeFolder url="file://$MODULE_DIR$/inc/illuminate/contracts" />
-      <excludeFolder url="file://$MODULE_DIR$/inc/phpdocumentor/type-resolver" />
       <excludeFolder url="file://$MODULE_DIR$/inc/vria/nodiacritic" />
       <excludeFolder url="file://$MODULE_DIR$/inc/illuminate/support" />
-      <excludeFolder url="file://$MODULE_DIR$/inc/phpdocumentor/reflection-docblock" />
       <excludeFolder url="file://$MODULE_DIR$/inc/illuminate/macroable" />
       <excludeFolder url="file://$MODULE_DIR$/inc/illuminate/collections" />
       <excludeFolder url="file://$MODULE_DIR$/inc/phpmetrics/phpmetrics" />
