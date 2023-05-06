@@ -762,7 +762,7 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\PMPro_Validatio
 				$e20r_import_err = array();
 			}
 
-			if ( isset( $fields['membership_id'] ) && false === pmpro_getLevel( $fields['membership_id'] ) ) {
+			if ( false === pmpro_getLevel( $fields['membership_id'] ) ) {
 
 				$msg = sprintf(
 				// translators: %1$d - PMPro Membership Level ID, %2$d - User ID

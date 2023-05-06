@@ -44,12 +44,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 		private $error_log = null;
 
 		/**
-		 * Instance of the Import() class
-		 *
-		 * @var Import|null $import
-		 */
-		private $import = null;
-		/**
 		 * The names of BuddyPress tables we can Import to
 		 *
 		 * @var string[] $required_tables
@@ -75,10 +69,9 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 		 *
 		 * @access private
 		 */
-		public function __construct( $import = null ) {
-			$this->import    = $import;
-			$this->data      = $import->get( 'data' );
-			$this->error_log = $import->get( 'error_log' );
+		public function __construct( $data = null, $error_log = null ) {
+			$this->data      = $data;
+			$this->error_log = $error_log;
 
 			$this->required_tables = apply_filters(
 				'e20r_import_buddypress_tables',
@@ -123,7 +116,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\BuddyPress' ) ) {
 							$table_name
 						)
 					);
-					// It didn't so we'll skip to the next table.
+					// It didn't, so we'll skip to the next table.
 					$this->error_log->debug( "Could not find {$table_name} table" );
 					continue; // Skip
 				}

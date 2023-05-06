@@ -63,7 +63,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 			if ( ! is_a( $wp_error, WP_Error::class ) || ! is_object( $wp_error ) ) {
 				throw new InvalidInstantiation(
 					sprintf(
-						// translators: %1$s: Supplied class base name, %2$s expected class base name
+					// translators: %1$s: Supplied class base name, %2$s expected class base name
 						esc_attr__( '"%1$s" is an unexpected class. Expecting "%2$s"', 'pmpro-import-members-from-csv' ),
 						gettype( $wp_error ),
 						class_basename( WP_Error::class )
@@ -117,7 +117,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 					break;
 				case Status::E20R_USER_IDENTIFIER_MISSING:
 					$msg = sprintf(
-						// translators: %1$d: The line number in the CSV import file
+					// translators: %1$d: The line number in the CSV import file
 						esc_attr__(
 							'Error: Neither the ID, user_login nor user_email field exists in the CSV record being processed! (line: %1$d)',
 							'pmpro-import-members-from-csv'
@@ -145,7 +145,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 				case Status::E20R_ERROR_ID_NOT_NUMBER:
 					$msg = sprintf(
-						// translators: %1$d: The line number from the CSV import file
+					// translators: %1$d: The line number from the CSV import file
 						esc_attr__(
 							'Supplied information in ID column is not a number! (line: %1$d)',
 							'pmpro-import-members-from-csv'
@@ -159,7 +159,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 				case Status::E20R_ERROR_NO_EMAIL:
 					$msg = sprintf(
-						// translators: %1$d: The line number from the CSV import file
+					// translators: %1$d: The line number from the CSV import file
 						esc_attr__( 'Invalid email address in CSV record. (line: %1$d)', 'pmpro-import-members-from-csv' ),
 						$active_line_number
 					);
@@ -170,7 +170,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 
 				case Status::E20R_ERROR_NO_EMAIL_OR_LOGIN:
 					$msg = sprintf(
-						// translators: %1$d: row number
+					// translators: %1$d: row number
 						esc_attr__(
 							'Neither "user_email" nor "user_login" column found, or the "user_email" and "user_login" column(s) was/were included, the user exists, and the "Update user record" option was NOT selected. (line: %1$d)',
 							'pmpro-import-members-from-csv'
@@ -254,7 +254,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\User_Present' ) ) {
 				$exists = $this->db_user_exists( array( 'user_email', 'user_login' ), array( $record['user_email'], $record['user_login'] ) );
 				$status = $this->data_can_be_imported( true, $exists, $allow_update );
 				$this->status_msg( $status, $allow_update );
-
 				if ( true === $status || Status::E20R_ERROR_UPDATE_NEEDED_NOT_ALLOWED === $status ) {
 					$this->error_log->debug( 'User found using the email and login values' );
 					return $status;

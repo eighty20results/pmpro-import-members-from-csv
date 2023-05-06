@@ -19,6 +19,7 @@
 
 namespace E20R\Import_Members\Process;
 
+use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidProperty;
 use E20R\Exceptions\NoHeaderDataFound;
 use E20R\Exceptions\NoUserDataFound;
@@ -37,12 +38,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 	 * @package E20R\Import_Members\Process
 	 */
 	class CSV {
-		/**
-		 * Instance of this class (CSV)
-		 *
-		 * @var null|CSV
-		 */
-		private static $instance = null;
 
 		/**
 		 * Error log class
@@ -57,19 +52,14 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 		private $variables = null;
 
 		/**
-		 * Instance of the User_Present() class
-		 *
-		 * @var User_Present|null
-		 */
-		private $user_present = null;
-
-		/**
 		 * CSV constructor.
 		 *
 		 * @param Variables|null $variables Instance of the Request variables (settings) class
 		 * @param Error_Log|null $error_log For debug logging and status messages
+		 *
+		 * @throws InvalidInstantiation
 		 */
-		public function __construct( $variables = null, $error_log = null, $user_present = null ) {
+		public function __construct( $variables = null, $error_log = null ) {
 
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -80,12 +70,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\CSV' ) ) {
 				$variables = new Variables( $this->error_log );
 			}
 			$this->variables = $variables;
-
-			if ( null === $user_present ) {
-				$user_present = new User_Present( $this->variables, $this->error_log );
-			}
-
-			$this->user_present = $user_present;
 		}
 
 		/**

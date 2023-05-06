@@ -31,12 +31,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Page' ) ) {
 	 * @package E20R\Import_Members\Import
 	 */
 	class Page {
-
-		/**
-		 * @var null|Page
-		 */
-		private static $instance = null;
-
 		/**
 		 * Instance of the Import() class. Should always be instantiated
 		 * @var Import|null

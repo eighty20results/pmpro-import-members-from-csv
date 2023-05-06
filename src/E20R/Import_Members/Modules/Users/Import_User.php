@@ -20,6 +20,7 @@
 namespace E20R\Import_Members\Modules\Users;
 
 use E20R\Exceptions\CannotUpdateDB;
+use E20R\Exceptions\InvalidInstantiation;
 use E20R\Exceptions\InvalidProperty;
 use E20R\Exceptions\UserIDAlreadyExists;
 use E20R\Import_Members\Error_Log;
@@ -69,13 +70,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		private $time_format = null;
 
 		/**
-		 * The methods used to validate date data
-		 *
-		 * @var Date_Format|null $date_format
-		 */
-		private $date_format = null;
-
-		/**
 		 * Import_User constructor.
 		 *
 		 * @param null|Variables $variables Instance of the Variables() class
@@ -83,11 +77,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @param null|User_Present $user_present Instance of the tests for user existence on the system
 		 * @param null|Generate_Password $generate_passwd Instance of the tests for the user password
 		 * @param null|Time $time_format Instance of the Time() validator class
-		 * @param null|Date_Format $date_format Instance of the Date_Format() validator class
 		 *
+		 * @throws InvalidInstantiation
 		 * @access private
 		 */
-		public function __construct( $variables = null, $error_log = null, $user_present = null, $generate_passwd = null, $time_format = null, $date_format = null ) {
+		public function __construct( $variables = null, $error_log = null, $user_present = null, $generate_passwd = null, $time_format = null ) {
 			if ( null === $error_log ) {
 				$error_log = new Error_Log(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
@@ -112,11 +106,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$time_format = new Time();
 			}
 			$this->time_format = $time_format;
-
-			if ( null === $date_format ) {
-				$date_format = new Date_Format();
-			}
-			$this->date_format = $date_format;
 		}
 
 		/**
@@ -140,7 +129,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 		 * @return int|null
 		 *
 		 * @throws InvalidProperty Thrown when the specified Variable::get() parameter doesn't exist (should not happen)
-		 * @throws CannotUpdateDB Thrown if the underlying DB cannot be updated (if updating user's ID)
 		 */
 		public function maybe_add_or_update( $user_data, $user_meta, $headers, $wp_error = null ) {
 
@@ -332,10 +320,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\Users\Import_User' ) ) {
 				$all_roles += $roles;
 			}
 
-			if ( ! empty( $all_roles ) ) {
-				foreach ( $all_roles as $role_name ) {
-					$user->add_role( $role_name );
-				}
+			foreach ( $all_roles as $role_name ) {
+				$user->add_role( $role_name );
 			}
 
 			// Adds the user to the specified blog ID if we're in a multi-site configuration

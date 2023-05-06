@@ -27,21 +27,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 	 * Class PMPro
 	 */
 	class PMPro {
-		/**
-		 * Singleton instance of this class (PMPro)
-		 *
-		 * @var null|PMPro
-		 */
-		private static $instance = null;
-
-		/**
-		 * PMPro constructor.
-		 *
-		 * @access private
-		 */
-		public function __construct() {
-			self::$instance = $this;
-		}
 
 		/**
 		 * Load all supported Import field (column) names for the PMPro module
@@ -85,9 +70,8 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\PMPro' ) ) {
 		 */
 		public function load_hooks() {
 			add_filter( 'e20r_import_supported_fields', array( $this, 'load_fields' ), 1, 1 );
-			add_filter( 'e20r_import_default_field_values', array( $this, 'update_field_values' ), 2, 3 );
+			add_filter( 'e20r_import_default_field_values', array( $this, 'update_field_values' ), 2, 1 );
 		}
-
 
 		/**
 		 * Run data checks/validations (business rules, etc)
