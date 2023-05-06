@@ -26,6 +26,8 @@ use E20R\Import_Members\Error_Log;
 use E20R\Import_Members\Validate\Date_Format;
 use E20R\Import_Members\Variables;
 use E20R\Import_Members\Import;
+use E20R\Import\src\E20R\Import_Members\Modules\PMPro\PMP_Order;
+use MemberOrder;
 use WP_Error;
 
 if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
@@ -34,14 +36,6 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 	 * @package E20R\Import_Members\Modules\PMPro
 	 */
 	class Import_Member {
-
-		/**
-		 * The instance of the Import_Sponsors class (singleton pattern)
-		 *
-		 * @var null|Import_Member $instance
-		 */
-		private static $instance = null;
-
 		/**
 		 * List of fields that are PMPro specific
 		 *
@@ -220,7 +214,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 
 			$this->error_log->debug( "Adding membership info for: {$user_id}" );
 
-			// Set site ID and custom table names for the multi site configs
+			// Set site ID and custom table names for the multisite configs
 			if ( is_multisite() ) {
 
 				$this->error_log->debug( 'Importing user on multi-site...' );
@@ -568,6 +562,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		 * @param bool $membership_in_the_past Did the member have a previous membership level
 		 *
 		 * @return bool
+		 * @throws InvalidProperty
 		 */
 		public function maybe_add_order( $user_id, $record, $membership_in_the_past ) {
 
@@ -661,15 +656,14 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			}
 
 			// Add any provided Discount Code use for this user
-			if ( ! empty( $record['membership_code_id'] ) && ! empty( $order ) && ! empty( $order->id ) ) {
+			if ( ! empty( $record['membership_code_id'] ) && ! empty( $order->get( 'id' ) ) ) {
 
 				if ( false === $wpdb->insert(
 					$pmpro_dc_uses_table,
 					array(
 						'code_id'   => $record['membership_code_id'],
 						'user_id'   => $user_id,
-						/** @phpstan-ignore-next-line */
-						'order_id'  => $order->id,
+						'order_id'  => $order->get( 'id' ),
 						'timestamp' => 'CURRENT_TIMESTAMP',
 					),
 					array( '%d', '%d', '%d', '%s' )
@@ -684,8 +678,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 							),
 							$record['membership_code_id'],
 							$user_id,
-							/** @phpstan-ignore-next-line */
-							$order->id
+							$order->get( 'id' )
 						)
 					);
 				}
@@ -701,7 +694,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		 * @param array $record
 		 * @param bool $membership_in_the_past
 		 *
-		 * @return \MemberOrder
+		 * @return PMP_Order
 		 */
 		public function create_order( $user_id, $record, $membership_in_the_past ) {
 
@@ -725,12 +718,10 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 			 */
 			$order_fields = $this->data->get_table_info( 'pmpro_membership_orders' );
 
-			$order                = new \MemberOrder();
-			$order->user_id       = $user_id; // @phpstan-ignore-line
-			$order->membership_id = $record['membership_id'] ?? null; // @phpstan-ignore-line
-
-			// phpcs:ignore
-			$order->InitialPayment = $record['membership_initial_payment'] ?? null; // @phpstan-ignore-line
+			$order = new PMP_Order();
+			$order->set( 'user_id', $user_id );
+			$order->set( 'membership_id', $record['membership_id'] ?? null );
+			$order->set( 'InitialPayment', $record['membership_initial_payment'] ?? null );
 
 			/**
 			 * Dynamically provide data for all configured Order fields...
@@ -749,41 +740,41 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				 * Add billing info (if/when we can)
 				 */
 				if ( 1 === preg_match( '/billing_(.*)/', $field_name, $matches ) ) {
-
-					if ( ! isset( $order->billing ) ) {
-						$order->billing = new \stdClass();  // @phpstan-ignore-line
+					$billing = $order->get( 'billing' );
+					if ( empty( $billing ) ) {
+						$billing = new \stdClass();
 					}
 
-					if ( ! isset( $order->billing->{$matches[1]} ) ) { /** @phpstan-ignore-line */
-
+					if ( ! isset( $billing->{$matches[1]} ) ) {
 						$meta_key = $this->data->map_billing_field_to_meta( $field_name );
 
 						if ( ! empty( $meta_key ) ) {
-							/** @phpstan-ignore-next-line */
-							$order->billing->{$matches[1]} = get_user_meta( $user_id, $meta_key, true );
-							$process_billing_info          = true;
+							$billing->{$matches[1]} = get_user_meta( $user_id, $meta_key, true );
+							$process_billing_info   = true;
 						}
 					}
+					$order->set( 'billing', $billing );
 				}
-				/** @phpstan-ignore-newt-line */
-				if ( false === $process_billing_info && ( ! isset( $order->{$field_name} ) || ( isset( $order->{$field_name} ) && empty( $order->{$field_name} ) ) ) ) {
+				if ( false === $process_billing_info && ! $order->get( $field_name ) ) {
 
 					// Process payment (amount)
 					if ( 'total' === $field_name && ! empty( $record['membership_initial_payment'] ) ) {
-						$order->total = $record['membership_initial_payment']; // @phpstan-ignore-line
+						$order->set( 'total', $record['membership_initial_payment'] );
 					} elseif ( 'total' === $field_name && (
 							empty( $record['membership_initial_payment'] ) &&
 							! empty( $record['membership_billing_amount'] )
 						) ) {
-						/** @phpstan-ignore-next-line */
-						$order->total = $record['membership_billing_amount']; // @phpstan-ignore-line
+						$order->set( 'total', $record['membership_billing_amount'] );
 
 					} elseif ( 'total' !== $field_name ) {
 						if ( 'status' === $field_name ) {
-							// @phpstan-ignore-next-line
-							$order->{$field_name} = ( isset( $record[ $full_field_name ] ) && 'active' === $record[ $full_field_name ] ? 'success' : 'cancelled' );
+							$order->set(
+								$field_name,
+								( isset( $record[ $full_field_name ] ) &&
+								'active' === $record[ $full_field_name ] ? 'success' : 'cancelled' )
+							);
 						} else {
-							$order->{$field_name} = ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null;
+							$order->set( $field_name, ! empty( $record[ $full_field_name ] ) ? $record[ $full_field_name ] : null );
 						}
 					} else {
 						$this->error_log->debug( "Warning: {$field_name} will not be processed!!" );
@@ -796,40 +787,34 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 				$order->setGateway( $record['membership_gateway'] );
 			}
 
-			if (
-				! isset( $record['membership_gateway'] ) ||
-				( isset( $record['membership_gateway'] ) && empty( isset( $record['membership_gateway'] ) ) )
-			) {
+			if ( empty( $record['membership_gateway'] ) ) {
 				$order->setGateway( $gateway_name );
 			}
 
 			if ( isset( $record['membership_gateway_environment'] ) && strtolower( $gw_environment ) !== strtolower( $record['membership_gateway_environment'] ) ) {
-				$order->gateway_environment = strtolower( $record['membership_gateway_environment'] ); // @phpstan-ignore-line
+				$order->set( 'gateway_environment', strtolower( $record['membership_gateway_environment'] ) );
 			}
 
-			if (
-				! isset( $record['membership_gateway_environment'] ) ||
-				( isset( $record['membership_gateway_environment'] ) && empty( isset( $record['membership_gateway_environment'] ) ) )
-			) {
-				$order->gateway_environment = $gw_environment; // @phpstan-ignore-line
+			if ( empty( $record['membership_gateway_environment'] ) ) {
+				$order->set( 'gateway_environment', $gw_environment );
 			}
+
 			if ( true === $membership_in_the_past ) {
-				/** @phpstan-ignore-next-line */
-				$order->status = 'cancelled'; // @phpstan-ignore-line
+				$order->set( 'status', 'cancelled' );
 			}
 
 			/**
 			 * Add MemberOrder billing info if possible
 			 */
-			if ( ! empty( $order->billing ) ) {
-				/** @phpstan-ignore-next-line */
-				$order->billing->name = "{$user->first_name} {$user->last_name}";
+			if ( ! empty( $billing ) ) {
+				$billing->name = "{$user->first_name} {$user->last_name}";
+				$order->set( 'billing', $billing );
 			}
 
 			if ( false === $order->saveOrder() ) {
 				$msg = sprintf(
 				// translators: %d - User ID
-					__( 'Unable to save order object for user (ID: %d).', 'pmpro-import-members-from-csv' ),
+					esc_attr__( 'Unable to save order for user (ID: %d).', 'pmpro-import-members-from-csv' ),
 					$user_id
 				);
 
