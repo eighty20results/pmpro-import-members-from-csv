@@ -24,6 +24,9 @@
       <sourceFolder url="file://$MODULE_DIR$/tests/unit/testcases" isTestSource="true" packagePrefix="E20R\Tests\Unit\" />
       <sourceFolder url="file://$MODULE_DIR$/tests/integration/inc" isTestSource="true" packagePrefix="E20R\Tests\Integration\Fixtures\" />
       <sourceFolder url="file://$MODULE_DIR$/tests/_fixtures/factory" isTestSource="true" packagePrefix="E20R\Tests\Fixtures\Factory\" />
+      <sourceFolder url="file://$MODULE_DIR$/inc" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/javascript" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.circleci" />
       <excludeFolder url="file://$MODULE_DIR$/.github" />
       <excludeFolder url="file://$MODULE_DIR$/.wordpress-org" />
@@ -164,6 +167,7 @@
       <excludeFolder url="file://$MODULE_DIR$/inc/mikey179/vfsstream" />
       <excludeFolder url="file://$MODULE_DIR$/inc/php-webdriver/webdriver" />
       <excludeFolder url="file://$MODULE_DIR$/inc/softcreatr/jsonpath" />
+      <excludeFolder url="file://$MODULE_DIR$/inc/doctrine/deprecations" />
     </content>
     <content url="file://$MODULE_DIR$/inc/bin" />
     <content url="file://$MODULE_DIR$/inc/codeception" />
