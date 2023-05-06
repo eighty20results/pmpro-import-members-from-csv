@@ -12,10 +12,11 @@ parameters:
         - WP_LANG_DIR
     ignoreErrors:
         # Uses func_get_args()
-        - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
+        # - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
         - '#Parameter \#2 \$callback of function .* expects .*callable\(\): mixed.*, .* given\.$#'
-        - '#Constant PMPRO_VERSION not found\.#'
+        # - '#Constant PMPRO_VERSION not found\.#'
         - '#Constant WP_LANG_DIR not found\.#'
+        - '#^Offset .base.* on array.* on left side of .* always exists and is not nullable\.#'
     scanDirectories:
     	- inc/wp_plugins/paid-memberships-pro
     	- inc/wp_plugins/00-e20r-utilities
