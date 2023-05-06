@@ -94,11 +94,11 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Member' ) ) {
 		 */
 		public function __construct( $import ) {
 			$this->import          = $import;
-			$this->error_log       = $import->get( 'error_log' );
-			$this->variables       = $import->get( 'variables' );
-			$this->data            = $import->get( 'data' );
-			$this->validate_date   = $import->get( 'validate_date' );
-			$this->email_templates = $import->get( 'email_templates' );
+			$this->error_log       = $this->import->get( 'error_log' );
+			$this->variables       = $this->import->get( 'variables' );
+			$this->data            = $this->import->get( 'data' );
+			$this->validate_date   = $this->import->get( 'validate_date' );
+			$this->email_templates = $this->import->get( 'email_templates' );
 		}
 
 		/**
