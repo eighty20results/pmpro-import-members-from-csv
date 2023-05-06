@@ -230,7 +230,7 @@ if ( ! class_exists( 'E20R\Import_Members\Modules\PMPro\Import_Sponsors' ) ) {
 		 * Attempt to save the user ID's sponsor info
 		 *
 		 * @param int $sponsored_user_id
-		 * @param Sponsor|\WP_User $sponsor
+		 * @param Sponsor|\WP_User|null $sponsor
 		 * @param bool $last_try
 		 *
 		 * @return WP_Error|bool

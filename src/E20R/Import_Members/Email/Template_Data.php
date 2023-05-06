@@ -119,9 +119,9 @@ if ( ! class_exists( '\E20R\Import_Members\Email\Template_Data' ) ) {
 		/**
 		 * Configure the member variables
 		 *
-		 * @param \WP_User     $user
-		 * @param \MemberOrder $order
-		 * @param array        $user_meta
+		 * @param \WP_User|null     $user
+		 * @param \MemberOrder|null $order
+		 * @param array             $user_meta
 		 */
 		public function configure_objects( $user, $order, $user_meta ) {
 
