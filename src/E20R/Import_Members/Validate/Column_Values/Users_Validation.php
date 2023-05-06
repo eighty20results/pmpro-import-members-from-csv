@@ -115,18 +115,18 @@ if ( ! class_exists( 'E20R\Import_Members\Validate\Column_Values\Users_Validatio
 
 			$allow_update = (bool) $this->variables->get( 'update_users' );
 
-			if ( isset( $record['user_login'] ) && ! empty( 'user_login' ) && false === $allow_update && false !== get_user_by( 'login', $record['user_login'] ) ) {
+			if ( isset( $record['user_login'] ) && false === $allow_update && false !== get_user_by( 'login', $record['user_login'] ) ) {
 				$this->status_msg( Status::E20R_ERROR_NO_UPDATE_FROM_LOGIN, $allow_update );
 				$success = false;
 			}
 
-			if ( isset( $record['user_email'] ) && ! empty( 'user_email' ) && false === $allow_update && false !== get_user_by( 'login', $record['user_email'] ) ) {
+			if ( isset( $record['user_email'] ) && false === $allow_update && false !== get_user_by( 'login', $record['user_email'] ) ) {
 				$this->status_msg( Status::E20R_ERROR_NO_UPDATE_FROM_EMAIL, $allow_update );
 				$success = false;
 			}
 
 			// BUG FIX: Not loading/updating record if user exists and the user identifiable data is the Email address
-			if ( empty( $user_data['user_login'] ) && empty( $user_data['user_email'] ) ) {
+			if ( empty( $record['user_login'] ) && empty( $record['user_email'] ) ) {
 				$this->status_msg( Status::E20R_ERROR_NO_EMAIL_OR_LOGIN, $allow_update );
 				$success = false;
 			}
