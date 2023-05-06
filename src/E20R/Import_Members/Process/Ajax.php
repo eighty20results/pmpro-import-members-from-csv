@@ -39,16 +39,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 	class Ajax {
 
 		/**
-		 * @var null|Ajax $instance
-		 */
-		private static $instance = null;
-
-		/**
-		 * @var null|string $filename
-		 */
-		private $filename = null;
-
-		/**
 		 * Instance of the Error_Log class
 		 *
 		 * @var Error_Log|null $error_log
@@ -438,12 +428,9 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 				 * @var WP_Error $wp_error
 				 */
 				foreach ( $results['errors'] as $wp_error ) {
-
-					if ( ! empty( $wp_error ) ) {
-						// phpcs:ignore
-						$this->error_log->debug( 'Error: ' . $wp_error->get_error_message() );
-						$msgs[] = $wp_error->get_error_message();
-					}
+					// phpcs:ignore
+					$this->error_log->debug( 'Error: ' . $wp_error->get_error_message() );
+					$msgs[] = $wp_error->get_error_message();
 				}
 
 				wp_send_json_error(
@@ -497,10 +484,6 @@ if ( ! class_exists( '\E20R\Import_Members\Process\Ajax' ) ) {
 					)
 				);
 			}
-		}
-
-		private function remove_file( $file_name ) {
-
 		}
 	}
 }
