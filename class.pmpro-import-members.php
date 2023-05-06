@@ -38,7 +38,7 @@ use E20R\Utilities\ActivateUtilitiesPlugin;
 use function add_action;
 use function register_deactivation_hook;
 
-// Make sure Composer (and thus the auto-loader exists)
+// Make sure Composer (and thus the autoloader exists)
 if ( ! file_exists( __DIR__ . '/composer.phar' ) ) {
 	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	error_log( 'Missing autoloader: Import Members for PMPro plugin cannot be loaded' );
@@ -97,7 +97,7 @@ if ( ! class_exists( '\E20R\Import\Loader' ) ) {
 	}
 }
 
-if ( true === Loader::is_utilities_module_active() && defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) ) {
+if ( defined( 'ABSPATH' ) && ! defined( 'PLUGIN_PHPUNIT' ) && true === Loader::is_utilities_module_active() ) {
 	register_deactivation_hook( __FILE__, 'E20R\\Import_Members\\Import::deactivation' );
 	// Load this plugin
 	add_action( 'plugins_loaded', array( new Import(), 'load_hooks' ), 10 );
