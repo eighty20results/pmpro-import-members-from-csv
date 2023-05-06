@@ -52,13 +52,6 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 		private $plugin_path = null;
 
 		/**
-		 * Instance of this class
-		 *
-		 * @var null|Import $instance
-		 */
-		private static $instance = null;
-
-		/**
 		 * Instance of the CSV class
 		 *
 		 * @var null|CSV $csv
@@ -420,14 +413,7 @@ if ( ! class_exists( 'E20R\Import_Members\Import' ) ) {
 				return;
 			}
 
-			$check = new \ReflectionMethod( 'E20R\Licensing\License', '__construct' );
-
-			// In case the ReflectionMethod doesn't return anything if the class doesn't exist
-			if ( empty( $check ) ) {
-				$this->error_log->debug( 'E20R Licensing module is missing. Not activating...' );
-				return;
-			}
-
+			$check       = new \ReflectionMethod( 'E20R\Licensing\License', '__construct' );
 			$is_licensed = false;
 
 			if ( false === $check->isPrivate() ) {
