@@ -31,7 +31,7 @@
   }
   ],
   "require": {
-	"php": ">=7.1",
+	"php": ">=7.4",
 	"10quality/license-keys-php-client": ">=v1.2.2",
 	"mixpanel/mixpanel-php" : "2.*",
 	"ext-curl": "*",
@@ -43,7 +43,9 @@
 	"automattic/vipwpcs": "^2.3.0",
 	"wp-coding-standards/wpcs": "^2.3.0",
 	"automattic/phpcs-neutron-standard": "^v1.7.0",
-	"phpstan/phpstan": "^0.12.78",
+	"phpstan/phpstan": "^1.8",
+	"phpstan/extension-installer": "^1.2",
+	"szepeviktor/phpstan-wordpress": "^v1.1",
 	"phpmetrics/phpmetrics": ">=v1.10.0",
 	"phpunit/phpunit": "^9.5",
 	"codeception/codeception": "^4.1.0",
@@ -61,9 +63,7 @@
 	"lucatume/wp-browser": "^3.0",
 	"brain/monkey": "=2.6.1",
 	"fakerphp/faker": "^v1.20",
-	"szepeviktor/phpstan-wordpress": "^v0.7",
 	"mikey179/vfsstream": "~1",
-	"phpstan/extension-installer": "^1.1",
 	"php-mock/php-mock": "2.3.0",
 	"ext-mysqli": "*"
   },
