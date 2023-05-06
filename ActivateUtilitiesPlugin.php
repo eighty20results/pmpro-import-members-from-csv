@@ -77,9 +77,10 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		 */
 		private static function activate_plugin( $plugin = null, $redirect = '', $network_wide = false ) {
 
-			$plugin = plugin_basename( trim( $plugin ) );
+			$plugin    = plugin_basename( trim( $plugin ) );
+			$is_active = self::is_active( $plugin );
 
-			if ( self::is_active( $plugin ) ) {
+			if ( true === $is_active ) {
 				return true;
 			}
 
@@ -128,7 +129,7 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 					ob_end_clean();
 			}
 
-			return self::is_active( $plugin );
+			return $is_active;
 		}
 
 		/**
@@ -137,7 +138,6 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		 * @param string $dependent_plugin_name The plugin we're dependent on (shown in error message).
 		 */
 		public static function plugin_not_installed( $dependent_plugin_name ) {
-
 			printf(
 				'<div class="notice notice-error"><p>%1$s</p></div>',
 				sprintf(
@@ -155,11 +155,11 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 		/**
 		 * Attempt to activate the E20R Utilities Module plugin when the dependent plugin is activated
 		 *
-		 * @param string|null $path The path to the plugin.
+		 * @param null|string $path The path to the plugin.
 		 *
 		 * @return bool
 		 */
-		public static function attempt_activation( $path = null ) {
+		public static function attempt_activation( $path = null ): bool {
 
 			if ( empty( $path ) ) {
 				$path = trailingslashit( plugin_dir_path( __DIR__ ) ) . self::$plugin_slug;
@@ -185,8 +185,9 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 				return false;
 			}
 
-			if ( ! self::is_active( self::$plugin_slug ) ) {
+			$active = self::is_active( self::$plugin_slug );
 
+			if ( false === $active ) {
 				$result = self::activate_plugin( self::$plugin_slug );
 
 				if ( ! is_wp_error( $result ) ) {
@@ -202,7 +203,6 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 							);
 						}
 					);
-
 					return true;
 				} else {
 					add_action(
@@ -220,16 +220,20 @@ if ( ! class_exists( 'E20R\Utilities\ActivateUtilitiesPlugin' ) ) {
 					return false;
 				}
 			}
+			return $active;
+		}
 
-			if ( self::is_active( self::$plugin_slug ) ) {
-				return true;
-			}
-
-			return false;
+		/**
+		 * Trigger plugin activation and dependency check on WP 'admin_init' action
+		 *
+		 * @return void
+		 */
+		public static function init() {
+			self::attempt_activation();
 		}
 	}
 }
 
 if ( function_exists( '\add_action' ) ) {
-	add_action( 'admin_init', '\E20R\Utilities\ActivateUtilitiesPlugin::attempt_activation', 9999, 1 );
+	add_action( 'admin_init', '\E20R\Utilities\ActivateUtilitiesPlugin::init', 9999, 1 );
 }
