@@ -36,14 +36,6 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 	 * @package E20R\Import_Members
 	 */
 	class Email_Templates {
-
-		/**
-		 * Instance of Email_Templates class
-		 *
-		 * @var null|Email_Templates
-		 */
-		private static $instance = null;
-
 		/**
 		 * Instance of Error_Log class
 		 *
@@ -59,15 +51,12 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		private $variables = null;
 
 		/**
-		 * @var null|Import The Import class
-		 */
-		private $import = null;
-
-		/**
 		 * Email_Templates constructor.
 		 *
 		 * @param Variables|null $variables Instance of the Variables() class
 		 * @param Error_Log|null $error_log Instance of the Error_Log() class
+		 *
+		 * @throws InvalidInstantiation
 		 */
 		public function __construct( $variables = null, $error_log = null ) {
 			if ( null === $error_log ) {
@@ -104,7 +93,7 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 		public function maybe_send_email( $user, $fields, $email = null ) {
 			$send_email = (bool) $this->variables->get( 'send_welcome_email' );
 
-			if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) { // @phpstan-ignore-line
+			if ( version_compare( PMPRO_VERSION, '1.9.5', 'le' ) ) {
 				$this->error_log->debug( 'Unable to send Email due to the specified PMPro version: ' . PMPRO_VERSION );
 				return false;
 			}
@@ -331,8 +320,6 @@ if ( ! class_exists( 'E20R\Import_Members\Email\Email_Templates' ) ) {
 
 		/**
 		 * Load Imported Member template to Email Templates Admin (add-on)
-		 *
-		 * @throws InvalidProperty Thrown if the specified settings key is missing
 		 *
 		 * @since v2.50 - ENHANCEMENT: Allow editing imported_member.html in the Email Templates Admin add-on
 		 */
