@@ -155,7 +155,12 @@ class Template_Data_UnitTest extends Unit {
 		}
 
 		foreach ( $attributes as $attribute ) {
-			$this->assertClassHasAttribute( $attribute, 'E20R\\Import_Members\\Email\\Template_Data' );
+			$this->assertTrue(
+				property_exists(
+					'E20R\\Import_Members\\Email\\Template_Data',
+					$attribute
+				)
+			);
 		}
 
 		foreach ( $methods as $class_method ) {
