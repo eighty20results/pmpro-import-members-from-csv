@@ -13,7 +13,7 @@ jobs:
   plugin_tests:
     strategy:
       matrix:
-        php_version: [ '7.3', '7.4', '8.0', '8.1' ]
+        php_version: [ '7.4', '8.0', '8.1' ]
     name: "Plugin tests - PHP"
     defaults:
       run:
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: eighty20results/pmpro-import-members-from-csv
 
@@ -39,7 +39,7 @@ jobs:
           coverage: pcov
 
       - name: Login to Docker HUB
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
@@ -68,7 +68,7 @@ jobs:
         run: make tests
 
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
 
   build_i18n:
     name: Build the I18N translation files
@@ -76,12 +76,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: eighty20results/pmpro-import-members-from-csv
 
       - name: WordPress .pot File Generator for e20r-members-list
-        uses: iamdharmesh/action-wordpress-pot-generator@main
+        uses: iamdharmesh/action-wordpress-pot-generator@v1
         with:
           destination_path: './languages'
           slug: ${{ env.E20R_PLUGIN_NAME }}
